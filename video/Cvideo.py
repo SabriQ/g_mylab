@@ -1,0 +1,289 @@
+import cv2
+import numpy as np
+import os
+import sys
+import pandas as pd
+import re
+class Video():
+    def __init__(self,video_path):
+        self.video_path = video_path		 
+        self.video_name = os.path.basename(self.video_path)
+        
+        extension = os.path.splitext(self.video_path)[-1]
+        abs_prefix = os.path.splitext(self.video_path)[-2]
+        
+        self.xy = os.path.dirname(self.video_path)+'\\'+'xy.txt'
+        self.led_xy = os.path.dirname(self.video_path)+'\\'+'led_xy.txt'
+        
+##        if os.path.splitext(self.video_path)[-1] == '.asf':
+        self.videots_path = abs_prefix + '_ts.txt'
+        self.videofreezing_path = abs_prefix + '_freezing.csv'
+
+    
+    def draw_roi(self,points = 4):
+        cap = cv2.VideoCapture(self.video_path)
+        ret,frame = cap.read()
+        coord = []
+        pts=[]
+        mask = 255*np.ones_like(frame)
+        
+        def draw_polygon(event,x,y,flags,param):
+            rows,cols,channels= param['img'].shape
+            black_bg = np.zeros((rows,cols,channels),np.uint8)
+            
+            if event == cv2.EVENT_LBUTTONDOWN:
+                if len(coord) < points:
+                    coord.append([x,y])
+                else:
+                    print(f"you already have choosed {points} points")                                 
+                
+            if event == cv2.EVENT_MOUSEMOVE:
+                if len(coord) ==1:
+                    cv2.line(black_bg,tuple(coord[0]),(x,y),(127,255,10),2)
+                if len(coord) >1 and len(coord) <points:
+                    pts = np.append(coord,[[x,y]],axis = 0)
+                    cv2.fillPoly(black_bg,[pts],(127,255,10))
+                if len(coord) == points:
+                    pts = np.array(coord,np.int32)
+                    cv2.fillPoly(black_bg,[pts],(127,255,10))
+                    cv2.fillPoly(mask,[pts],0)
+
+                frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)                
+                cv2.imshow("draw_roi",frame)
+                
+        cv2.namedWindow("draw_roi")
+        cv2.setMouseCallback("draw_roi",draw_polygon,{"img":frame})
+        while(1):
+            key = cv2.waitKey(10) & 0xFF 
+            if len(coord)==4:
+                cv2.imshow("mask",mask)
+            if key == ord('s'):                    
+                f = open(self.xy,'w+')
+                f.write(f'x:{[i[0] for i in coord]}\ny:{[i[1] for i in coord]}')
+                f.close()                    
+                print(f'{self.xy} is saved')
+                cv2.destroyAllWindows()
+                break
+            if key == ord('q'):
+                print("selected points are aborted")
+                cv2.destroyAllWindows()
+                return self.draw_roi()
+        cap.release()
+        cv2.destroyAllWindows()
+        return mask,pts
+    
+    # mask_generate mask same as draw_roi, besides it could generate mask when xy.txt exist
+    def mask_generate(self):
+        cap = cv2.VideoCapture(self.video_path)
+        ret,frame = cap.read()
+        coord = []
+        pts=[]
+        mask = 255*np.ones_like(frame)
+        
+        if os.path.exists(self.xy):
+            print(f'{self.xy} existed')
+            f = open(self.xy)
+            temp = f.read()
+            f.close()
+            coord_x = temp.split('\n')[0]
+            coord_y = temp.split('\n')[1]
+
+            coord.append([int(coord_x.split(',')[0][3:6]),int(coord_y.split(',')[0][3:6])])
+            coord.append([int(coord_x.split(',')[1]),int(coord_y.split(',')[1])])
+            coord.append([int(coord_x.split(',')[2]),int(coord_y.split(',')[2])])
+            coord.append([int(coord_x.split(',')[3].replace(']','')),int(coord_y.split(',')[3].replace(']',''))])
+            pts = np.array(coord,np.int32)
+##            print(pts)
+            cv2.fillPoly(mask,[pts],0)        
+        else:
+            mask,_ = self.draw_roi()      
+        cap.release()        
+        return mask
+    
+    def _draw_led_location(self,img):
+        ix = []
+        iy = []
+        rows,cols,channels= img.shape
+        black_bg= np.zeros((rows,cols,channels),np.uint8)
+        
+        def draw_rectangle(event,x,y,flags,param):
+##            print(x,y)
+            if event == cv2.EVENT_LBUTTONDOWN:
+                ix.append(x)
+                iy.append(y)            
+                cv2.rectangle(black_bg,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,255,255),2)
+        if os.path.exists(self.led_xy):
+            print('led_xy existed')
+            f = open(self.led_xy)
+            coord = f.read()
+            f.close
+            coord_x = re.split('[\n:\[\]xy]',coord)[3]
+            coord_y = re.split('[\n:\[\]xy]',coord)[8]
+            
+            ix.append(int(coord_x))
+            iy.append(int(coord_y))
+            cv2.rectangle(black_bg,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,255,255),2)
+            return ix,iy,black_bg
+        else:
+            print('Mark the led location please')
+            cv2.namedWindow('draw_led_location')
+            cv2.setMouseCallback('draw_led_location',draw_rectangle)
+            
+            while(1):
+                img_show = cv2.add(img,black_bg)
+                cv2.imshow('draw_led_location',img_show)
+                key = cv2.waitKey(10) & 0xFF
+                if key == ord('s'):
+                    #cv2.imwrite(self.mask_path,black_bg_inv)
+                    cv2.destroyWindow('draw_led_location')
+
+                    f = open(self.led_xy,'w+')
+                    f.write(f'x:{ix}\ny:{iy}')
+                    f.close
+
+                    print('led_xy.txt is created')
+                    cv2.destroyWindow('draw_led_location')
+                    return ix,iy,black_bg               
+                    
+                elif key == ord(' '):
+                    ix = []
+                    iy = []
+                    cv2.destroyWindow('draw_led_location')
+                    self.draw_led_location(img)
+                elif key == ord ('q'):
+                    cv2.destroyWindow('draw_led_location')
+                    print("give up drawing led location")
+                    sys.exit()
+                    
+            
+        
+    def led_on_frames (self,*args,threshold1 = 240,threshold2 = 50):
+        '''
+        两种模式
+        第一种是无输入，video.mark_led_on()，会自动识别 roi内的led,像素值阈值（threshold1）为240，
+        达到像素阈值的个数阈值（threshold2）为50,return a list of "led_on_frame"
+        第二种为有输入，video.mark_led_on(61,355,700),程序会自动跳到数字指定的帧，然后mannually confirm
+        'a':后退一帧
+        'f':前进一帧
+        's':保存当前帧数到结果中
+        'n':下一个指定帧
+        '''
+        font = cv2.FONT_HERSHEY_COMPLEX
+        cap = cv2.VideoCapture(self.video_path)
+        frame_No = 1
+        led_ons = args
+##        threshold1 = 240 #判断像素为led_on的像素阈值
+##        threshold2 = 50 # 判断led on 的 roi 内像素值大于 threshold1 的像素个数的阈值
+        ret,frame = cap.read()
+        if ret:
+            #frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            ix,iy,mask = self._draw_led_location(frame)
+        else:
+            print("video can not be read")
+            sys.exit()
+        
+        print('Got the led location')  
+##        pixel_sum_base = sum(sum(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)]))
+##        def show_frame (frame_No,frame):
+##            cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+##            frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+##            cv2.imshow('led location',frame_gray)
+        # for check
+        led_on_frame = []
+        if len(led_ons):
+            print("please press 'a' or 'f' to confirm the first led_on frame, and 's' to save the frame_No!")
+            for i in np.arange(1,len(led_ons)+1):
+                frame_No = led_ons[i-1]
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)  
+                ret,frame = cap.read()
+                frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                judge = sum(sum(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)] > threshold1))
+                frame_show = cv2.add(frame,mask)
+                #cv2.rectangle(frame_show,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,0,0),2)
+                cv2.putText(frame_show,f'frame_No:{frame_No} have {judge} pixels hugely changed',(10,15), font, 0.5, (255,255,255))
+                cv2.imshow('led location',frame_show)
+                while 1:
+                    key = cv2.waitKey(1) & 0xFF
+                    
+                    if key == ord('f'):                        
+                        frame_No +=1
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                        ret,frame = cap.read()
+                        if ret:
+                            frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                            judge = sum(sum(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)] > threshold1))                     
+                            frame_show = cv2.add(frame,mask)
+                            #cv2.rectangle(frame_show,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,0,0),2)
+                            cv2.putText(frame_show,f'frame_No:{frame_No} have {judge} pixels hugely changed',(10,15), font, 0.5, (255,255,255))
+                            cv2.imshow('led location',frame_show)
+                            #print(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)])
+                        else:
+                            frame_No = frame_No-1
+                            print(f'frame_No {frame_No} is the last frame')
+                        
+                    if key == ord('a'):
+                        frame_No = frame_No - 1
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-2)
+                        ret,frame = cap.read()
+                        frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                        judge = sum(sum(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)] > threshold1))
+                        frame_show = cv2.add(frame,mask)
+                        #cv2.rectangle(frame_show,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,0,0),2)
+                        cv2.putText(frame_show,f'frame_No:{frame_No} have {judge} pixels hugely changed',(10,15), font, 0.5, (255,255,255))
+                        cv2.imshow('led location',frame_show)
+                        #print(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)])
+                        
+                    if key == ord('s'):
+                        led_on_frame.append(frame_No)
+                        print(f'{frame_No} frame is saved')              
+                        break
+                    if key == ord('n'):
+                        #led_ons.pop(i-1)
+                        print('end of checking')
+                        cv2.destroyAllWindows()
+                        break
+                    if key == ord('q'):
+                        print('give up checking')
+                        cv2.destroyAllWindows()
+                        sys.exit()
+            return led_ons
+        else:
+            print('finding the first frame where led on...')
+            while(1):
+                ret,frame = cap.read()
+                if ret:
+                    #frame_show = cv2.add(frame,mask)
+                    #cv2.imshow('searching...',frame_show)
+                    frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                    judge = sum(sum(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)] > threshold1))
+                    if judge > threshold2:
+                        led_on_frame.append(frame_No)
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No+99)
+                        frame_No = frame_No + 99
+                    else:                    
+                        frame_No = frame_No+1
+                
+                
+##                    cv2.rectangle(frame_gray,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,0,0),2)
+##                    cv2.putText(frame_gray,f'frame_No:{frame_No} have {judge} pixels hugely changed',(10,15), font, 0.5, (255,255,255))
+##                    cv2.imshow('led location',frame_gray)                                             
+##    ##            
+##                    if cv2.waitKey(1) & 0xFF == ord('q'):
+##                        break
+                else:
+                    print(f'it has totally {frame_No-1} frame')
+                    break
+        return led_on_frame
+
+    def extract_timestamps(self):
+        print("not yet code")
+        pass
+            
+            
+if __name__ == '__main__':
+
+    video = Video (r'C:\Users\Sabri\Desktop\#191023_190308103432Cam-1.asf')
+    mask,pts = video.draw_roi(points=3)
+    cv2.imshow("mask",mask)
+    print(pts)
+
