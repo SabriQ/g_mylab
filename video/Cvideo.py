@@ -18,6 +18,118 @@ class Video():
 ##        if os.path.splitext(self.video_path)[-1] == '.asf':
         self.videots_path = abs_prefix + '_ts.txt'
         self.videofreezing_path = abs_prefix + '_freezing.csv'
+    def _extract_coord (self,file,aim):
+        f = open (file)
+        temp = f.readlines()
+        coords = []
+        for eachline in temp:
+            eachline = str(eachline)
+            if aim in str(eachline):
+                coord = []
+                pattern_x = re.compile('\[(\d+),')
+                coord_x = pattern_x.findall(str(eachline))
+                pattern_y = re.compile('(\d+)\]')
+                coord_y = pattern_y.findall(str(eachline))
+                for x,y in zip(coord_x,coord_y):
+                    coord.append([int(x),int(y)])
+                coords.append(coord)
+        f.close()
+        return coords
+
+    
+    def draw_rois(self,aim="freezing"):
+        if os.path.exists(self.xy):
+            existed_coords = self._extract_coord(self.xy,aim)
+            print("you have drawn before")
+        cap = cv2.VideoCapture(self.video_path)
+        ret,frame = cap.read()
+        origin = []
+        coord = []
+        coord_current = [] # used when move 
+        masks = []
+        coords = []
+        font = cv2.FONT_HERSHEY_COMPLEX
+        state = "go"
+        if os.path.exists(self.xy):
+            for existed_coord in existed_coords:
+                if len(existed_coord) >0:
+                    existed_coord = np.array(existed_coord,np.int32)
+                    coords.append(existed_coord)
+                    mask = 255*np.ones_like(frame)
+                    cv2.fillPoly(mask,[existed_coord],0)
+                    masks.append(mask)
+                    mask = 255*np.ones_like(frame)
+        def draw_polygon(event,x,y,flags,param):
+            nonlocal state, origin,coord,coord_current,mask           
+            rows,cols,channels= param['img'].shape
+            black_bg = np.zeros((rows,cols,channels),np.uint8)
+            if os.path.exists(self.xy):
+                for i,existed_coord in enumerate(existed_coords,1):
+                    if len(existed_coord)>0:
+                        existed_coord = np.array(existed_coord,np.int32)                 
+                        cv2.fillPoly(black_bg,[existed_coord],(127,255,10))                    
+                        cv2.putText(black_bg,f'{i}',tuple(np.trunc(existed_coord.mean(axis=0)).astype(np.int32)), font, 1, (0,0,255))
+            if state == "go" and event == cv2.EVENT_LBUTTONDOWN:
+                coord.append([x,y])
+                
+            if event == cv2.EVENT_MOUSEMOVE:
+                if state == "go":
+                    if len(coord) ==1:
+                        cv2.line(black_bg,tuple(coord[0]),(x,y),(127,255,10),2)
+                    if len(coord) >1:
+                        pts = np.append(coord,[[x,y]],axis = 0)
+##                        print(pts)
+                        cv2.fillPoly(black_bg,[pts],(127,255,10))
+                    frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)                
+                    cv2.imshow("draw_roi",frame)
+                if state == "stop":
+                    pts = np.array(coord,np.int32)
+                    cv2.fillPoly(black_bg,[pts],(127,255,10))
+                    frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)                
+                    cv2.imshow("draw_roi",frame)
+                if state == "move":                    
+                    coord_current = np.array(coord,np.int32) +(np.array([x,y])-np.array(origin) )
+                    pts = np.array(coord_current,np.int32)
+                    cv2.fillPoly(black_bg,[pts],(127,255,10))
+                    cv2.fillPoly(mask,[pts],0)
+                    frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)                
+                    cv2.imshow("draw_roi",frame)                
+            if event == cv2.EVENT_RBUTTONDOWN:
+                origin =  [x,y]
+                state = "move"
+            if event == cv2.EVENT_LBUTTONDBLCLK:              
+                if state == "move":
+                    coord = coord_current.tolist()
+                state = "stop"
+                mask = 255*np.ones_like(mask)
+                pts = np.array(coord,np.int32)
+                cv2.fillPoly(mask,[pts],0)
+                
+        cv2.namedWindow("draw_roi")
+        cv2.setMouseCallback("draw_roi",draw_polygon,{"img":frame})
+        while(1):
+            key = cv2.waitKey(10) & 0xFF 
+            if key == ord('s'):                    
+                f = open(self.xy,'a+')
+                f.write(f'{aim} {coord}\n')
+                f.close()                    
+                print(f'{self.xy} is saved')
+                cv2.destroyAllWindows()
+                break
+            if key == ord('q'):
+                print("selected points are aborted")
+                cv2.destroyAllWindows()
+                return self.draw_rois()
+            if key == ord('a'):
+                f = open(self.xy,'a+')
+                f.write(f'{aim} {coord}\n')
+                f.close()       
+                print('please draw another aread')
+                cv2.destroyAllWindows()
+                return self.draw_rois()
+        cap.release()
+        cv2.destroyAllWindows()
+        return masks,coords
 
     
     def draw_roi(self,points = 4):
@@ -35,7 +147,7 @@ class Video():
                 if len(coord) < points:
                     coord.append([x,y])
                 else:
-                    print(f"you already have choosed {points} points")                                 
+                    print(f"you already have choosed {points} points")                                
                 
             if event == cv2.EVENT_MOUSEMOVE:
                 if len(coord) ==1:
@@ -87,7 +199,6 @@ class Video():
             f.close()
             coord_x = temp.split('\n')[0]
             coord_y = temp.split('\n')[1]
-
             coord.append([int(coord_x.split(',')[0][3:6]),int(coord_y.split(',')[0][3:6])])
             coord.append([int(coord_x.split(',')[1]),int(coord_y.split(',')[1])])
             coord.append([int(coord_x.split(',')[2]),int(coord_y.split(',')[2])])
@@ -282,8 +393,10 @@ class Video():
             
 if __name__ == '__main__':
 
-    video = Video (r'C:\Users\Sabri\Desktop\#191023_190308103432Cam-1.asf')
-    mask,pts = video.draw_roi(points=3)
-    cv2.imshow("mask",mask)
-    print(pts)
+    video = Video (r'C:\Users\Sabri\Desktop\test\20190609-133024.mp4')
+    masks,ptss = video.draw_rois()
+    print(len(masks),len(ptss))
+##    for mask, pts in zip(masks,ptss):
+##        cv2.imshow("mask",mask)
+##        print(pts)
 
