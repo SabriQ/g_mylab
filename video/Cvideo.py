@@ -60,7 +60,7 @@ class Video():
                     masks.append(mask)
                     mask = 255*np.ones_like(frame)
         def draw_polygon(event,x,y,flags,param):
-            nonlocal state, origin,coord,coord_current,mask           
+            nonlocal state, origin,coord,coord_current,mask,frame           
             rows,cols,channels= param['img'].shape
             black_bg = np.zeros((rows,cols,channels),np.uint8)
             if os.path.exists(self.xy):
@@ -70,8 +70,7 @@ class Video():
                         cv2.fillPoly(black_bg,[existed_coord],(127,255,10))                    
                         cv2.putText(black_bg,f'{i}',tuple(np.trunc(existed_coord.mean(axis=0)).astype(np.int32)), font, 1, (0,0,255))
             if state == "go" and event == cv2.EVENT_LBUTTONDOWN:
-                coord.append([x,y])
-                
+                coord.append([x,y])                
             if event == cv2.EVENT_MOUSEMOVE:
                 if state == "go":
                     if len(coord) ==1:
@@ -101,7 +100,7 @@ class Video():
                 if state == "move":
                     coord = coord_current.tolist()
                 state = "stop"
-                mask = 255*np.ones_like(mask)
+                mask = 255*np.ones_like(frame)
                 pts = np.array(coord,np.int32)
                 cv2.fillPoly(mask,[pts],0)
                 
@@ -109,10 +108,13 @@ class Video():
         cv2.setMouseCallback("draw_roi",draw_polygon,{"img":frame})
         while(1):
             key = cv2.waitKey(10) & 0xFF 
-            if key == ord('s'):                    
-                f = open(self.xy,'a+')
-                f.write(f'{aim} {coord}\n')
-                f.close()                    
+            if key == ord('s'):
+                if len(coord) >0:
+                    masks.append(mask)
+                    coords.append(coord)
+                    f = open(self.xy,'a+')
+                    f.write(f'{aim} {coord}\n')
+                    f.close()                    
                 print(f'{self.xy} is saved')
                 cv2.destroyAllWindows()
                 break
@@ -126,7 +128,7 @@ class Video():
                 f.close()       
                 print('please draw another aread')
                 cv2.destroyAllWindows()
-                return self.draw_rois()
+                return self.draw_rois(aim=aim)
         cap.release()
         cv2.destroyAllWindows()
         return masks,coords
@@ -394,7 +396,7 @@ class Video():
 if __name__ == '__main__':
 
     video = Video (r'C:\Users\Sabri\Desktop\test\20190609-133024.mp4')
-    masks,ptss = video.draw_rois()
+    masks,ptss = video.draw_rois(aim="epm")
     print(len(masks),len(ptss))
 ##    for mask, pts in zip(masks,ptss):
 ##        cv2.imshow("mask",mask)
