@@ -37,7 +37,7 @@ class Video():
         return coords
 
     
-    def draw_rois(self,aim="freezing"):
+    def draw_rois(self,aim="freezing",count = 1):
         if os.path.exists(self.xy):
             existed_coords = self._extract_coord(self.xy,aim)
             print("you have drawn before")
@@ -59,6 +59,8 @@ class Video():
                     cv2.fillPoly(mask,[existed_coord],0)
                     masks.append(mask)
                     mask = 255*np.ones_like(frame)
+                    if len(existed_coord) >= count:
+                        return masks,coords
         def draw_polygon(event,x,y,flags,param):
             nonlocal state, origin,coord,coord_current,mask,frame           
             rows,cols,channels= param['img'].shape

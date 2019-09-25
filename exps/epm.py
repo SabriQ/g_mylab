@@ -57,7 +57,7 @@ for h5list in h5lists:
 ##    plt.scatter(X,Y)
 ##    plt.show()
     if videolist:
-        masks,coords = Video(videolist[0]).draw_rois(aim="epm")
+        masks,coords = Video(videolist[0]).draw_rois(aim="epm",count=5)
 ##        for i,mask in enumerate(masks,1):
 ##            cv2.imshow(f"test{i}",mask)
     else:
