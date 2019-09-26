@@ -36,8 +36,8 @@ def _video_to_csv(videoPath,Interval_number=1,show = True):
                 if show:
                     if frame_count <=100:
                         cv2.putText(frame_gray,f'frame_No:{frame_count}',(10,15), font, 0.5, (0,0,0))
-                        cv2.imshow(video.masked_path,frame_gray)                    
-                        cv2.waitKey(1)
+                        cv2.imshow("video",frame_gray)                    
+                        cv2.waitKey(10)
                         
 ##                    frames.append(frame_gray)
                 

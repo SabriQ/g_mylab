@@ -7,11 +7,11 @@ import csv
 import matplotlib.pyplot as plt
 import cv2
 #######
-videolists = glob.glob(r"C:\Users\Sabri\Desktop\test\*mp4")
+videolists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*mp4")
 ##print(videolists)
-h5lists = glob.glob(r"C:\Users\Sabri\Desktop\test\*h5")
+h5lists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*h5")
 ##print(h5lists)
-ts_lists = glob.glob(r"C:\Users\Sabri\Desktop\test\*txt")
+ts_lists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*txt")
 ##print(ts_lists)
 
 def Count(masks,X,Y,T):
@@ -45,9 +45,10 @@ def Count(masks,X,Y,T):
 for h5list in h5lists:
     f = pd.read_hdf(h5list)
 ##    print(f.DeepCut_resnet50_ephy_si_mp4Jun9shuffle1_500000.)
-    X =np.array(f.DeepCut_resnet50_ephy_si_mp4Jun9shuffle1_500000.Body['x'])
-    Y =np.array(f.DeepCut_resnet50_ephy_si_mp4Jun9shuffle1_500000.Body['y'])
-    L = np.array(f.DeepCut_resnet50_ephy_si_mp4Jun9shuffle1_500000.Body['likelihood'])
+    training_set = f.columns[0][0]
+    X =np.array(f[training_set].Body['x'])
+    Y =np.array(f[training_set].Body['y'])
+    L = np.array(f[training_set].Body['likelihood'])
     ts_list = [i for i in ts_lists if os.path.basename(h5list)[0:12] in i]
 
     T = np.array(pd.read_csv(ts_list[0],sep='\n',encoding='utf-16',header=None)[0])
@@ -57,7 +58,7 @@ for h5list in h5lists:
 ##    plt.scatter(X,Y)
 ##    plt.show()
     if videolist:
-        masks,coords = Video(videolist[0]).draw_rois(aim="epm",count=5)
+        masks,coords = Video(videolist[0]).draw_rois(aim="epm",count=2)
 ##        for i,mask in enumerate(masks,1):
 ##            cv2.imshow(f"test{i}",mask)
     else:
@@ -66,11 +67,13 @@ for h5list in h5lists:
 
     time,distance = Count(masks,X,Y,T)
     print(f'{os.path.basename(videolist[0])} process done.')
-    output_head = ["head"]+[str(key)+"_time" for key,value in time.items()]+[str(key)+"_distance" for key,value in distance.items()]
+    output_head = ["video"]+[str(key)+"_time" for key,value in time.items()]+[str(key)+"_distance" for key,value in distance.items()]
     output_count= [os.path.basename(videolist[0])]+[value for key,value in time.items()]+[value for key,value in distance.items()]
-    with open(os.path.join(os.path.dirname(videolist[0]),"output.csv"),'a+') as f:
+    outfile = os.path.join(os.path.dirname(videolist[0]),"output.csv")
+    with open(outfile,'a+') as f:
         f_csv = csv.writer(f)
-        f_csv.writerow(output_head)
+        if os.path.getsize(outfile) == 0:
+            f_csv.writerow(output_head)
         f_csv.writerow(output_count)
 
 

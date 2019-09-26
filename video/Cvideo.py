@@ -52,6 +52,7 @@ class Video():
         state = "go"
         if os.path.exists(self.xy):
             for existed_coord in existed_coords:
+##                print(len(coords),count)
                 if len(existed_coord) >0:
                     existed_coord = np.array(existed_coord,np.int32)
                     coords.append(existed_coord)
@@ -59,7 +60,7 @@ class Video():
                     cv2.fillPoly(mask,[existed_coord],0)
                     masks.append(mask)
                     mask = 255*np.ones_like(frame)
-                    if len(existed_coord) >= count:
+                    if len(coords) >= count:
                         return masks,coords
         def draw_polygon(event,x,y,flags,param):
             nonlocal state, origin,coord,coord_current,mask,frame           
@@ -130,7 +131,7 @@ class Video():
                 f.close()       
                 print('please draw another aread')
                 cv2.destroyAllWindows()
-                return self.draw_rois(aim=aim)
+                return self.draw_rois(aim=aim,count = count)
         cap.release()
         cv2.destroyAllWindows()
         return masks,coords
