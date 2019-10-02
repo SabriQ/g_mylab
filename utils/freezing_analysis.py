@@ -1,7 +1,7 @@
 from mylab.video.Cvideo import Video 
 from mylab.exps.cfc import video_to_csv as v2c
 from mylab.csvs.Ccsv import Csv
-import glob,os,sys
+import glob,os,sys,platform
 import concurrent.futures
 import subprocess
 import csv
@@ -9,36 +9,36 @@ import csv
 videolists = glob.glob(r'C:\Users\Sabri\Desktop\test\*.mp4')
 coordinates = os.path.join(os.path.dirname(videolists[0]),'xy.txt')
 
-powershell = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-##print(sys.argv[0])
-extract_ts = os.path.join(os.path.dirname(sys.argv[0]),'extract_ts.ps1')
+freezing_stat = {}
+frame_interval=2 # 产生_freezing_csv文件时，coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
+diff_gray_value=30 #前后两帧同样像素点位置是否变化的阈值，一般不变，但是当曝光很暗，比如低于10lux时可以适当降低这个值
+threshold = 0.02 #当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.02%
+#另外还有一个参数并没有写出来用于修改，即小鼠不动的时间要不小于1s,才会认为是freezing，这个值一般不动.
 
+#判断是否选中视频
 if len(videolists)==0:
     print("there are no video choosed")
     sys.exit()
-elif not os.path.exists(coordinates):
+#判断是否画了老鼠活动区域，没有则弹出frame
+if not os.path.exists(coordinates):
     print("please draw the travel region.")
     _,_ = Video(videolists[0]).draw_roi()
-else:
-    pass
-
-freezing_stat = {}
-threshold = 0.02
+#判断*_ts.txt文件是否存在，不存在则产生
 for video in videolists:
-    ts_video = os.path.splitext(video)[0]+'_ts.txt'
-    extension = os.path.splitext(video)[1]
-    csv_video = os.path.splitext(video)[0]+'_freezing.csv'
-    print(csv_video)
-    if not os.path.exists(ts_video):
-        subprocess.call([powershell,"-ExecutionPolicy","Unrestricted","-File",extract_ts,video,extension])
-        print("we are extracting timestamps")
-    if not os.path.exists(csv_video):
-        v2c(video,Interval_number=2,diff_gray_value=30,show = True)
-        print("we are caclulating the pixel change percentage frame by frame")
-    
-    freezing_stat[os.path.basename(video)]=Csv(csv_video).freezing_percentage(threshold=threshold,start=0,stop=300,show_detail=True)
-        
+    freeze_video = Video(video)
+    if not os.path.exists(freeze_video.videots_path):
+        freeze_video.generate_ts_txt()
+    else:
+        print(video,"*_ts.txt file already exists")
+#判断*_freezing.csv是否存在，不存在则产生
+    if not os.path.exists(freeze_video.videofreezing_path):
+        v2c(video,Interval_number=frame_interval,diff_gray_value=diff_gray_value,show = True)
+    else:
+        print(video,"*_freezing.csv file already exists")
+    freezing_stat[os.path.basename(video)]=Csv(freeze_video.videofreezing_path).freezing_percentage(threshold=threshold,start=0,stop=300,show_detail=True)
 
+
+#将结果存储到同目录下的freezing_stat.csv中
 with open(os.path.join(os.path.dirname(videolists[0]),'freezing_stat.csv'),'w',newline="") as csv_file:
     writer = csv.writer(csv_file)
     writer.writerow(['video_id','freezing%',threshold])

@@ -4,6 +4,7 @@ import os
 import sys
 import pandas as pd
 import re
+import platform,subprocess
 class Video():
     def __init__(self,video_path):
         self.video_path = video_path		 
@@ -18,6 +19,23 @@ class Video():
 ##        if os.path.splitext(self.video_path)[-1] == '.asf':
         self.videots_path = abs_prefix + '_ts.txt'
         self.videofreezing_path = abs_prefix + '_freezing.csv'
+        
+    def generate_ts_txt(self):
+        if (platform.system()=="Linux"):
+            command = r'ffprobe -i %s -show_frames -select_streams v  -loglevel quiet| grep pkt_pts_time= | cut -c 14-24 > %s' % (self.video_path,self.videots_path)
+            child = subprocess.Popen(command,shell=True)
+        if (platform.system()=="Windows"):
+            try:
+                powershell=r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+            except:
+                print("your windows system doesn't have powershell")
+                sys.exit()
+            # command below relys on powershell so we open powershell with a process named child and input command through stdin way.
+            child = subprocess.Popen(powershell,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            command = r'ffprobe.exe -i %s -show_frames -loglevel quiet |Select-String media_type=video -context 0,4 |foreach{$_.context.PostContext[3] -replace {.*=}} |Out-File %s' % (self.video_path,self.videots_path)
+            child.stdin.write(command.encode('utf-8'))
+            out = child.communicate()[1].decode('gbk') # has to be 'gbk'
+        
     def _extract_coord (self,file,aim):
         f = open (file)
         temp = f.readlines()
