@@ -6,7 +6,7 @@ import concurrent.futures
 import subprocess
 import csv
 
-videolists = glob.glob(r'C:\Users\Sabri\Desktop\program\video\video_analyze\mark_led_on\*AVI')
+videolists = glob.glob(r'C:\Users\Sabri\Desktop\test\*.mp4')
 coordinates = os.path.join(os.path.dirname(videolists[0]),'xy.txt')
 
 powershell = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"

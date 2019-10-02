@@ -63,8 +63,12 @@ class Video():
                     if len(coords) >= count:
                         return masks,coords
         def draw_polygon(event,x,y,flags,param):
-            nonlocal state, origin,coord,coord_current,mask,frame           
-            rows,cols,channels= param['img'].shape
+            nonlocal state, origin,coord,coord_current,mask,frame
+            try:
+                rows,cols,channels= param['img'].shape
+            except:
+                print("Your video is broken,please check that if it could be opened with potplayer?")
+                sys.exit()
             black_bg = np.zeros((rows,cols,channels),np.uint8)
             if os.path.exists(self.xy):
                 for i,existed_coord in enumerate(existed_coords,1):
@@ -145,7 +149,11 @@ class Video():
         mask = 255*np.ones_like(frame)
         
         def draw_polygon(event,x,y,flags,param):
-            rows,cols,channels= param['img'].shape
+            try:
+                rows,cols,channels= param['img'].shape
+            except:
+                print("Your video is broken,please check that if it could be opened with potplayer?")
+                sys.exit()
             black_bg = np.zeros((rows,cols,channels),np.uint8)
             
             if event == cv2.EVENT_LBUTTONDOWN:
@@ -271,9 +279,9 @@ class Video():
                     print("give up drawing led location")
                     sys.exit()
                     
-            
+
         
-    def led_on_frames (self,*args,threshold1 = 240,threshold2 = 50):
+    def led_on_frames (self,*args,threshold1 = 220,threshold2 = 50):
         '''
         两种模式
         第一种是无输入，video.mark_led_on()，会自动识别 roi内的led,像素值阈值（threshold1）为240，
@@ -398,9 +406,11 @@ class Video():
             
 if __name__ == '__main__':
 
-    video = Video (r'C:\Users\Sabri\Desktop\test\20190609-133024.mp4')
-    masks,ptss = video.draw_rois(aim="epm")
-    print(len(masks),len(ptss))
+    video = Video (r'Y:\Qiushou\12 Miniscope\20190928\191126\191126B-20190928-221031.mp4')
+    frames = video.led_on_frames()
+    print(frames)
+#    masks,ptss = video.draw_rois(aim="epm")
+#    print(len(masks),len(ptss))
 ##    for mask, pts in zip(masks,ptss):
 ##        cv2.imshow("mask",mask)
 ##        print(pts)
