@@ -1,4 +1,4 @@
-from mylab.video.Cvideo import Video
+from mylab.Cvideo import Video
 import time
 import os
 import sys

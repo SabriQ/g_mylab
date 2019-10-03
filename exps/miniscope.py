@@ -10,29 +10,29 @@ Created on Wed Oct  2 16:05:55 2019
 #    untracked_videos
 import glob,os 
 
-#all_videolists = glob.glob(r'Y:\Qiushou\12 Miniscope\*\*\*[0-9].mp4')
-#ts_txts  = glob.glob(r'Y:\Qiushou\12 Miniscope\*\*\*_ts.txt')
-#tracked_h5s = glob.glob(r'Y:\Qiushou\12 Miniscope\*\*\*Deep*.h5')
-#
-#def dst_videolists(all_videolists,ts_files,tracked_h5):
-#    ts_videos = []
-#    tracked_videos = []
-#    for video in all_videolists :
-#        basename = os.path.splitext(os.path.basename(video))[0]
-##        print(basename)
-#        for ts_txt in ts_txts:
-##            print(ts_file)
-#            if basename in ts_txt:
-#                ts_videos.append(video)
-##                print(">>>>>>"+video)
-#        for tracked_h5 in tracked_h5s:
-##            print(tracked_video)
-#            if basename in tracked_h5:
-#                tracked_videos.append(video)
-##                print("<<<<<<"+video)
-#    return [ i for i in all_videolists if i not in ts_videos],[ i for i in all_videolists if i not in tracked_videos]
-#
-#no_ts_videos, untracked_videos =  dst_videolists(all_videolists,ts_txts,tracked_h5s)
+all_videolists = glob.glob(r'Y:\Qiushou\12 Miniscope\*\*\*[0-9].mp4')
+ts_txts  = glob.glob(r'Y:\Qiushou\12 Miniscope\*\*\*_ts.txt')
+tracked_h5s = glob.glob(r'Y:\Qiushou\12 Miniscope\*\*\*Deep*.h5')
+
+def dst_videolists(all_videolists,ts_files,tracked_h5):
+    ts_videos = []
+    tracked_videos = []
+    for video in all_videolists :
+        basename = os.path.splitext(os.path.basename(video))[0]
+#        print(basename)
+        for ts_txt in ts_txts:
+#            print(ts_file)
+            if basename in ts_txt:
+                ts_videos.append(video)
+#                print(">>>>>>"+video)
+        for tracked_h5 in tracked_h5s:
+#            print(tracked_video)
+            if basename in tracked_h5:
+                tracked_videos.append(video)
+#                print("<<<<<<"+video)
+    return [ i for i in all_videolists if i not in ts_videos],[ i for i in all_videolists if i not in tracked_videos]
+
+no_ts_videos, untracked_videos =  dst_videolists(all_videolists,ts_txts,tracked_h5s)
 #print(no_ts_videos)
 #print(untracked_videos)
 #print(len(all_videolists),len(ts_files),len(tracked_videolists),len(ts_videos),len(tracked_videos))
@@ -57,3 +57,5 @@ generate_ts_txt(r'C:\Users\Sabri\Desktop\test\20190807-103247.mp4')
 #    generate_ts_txt(video)
 
 #%% generate  tracked file
+
+

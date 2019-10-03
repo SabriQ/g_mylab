@@ -1,4 +1,4 @@
-from mylab.video.Cvideo import Video
+from mylab.Cvideo import Video
 import pandas as pd
 import numpy as np
 import sys,os
