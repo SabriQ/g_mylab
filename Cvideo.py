@@ -58,7 +58,8 @@ class Video():
     def draw_rois(self,aim="freezing",count = 1):
         if os.path.exists(self.xy):
             existed_coords = self._extract_coord(self.xy,aim)
-            print("you have drawn before")
+            if len(existed_coords):
+                print("you have drawn before")
         cap = cv2.VideoCapture(self.video_path)
         ret,frame = cap.read()
         origin = []
@@ -106,7 +107,7 @@ class Video():
                         cv2.fillPoly(black_bg,[pts],(127,255,10))
                     frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)                
                     cv2.imshow("draw_roi",frame)
-                if state == "stop":
+                if state == "stop": 
                     pts = np.array(coord,np.int32)
                     cv2.fillPoly(black_bg,[pts],(127,255,10))
                     frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)                
@@ -242,6 +243,8 @@ class Video():
         cap.release()        
         return mask
     
+    
+                
     def _draw_led_location(self,img):
         ix = []
         iy = []
@@ -253,7 +256,7 @@ class Video():
             if event == cv2.EVENT_LBUTTONDOWN:
                 ix.append(x)
                 iy.append(y)            
-                cv2.rectangle(black_bg,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,255,255),2)
+                cv2.rectangle(black_bg,(ix[-1]-5,iy[-1]-5),(ix[-1]+5,iy[-1]+5),(255,255,255),2)
         if os.path.exists(self.led_xy):
             print('led_xy existed')
             f = open(self.led_xy)
@@ -264,7 +267,7 @@ class Video():
             
             ix.append(int(coord_x))
             iy.append(int(coord_y))
-            cv2.rectangle(black_bg,(ix[-1]-10,iy[-1]-10),(ix[-1]+10,iy[-1]+10),(255,255,255),2)
+            cv2.rectangle(black_bg,(ix[-1]-5,iy[-1]-5),(ix[-1]+5,iy[-1]+5),(255,255,255),2)
             return ix,iy,black_bg
         else:
             print('Mark the led location please')
@@ -299,7 +302,7 @@ class Video():
                     
 
         
-    def led_on_frames (self,*args,threshold1 = 220,threshold2 = 50):
+    def led_on_frames (self,*args,threshold1 = 240,threshold2 = 2):
         '''
         两种模式
         第一种是无输入，video.mark_led_on()，会自动识别 roi内的led,像素值阈值（threshold1）为240，
@@ -397,7 +400,7 @@ class Video():
                     #frame_show = cv2.add(frame,mask)
                     #cv2.imshow('searching...',frame_show)
                     frame_gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-                    judge = sum(sum(frame_gray[(iy[-1]-10):(iy[-1]+10),(ix[-1]-10):(ix[-1]+10)] > threshold1))
+                    judge = sum(sum(frame_gray[(iy[-1]-5):(iy[-1]+5),(ix[-1]-5):(ix[-1]+5)] > threshold1))
                     if judge > threshold2:
                         led_on_frame.append(frame_No)
                         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No+99)
@@ -417,14 +420,11 @@ class Video():
                     break
         return led_on_frame
 
-    def extract_timestamps(self):
-        print("not yet code")
-        pass
             
             
 if __name__ == '__main__':
 
-    video = Video (r'Y:\Qiushou\12 Miniscope\20190928\191126\191126B-20190928-221031.mp4')
+    video = Video (r'W:\12_Miniscope\20190924\191125\191125A-20190924-211547.mp4')
     frames = video.led_on_frames()
     print(frames)
 #    masks,ptss = video.draw_rois(aim="epm")

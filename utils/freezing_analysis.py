@@ -1,10 +1,10 @@
-from mylab.video.Cvideo import Video 
+from mylab.Cvideo import Video 
 from mylab.exps.cfc import video_to_csv as v2c
-from mylab.csvs.Ccsv import Csv
+from mylab.Ccsv import Csv
 import glob,os,sys,platform
-import concurrent.futures
 import subprocess
 import csv
+#import concurrent.futures # for parallel computing
 
 videolists = glob.glob(r'C:\Users\Sabri\Desktop\test\*.mp4')
 coordinates = os.path.join(os.path.dirname(videolists[0]),'xy.txt')
