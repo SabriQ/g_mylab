@@ -6,13 +6,13 @@ import subprocess
 import csv
 #import concurrent.futures # for parallel computing
 
-videolists = glob.glob(r'C:\Users\Sabri\Desktop\test\*.mp4')
+videolists = glob.glob(r'C:\Users\Sabri\Desktop\test\180228160127Cam-1.asf')
 coordinates = os.path.join(os.path.dirname(videolists[0]),'xy.txt')
 
 freezing_stat = {}
 frame_interval=2 # 产生_freezing_csv文件时，coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
 diff_gray_value=30 #前后两帧同样像素点位置是否变化的阈值，一般不变，但是当曝光很暗，比如低于10lux时可以适当降低这个值
-threshold = 0.02 #当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.02%
+threshold = 0.52 #当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.02%
 #另外还有一个参数并没有写出来用于修改，即小鼠不动的时间要不小于1s,才会认为是freezing，这个值一般不动.
 
 #判断是否选中视频
@@ -35,7 +35,7 @@ for video in videolists:
         v2c(video,Interval_number=frame_interval,diff_gray_value=diff_gray_value,show = True)
     else:
         print(video,"*_freezing.csv file already exists")
-    freezing_stat[os.path.basename(video)]=Csv(freeze_video.videofreezing_path).freezing_percentage(threshold=threshold,start=0,stop=300,show_detail=True)
+    freezing_stat[os.path.basename(video)]=Csv(freeze_video.videofreezing_path).freezing_percentage(threshold=threshold,start=0,stop=300,show_detail=True,save_epoch = True)
 
 
 #将结果存储到同目录下的freezing_stat.csv中

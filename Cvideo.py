@@ -243,7 +243,7 @@ class Video():
         cap.release()        
         return mask
     
-    
+       
                 
     def _draw_led_location(self,img):
         ix = []
@@ -300,7 +300,11 @@ class Video():
                     print("give up drawing led location")
                     sys.exit()
                     
-
+    def led_on_frames2(self):
+        font = cv2.FONT_HERSHEY_COMPLEX
+        cap = cv2.VideoCapture(self.video_Path)
+        frame_No = 1
+        
         
     def led_on_frames (self,*args,threshold1 = 240,threshold2 = 2):
         '''
@@ -424,9 +428,9 @@ class Video():
             
 if __name__ == '__main__':
 
-    video = Video (r'W:\12_Miniscope\20190924\191125\191125A-20190924-211547.mp4')
-    frames = video.led_on_frames()
-    print(frames)
+    video = Video (r'W:\12_Miniscope\20190930\191126\191126B-20190930-151942.mp4')
+    frames = video.led_on_frames(27770)
+##    print(frames)
 #    masks,ptss = video.draw_rois(aim="epm")
 #    print(len(masks),len(ptss))
 ##    for mask, pts in zip(masks,ptss):

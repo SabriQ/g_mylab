@@ -3,12 +3,14 @@ import os,sys
 import pandas as pd
 import numpy as np
 import warnings
+import csv
 import seaborn as sns
 from scipy import stats
 class Csv():
     def __init__(self,csvPath):
         self.csvPath = csvPath
-        pass
+        self.freezingEpochPath = os.path.join(os.path.dirname(csvPath),'behave_video_'+os.path.splitext(os.path.basename(csvPath))[0]+'epoch.csv')
+        print(self.freezingEpochPath)
     def _rlc(self,x):
         name=[]
         length=[]
@@ -25,7 +27,7 @@ class Csv():
         length.append(count)
         return name,length
 
-    def freezing_percentage(self,threshold = 0.5, start = 0, stop = 6,show_detail=False,percent =True):       
+    def freezing_percentage(self,threshold = 0.5, start = 0, stop = 6,show_detail=False,percent =True,save_epoch=True): 
         data = pd.read_csv(self.csvPath)
         print(len(data['ts(s)']),"time points ;",len(data['Frame_No']),"frames")
 ##        if not (len(data['ts(s)']) == len(data['Frame_No'])):
@@ -65,6 +67,10 @@ class Csv():
 ##        print(lengthes)
         
         sum_freezing_time = 0
+        if save_epoch:
+            with open(self.freezingEpochPath,'w+',newline="") as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(["start","stop"])
         for i,value in enumerate(values,0):
             if value ==1:              
                 begin = sum(lengthes[0:i])
@@ -77,10 +83,18 @@ class Csv():
                 if condition >=1:
                     if show_detail:
                         print(f"{round(selected_data['ts(s)'].iat[begin],1)}s--{round(selected_data['ts(s)'].iat[end],1)}s,duration is {round(condition,1)}".rjust(35,'-'))
+                    if save_epoch:
+                        with open(self.freezingEpochPath,'a+',newline="") as csv_file:
+                            writer = csv.writer(csv_file)
+                            writer.writerow([selected_data['ts(s)'].iat[begin],selected_data['ts(s)'].iat[end]])
                     sum_freezing_time = sum_freezing_time + condition
                 else:
                     sum_freezing_time = sum_freezing_time
         print(f'the freezing percentage during [{start}s --> {stop}s] is {round(sum_freezing_time*100/(stop-start),2)}%')
+        if save_epoch:
+            with open(self.freezingEpochPath,'a+',newline="") as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow(["","",f"{round(sum_freezing_time*100/(stop-start),2)}%"])
         if  percent:
             return sum_freezing_time*100/(stop-start)
         else:
