@@ -32,9 +32,11 @@ class Video():
                 sys.exit()
             # command below relys on powershell so we open powershell with a process named child and input command through stdin way.
             child = subprocess.Popen(powershell,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            command = r'ffprobe.exe -i %s -show_frames -loglevel quiet |Select-String media_type=video -context 0,4 |foreach{$_.context.PostContext[3] -replace {.*=}} |Out-File %s' % (self.video_path,self.videots_path)
+            command = r'ffprobe.exe -i "%s" -show_frames -loglevel quiet |Select-String media_type=video -context 0,4 |foreach{$_.context.PostContext[3] -replace {.*=}} |Out-File "%s"' % (self.video_path,self.videots_path)
             child.stdin.write(command.encode('utf-8'))
             out = child.communicate()[1].decode('gbk') # has to be 'gbk'
+            print(out)
+            child.wait()
         
     def _extract_coord (self,file,aim):
         f = open (file)
