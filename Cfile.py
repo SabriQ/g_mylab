@@ -46,15 +46,7 @@ class TrackFile(File):
         super().__init__(file_path)
         self.trackvideo_path = os.path.join(self.dirname,self.file_name_noextension+'_labeled.mp4')
 
-class Matfile(File):
-    def __init__(self,file_path):
-        super().__init__(file_path)
 
-    def ms_traceview(self,num):
-        fig = plt.figure()
-        for i in range(num):
-            ax = fig.add_subplot(num,1,i+1)
-            ax.
 
 class Free2pFile(File):
     def __init__(self,file_path):

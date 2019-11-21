@@ -383,7 +383,83 @@ class Video():
                     sys.exit()
 
 
+    def check_frames(self,*args):
+        '''
+        'a':后退一帧
+        'd':前进一帧
+        'w':前进一百帧
+        's':后退一百帧
+        'n':下一个指定帧
+        '''
+        font = cv2.FONT_ITALIC
+        cap = cv2.VideoCapture(self.video_path)
+        total_frame = cap.get(7)
+        print(f"there are {total_frame} frames in total")
+        frame_No=1
+        led_ons = args
+        for i in led_ons:
+            if i < 1:
+                frame_No = 1
+                print(f"there is before the first frame")
+            elif i > total_frame:
+                frame_No = total_frame
+                print(f"{i} is after the last frame")
+            else:
+                frame_No = i
 
+            cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
+            ret,frame = cap.read()
+            cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+            cv2.imshow('check_frames',frame)
+            while 1:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('d'):
+                    frame_No = frame_No +1
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('a'):
+                    frame_No = frame_No - 1
+                    if frame_No <=1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('w'):
+                    frame_No=frame_No +100
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('s'):
+                    frame_No=frame_No -100
+                    if frame_No <= 1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('n'):
+                    #led_ons.pop(i-1)
+                    print('end of checking')
+                    cv2.destroyAllWindows()
+                    break
+                if key == ord('q'):
+                    print('give up checking')
+                    cv2.destroyAllWindows()
+                    sys.exit()
+        print("finish checking")
+                        
     def led_on_frames (self,*args,threshold1 = 240,threshold2 = 2):
         '''
         两种模式
@@ -431,7 +507,6 @@ class Video():
                 cv2.imshow('led location',frame_show)
                 while 1:
                     key = cv2.waitKey(1) & 0xFF
-
                     if key == ord('f'):
                         frame_No +=1
                         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
@@ -505,12 +580,19 @@ class Video():
 
 
 if __name__ == '__main__':
-    video_pathes =glob.glob (r'Y:\zhangna\3. EPM and open field\open_field\*.mp4')
-    #video_pathes = [i for i in video_pathes if "cut" not in i]
-    print(video_pathes)
-    for video in video_pathes:
-        video = Video(video)
-        video.generate_ts_txt()
+    #%% led on frames
+    video_path = r"X:\miniscope\20191110\191172\191172B-20191110-152717.mp4"
+    Video(video_path).check_frames(0)  
+    #%% check frames
+    
+    #%%
+    
+#    video_pathes =glob.glob (r'Y:\zhangna\3. EPM and open field\open_field\*.mp4')
+#    #video_pathes = [i for i in video_pathes if "cut" not in i]
+#    print(video_pathes)
+#    for video in video_pathes:
+#        video = Video(video)
+#        video.generate_ts_txt()
         #video.cut_video_seconds("00:00:03","00:03:02","00:06:03","00:09:03")
 #    masks,coords = video.draw_rois(aim="freezing",count = 3)
 ##    print(frames)
