@@ -5,6 +5,8 @@ import pandas as pd
 import pickle 
 import os
 import glob
+import datetime
+import math
 def loadmat(filename):
     '''
     this function should be called instead of direct spio.loadmat
@@ -131,7 +133,77 @@ def add_ms_ts2mat(ms_ts_path,mat_path):
     spio.savemat(mat_path,{"ms":ms_mat["ms"]})
     del ms_mat
     del ms_ts
+def find_close_fast(arr, e):    
+    start_time = datetime.datetime.now()            
+    low = 0    
+    high = len(arr) - 1    
+    idx = -1     
+    while low <= high:        
+        mid = int((low + high) / 2)        
+        if e == arr[mid] or mid == low:            
+            idx = mid            
+            break        
+        elif e > arr[mid]:            
+            low = mid        
+        elif e < arr[mid]:            
+            high = mid     
+    if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
+        idx += 1            
+    use_time = datetime.datetime.now() - start_time    
+    return idx
+def find_close_fast2(arr,e):
+    np.add(arr,e*(-1))
+    min_value = min(np.abs(np.add(arr,e*-1)))
+    locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
+    return locations[0][0]
+#    return arr[idx],idx, use_time.seconds * 1000 + use_time.microseconds / 1000
+def _angle(dx1,dy1,dx2,dy2):
+#def _angle(v1,v2)    #v1 = [0,1,1,1] v2 = [x1,y1,x2,y2]
+#    dx1 = v1[2]-v1[0]
+#    dy1 = v1[3]-v1[1]
+#    dx2 = v2[2]-v2[0]
+#    dy2 = v2[3]-v2[1]
+
+    angle1 = math.atan2(dy1, dx1) * 180/math.pi
+    if angle1 <0:
+        angle1 = 360+angle1
+    # print(angle1)
+    angle2 = math.atan2(dy2, dx2) * 180/math.pi
+    if angle2<0:
+        angle2 = 360+angle2
+    # print(angle2)
+    return abs(angle1-angle2)
+# dx1 = 1,dy1 = 0,this is sure ,because we always want to know between the varial vector with vector[0,1,1,1]
+def speed(X,Y,T):
+    speeds=[0]
+    speed_angles=[0]
+    for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
+        distance = np.sqrt(delta_x**2+delta_y**2)
+        speeds.append(distance*1000/delta_t)
+        speed_angles.append(_angle(1,0,delta_x,delta_y))
+    return pd.Series(speeds),pd.Series(speed_angles) # in pixel/s
+def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
+    headdirections=[] # head_c - body_c
+    taildirections=[]
+    arch_angles=[]
+    for x1,y1,x2,y2,x3,y3 in zip(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
+        hb_delta_x = x1-x2 # hb means head to body
+        hb_delta_y = y1-y2
+        headdirection = _angle(1,0,hb_delta_x,hb_delta_y)
+        headdirections.append(headdirection)
+        tb_delta_x = x3-x2
+        tb_delta_y = y3-y2
+        taildirection = _angle(1,0,tb_delta_x,tb_delta_y)
+        taildirections.append(taildirection)
+        arch_angle = abs(headdirection - taildirection)
+        if arch_angle>180:
+            arch_angle = 360-arch_angle
+        arch_angles.append(arch_angle)
+    return pd.Series(headdirections), pd.Series(taildirections), pd.Series(arch_angles)        
+    
+        
 if __name__ == "__main__":
+    print()
     #%% 产生ms_ts2.pkl 是ms_ts.pkl的纠正
 #    dateDir=r"X:\miniscope\20191*\191172"
 #    save_path=r'Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all\ms_ts2.pkl'

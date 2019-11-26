@@ -98,7 +98,7 @@ class Csv():
         if  percent:
             return sum_freezing_time*100/(stop-start)
         else:
-            return sum_freezing_time/(stop-start)
+            return sum_freezing_time/(stop-start)8
 
 
         
