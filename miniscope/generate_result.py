@@ -6,6 +6,7 @@ Created on Tue Nov 19 17:27:19 2019
 """
 #%%
 from mylab.miniscope.functions import *
+from mylab.Cvideo import Video
 import os,sys
 import glob
 import numpy as np
@@ -174,7 +175,9 @@ for msblock,behaveblock in zip(msblocks,behaveblocks):
 del i
 
 #output ms_starts,aligned_behaveblock; update behaveblocks
+
 #%%
+results={}
 result={"mouse_id":mouse_id,
        "ms_mat_path":ms_mat_path,
        "behave_trackfiles":behave_trackfiles,
@@ -186,7 +189,8 @@ result={"mouse_id":mouse_id,
        "logblocks":logblocks,
        "blocknames":blocknames,
        "ms_starts":ms_starts,
-       "aligned_behaveblocks":aligned_behaveblocks}
+       "aligned_behaveblocks":aligned_behaveblocks,
+       "results":results}
 del mouse_id
 del ms_mat_path
 del behave_trackfiles
@@ -200,6 +204,5 @@ del ms_starts
 del aligned_behaveblocks
 # output result
 #%%
-with open(result_path,'wb') as f:
-    pickle.dump(result,f)
-print("result is saved.")
+view_variable_structure(result)
+save_result(result,result_path)

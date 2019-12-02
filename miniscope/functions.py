@@ -7,6 +7,16 @@ import os
 import glob
 import datetime
 import math
+
+def save_result(result,result_path):
+    with open(result_path,'wb') as f:
+        pickle.dump(result,f)
+    print("result is saved.")
+def load_result(result_path):
+    with open(result_path,'rb') as f:
+        result = pickle.load(f)
+    print("result is loaded")
+    return result
 def loadmat(filename):
     '''
     this function should be called instead of direct spio.loadmat
@@ -39,7 +49,29 @@ def _todict(matobj):
         else:
             dict[strg] = elem
     return dict
-#
+
+level = 0
+def view_variable_structure(variable):       
+    global level   
+    level=level+1        
+    if isinstance(variable,dict):
+        for key in variable.keys():
+            print(2*(level-1)*" ","--",key)
+            view_variable_structure(variable[key])
+            level = level -1
+    if isinstance(variable,list):
+        if isinstance(variable[0],int) or isinstance(variable[0],str) or isinstance(variable[0],tuple):
+            print(2*(level-1)*" ","--",len(variable),'lists of int/str/tuples')
+        else: 
+            print(2*(level-1)*" ","--",len(variable),'lists','for each list there are')
+            view_variable_structure(variable[0])
+            level = level-1
+
+    if isinstance(variable,pd.core.frame.DataFrame):
+        print(2*(level-1)*" ",level*" ","--",len(variable.columns),"columns |",variable.columns[0],'...',variable.columns[-1],"|")
+    else:
+        pass
+    
 def Traceview(RawTraces,neuronsToPlot):
     maxRawTraces = np.amax(RawTraces)
     plt.figure(figsize=(60,15))

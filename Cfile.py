@@ -5,7 +5,7 @@ Created on Thu Oct 31 16:07:26 2019
 @author: Sabri
 """
 import os,re
-from Cvideo import Video
+from mylab.Cvideo import Video
 import scipy.io as spio
 class File():
     def __init__ (self,file_path):
@@ -40,6 +40,12 @@ class File():
             print(f"Transfer {self.file_path} successfully")
         else:
             print("{self.file_path} does not exists.")
+            
+
+#        if isinstance(variable,str) or isinstance(variable,int),or isinstance(variable,float):
+            
+        
+
 
 class TrackFile(File):
     def __init__(self,file_path):
@@ -54,12 +60,15 @@ class Free2pFile(File):
 
 
 if __name__ == "__main__":
+#%%
 #    File(r"C:\Users\Sabri\Desktop\test\test_180228160127Cam-1_Test.asf").add_prefixAsuffix(prefix="test",suffix="Test",keep_origin=False)
 #    File(r"C:\Users\Sabri\Desktop\test\test_test_180228160127Cam-1_Test_Test.asf").copy2(r"C:\Users\Sabri\Desktop\test\tt")
 #    TrackFile(r"C:\Users\Sabri\Desktop\test\trackfiles\191174A-20191110-221945DeepCut_resnet50_linear_track_40cm_ABSep26shuffle1_500000.h5").restrict_area()
-    import glob
-    videolists = glob.glob(r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_CFC\RawData\201910*\*\*\*1000000.csv")
-
-    for video in videolists:
-        File(video).add_prefixAsuffix(prefix = "behave_video_",suffix ="",keep_origin=True)
-
+#%%
+    #    import glob
+#    videolists = glob.glob(r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_CFC\RawData\201910*\*\*\*1000000.csv")
+#
+#    for video in videolists:
+#        File(video).add_prefixAsuffix(prefix = "behave_video_",suffix ="",keep_origin=True)
+#%%
+    print()
