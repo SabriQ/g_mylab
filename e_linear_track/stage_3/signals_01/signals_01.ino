@@ -5,7 +5,7 @@ int ON=13;
 int ir_ll = A0;// infra red left-left lick
 int ir_lr = A1;// infra red left-right lick
 int ir_ls = A2;// infra red left-start of context
-int ir_rl = A3;// infra red right-left lick
+int ir_rl = A3;// infra red right-left lick  Serial.print(ll);Serial.print(" ");
 int ir_rr = A4;// infra red right-right lick
 int ir_rs = A5;// infra red right-start of context
 int ir[6];
@@ -57,7 +57,7 @@ void Read_ir(){
   float rs = Read_analog(ir_rs,10);
   if (ll < 500 && ll >5){ir[0] = 1;}else{ir[0] = 0;}  
   if (lr < 500 && lr >5){ir[1] = 1;}else{ir[1] = 0;}  
-  if (ls < 500 && ls >5){ir[2] = 1;}else{ir[2] = 0;}  
+  if (ls < 50){ir[2] = 1;}else{ir[2] = 0;}  
   if (rl < 500 && rl >5){ir[3] = 1;}else{ir[3] = 0;}  
   if (rr < 800 && rr >5){ir[4] = 1;}else{ir[4] = 0;}  
   if (rs < 500 && rs >5){ir[5] = 1;}else{ir[5] = 0;}   
@@ -86,7 +86,7 @@ void loop() {
 //  ir[4] ir_rr //one of the choice
 //  ir[5] ir_rs // context exit or reverse_enter
   if(on_signal >= 0.90){      
-    do{Read_ir();}while(ir[0]==0);  //ir_ll as nose poke
+    do{Read_ir();}while(ir[1]==0);  //ir_ll as nose poke
     Serial.println("Stat1: nose_poke");
     unsigned long start_trial_time = millis();// means one trial gets started
     Trial_num =Trial_num + 1;       
@@ -95,14 +95,14 @@ void loop() {
     do{Read_ir();}while(ir[5]==0);unsigned long context_exit_time = millis();
     Serial.println("Stat3: context exit");
     do{Read_ir();}while(ir[3]==0 && ir[4]==0 );unsigned long choice_time = millis();
-    Serial.print("Stat4: choice ");
+    Serial.print("Stat4: choice");
     if (ir[3]==1){
-      Serial.println("l");
+      Serial.println("_l");
       left_choice= left_choice + 1;      
       stat = 1;}
     else if (ir[4]==1){
-      Serial.println("r");
       right_choice=right_choice + 1;
+      Serial.println("_r") ;   
       stat = 2;} 
     do{Read_ir();}while(ir[5]==0);unsigned long context_reverse_enter_time = millis();
     Serial.println("Stat5: contextRenter");

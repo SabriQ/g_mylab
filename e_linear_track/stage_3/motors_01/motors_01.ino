@@ -31,8 +31,13 @@ Serial.begin(9600);
 
 void loop() {
   // put your main code here, to run repeatedly:
+//   Read_ctx();
+//     Serial.print(ctx[0]);
+//    Serial.print(" ");
+//    Serial.println(ctx[1]);
   if (Serial.available()>0){
-    rec_py_signal();  } 
+    rec_py_signal();  
+    } 
   //Serial.println("000");
 }
 void pulse_stepper(int port_out, float Freq)
@@ -44,7 +49,20 @@ void pulse_stepper(int port_out, float Freq)
   delayMicroseconds(int(float(500000 / 800) / Freq));
   //delayMicroseconds(483);
 }
+void pmw (int port){
+  digitalWrite(port,HIGH);
+  delayMicroseconds(200);
+  digitalWrite(port,LOW);
+  delayMicroseconds(1800);
+}
 void water_deliver (int pump, int milliseconds) {
+  int Start = micros();
+  int diff = 0;
+  do{
+  int End = micros();
+  diff = End - Start;
+//  Serial.println(diff);
+  pmw(pump);}while(diff < milliseconds*1000);
   digitalWrite(pump, HIGH);
   delay(milliseconds);
   digitalWrite(pump, LOW);
@@ -71,38 +89,38 @@ void rec_py_signal(){
     case 48://0 left and right doors go left (approaching motor)
       digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);
-      do{Read_ctx();pulse_stepper(pul, 1.5);}while(ctx[0]==0);
+      do{Read_ctx();pulse_stepper(pul,1);}while(ctx[0]==0);
       digitalWrite(ena,HIGH);
       break;
     case 49://1
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);
-      do{Read_ctx();pulse_stepper(pul, 1.5);}while(ctx[0]==0 && ctx[1]==0);
+      do{Read_ctx();pulse_stepper(pul, 1);}while(ctx[0]==0 && ctx[1]==0);
       digitalWrite(ena,HIGH);
       break;
     case 50://2
       digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);
-      do{Read_ctx();pulse_stepper(pul, 1.5);}while(ctx[0]==0 && ctx[1]==0);
+      do{Read_ctx();pulse_stepper(pul,1);}while(ctx[0]==0 && ctx[1]==0);
       digitalWrite(ena,HIGH);
       break;
     case 51://3
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);
-      do{Read_ctx();pulse_stepper(pul, 1.5);}while(ctx[1]==0);
+      do{Read_ctx();pulse_stepper(pul,1);}while(ctx[1]==0);
       digitalWrite(ena,HIGH);
       break;
     case 52://4
-      water_deliver(p_ll,50);
+      water_deliver(p_ll,1000);
       break;
     case 53://5
-      water_deliver(p_lr,8); 
+      water_deliver(p_lr,9); 
       break;
     case 54://6
-      water_deliver(p_rl,8);
+      water_deliver(p_rl,9);
       break;
     case 55://7
-      water_deliver(p_rr,8);
+      water_deliver(p_rr,9);
       break;
     default:
       break;
