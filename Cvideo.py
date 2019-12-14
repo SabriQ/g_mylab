@@ -528,9 +528,6 @@ class Video():
             cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
             ret,frame = cap.read()
             cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
-            cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
-            speed_frame = find_close_fast(be_frame,frame_No)
-            cv2.putText(frame,f'{speed[speed_frame]}',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
             cv2.imshow('check_frames',frame)
             while 1:
                 key = cv2.waitKey(1) & 0xFF
@@ -703,7 +700,7 @@ class Video():
 if __name__ == '__main__':
     #%% led on frames
     Video(behave_videos[0]).check_frames_info(2000,
-          speed=result["behaveblocks"][0]["Bodyspeeds"].tolist(),
+          speed=result["aligned_behaveblocks"][0]["Bodyspeeds"].tolist(),
           be_frame = result["aligned_behaveblocks"][0]["be_frame"],
           x=np.array(result["behaveblocks"][0]["Body_x"].tolist()).astype(np.int),
           y=np.array(result["behaveblocks"][0]["Body_y"].tolist()).astype(np.int))  

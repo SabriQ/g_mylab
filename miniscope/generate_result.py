@@ -156,7 +156,9 @@ del i
 result['video_scale'] = scale(behave_videos[0])
 s = result['video_scale'][0]
 for i,start in enumerate(ms_starts,0):
-    delta_t = behaveblocks[i]['be_ts'][start-1]
+    delta_t = behaveblocks[i]['be_ts'][start-1]-0.1 
+    #这个-0.1s即100ms指的大概是 miniscope启动大概需要100ms的时间，即miniscope的0时刻大约比led_on要晚大约100ms,
+    #这是通过对比ms_ts(原始)的最大值，和视频的结束时间的出来的，如果不-0.1,差值的平均在113ms左右
     behaveblocks[i]['correct_ts']=behaveblocks[i]['be_ts']-delta_t
     del i
     del start

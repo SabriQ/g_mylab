@@ -44,9 +44,9 @@ if __name__ == "__main__":
         in_context = []
         for x,y in zip(aligned_behaveblock['Body_x'],aligned_behaveblock['Body_y']):
             if 255 in masks[int(y),int(x)]: # according the mask presenting the context area we have drawn, pick out any frame when mouse is in context area 
-                in_context.append(1)
-            else:
                 in_context.append(0)
+            else:
+                in_context.append(1)
         aligned_behaveblock['in_context'] = in_context
     #%% for each block(context),calculate the averate trace value of each neuron
     block_context_average_tracevalue=pd.DataFrame()
@@ -87,22 +87,29 @@ if __name__ == "__main__":
 #    result["results"]["bootstrap_context_selectivities"] = bootstrap_context_selectivity(in_context_msblocks,blocknames, 10,[[0,3,5,6,8],[1,2,4,7,9]],[0,1],[3,2],[5,4],[6,7],[8,9],[10,11])
 #    print("finish bootstrap")
     #%% for view context selectivity
-    traces_no = 531
-    if traces_no > np.shape(block_context_average_tracevalue)[0]:
-        traces_no = np.shape(block_context_average_tracevalue)[0]
-    plt.figure(figsize=(80,100))
-    i=1
-    for trace in range(traces_no):
-        plt.subplot(int(np.ceil(traces_no/16)),16,i)
-    #    if i == 220:
-        plt.plot(result["results"]["block_context_selectivities"][:,trace],'.')
-        plt.plot(result["results"]["block_context_selectivities"][:,trace])    
-        plt.hlines(y=0.0,xmin=0,xmax=6,colors='black',linestyles='dashed',lw=2)
-        plt.xticks([],rotation=-90)
-        plt.yticks([])
-        i=1+i
-    plt.show()
+#    traces_no = 531
+#    if traces_no > np.shape(block_context_average_tracevalue)[0]:
+#        traces_no = np.shape(block_context_average_tracevalue)[0]
+#    plt.figure(figsize=(80,100))
+#    i=1
+#    for trace in range(traces_no):
+#        plt.subplot(int(np.ceil(traces_no/16)),16,i)
+#    #    if i == 220:
+#        plt.plot(result["results"]["block_context_selectivities"][:,trace],'.')
+#        plt.plot(result["results"]["block_context_selectivities"][:,trace])    
+#        plt.hlines(y=0.0,xmin=0,xmax=6,colors='black',linestyles='dashed',lw=2)
+#        plt.xticks([],rotation=-90)
+#        plt.yticks([])
+#        i=1+i
+#    plt.show()
 #    output block_context_selectivities
+    #%%check
+#    i=11
+#    print(blocknames[i])
+#    #%%
+#    Video(behave_videos[i]).check_frames(15374)
+#    #%%
+#    result["behaveblocks"][0].iloc[32220:32225,:]
     #%% save
     view_variable_structure(result)
     save_result(result,result_path)  

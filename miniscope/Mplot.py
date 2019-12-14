@@ -45,7 +45,7 @@ def TrackView(x,y,figsize=(40,5),title="one of the block"):
     plt.show()
 def TrackinZoneView(ZoneCoordinates,aligned_behaveblocks,blocknames,window_title="Track_in_context",figsize=(20,5)):
     #coordinates = result['contextcoords']
-    #%% output contextcoords (contextcoord in each block)
+    #output contextcoords (contextcoord in each block)
     contextcoords=ZoneCoordinates
     plt.figure(window_title,figsize=figsize)
     for i in range(len(aligned_behaveblocks)):           
@@ -60,8 +60,25 @@ def TrackinZoneView(ZoneCoordinates,aligned_behaveblocks,blocknames,window_title
         plt.yticks([])
     plt.ion()
     #output contextcoords
-def TrackINTrialsView(in_context_behaveblock):
-    sns.distplot(in_context_behaveblock["Tailspeeds"])
-    
+def TrackINTrialsView(in_context_behaveblock,contextcoord,title):
+#    sns.distplot(in_context_behaveblock["Tailspeed_angles"])
+    plt.figure(figsize=(4,20));
+    x_max = max(result["contextcoords"][1][1][0][:,0])
+    x_min = min(result["contextcoords"][1][1][0][:,0])
+    for i in range(44):
+        if in_context_behaveblock["Headspeed_angles"].tolist()[i] >100 and in_context_behaveblock["Headspeed_angles"].tolist()[i] <260:
+            plt.plot(in_context_behaveblock["Body_x"].tolist()[i],i,"r.")
+            if i >40:
+                print(in_context_behaveblock["Body_x"].tolist()[i])
+        if in_context_behaveblock["Headspeed_angles"].tolist()[i] <100 or in_context_behaveblock["Headspeed_angles"].tolist()[i] >260:
+            plt.plot(in_context_behaveblock["Body_x"].tolist()[i],i,"g.")
+            if i >40:
+                print(in_context_behaveblock["Body_x"].tolist()[i])
+    plt.axvspan(x_min,x_max,0,1,color="gray",alpha=0.3)
+    plt.xticks([])
+    plt.yticks([])
+    plt.title(title)
+    plt.show()
 if __name__=="__main__":
-    TrackINTrialsView(result["in_context_behaveblocks"][0])
+#    for i in range(12):
+    TrackINTrialsView(aligned_behaveblocks[8],contextcoords[8],"9")
