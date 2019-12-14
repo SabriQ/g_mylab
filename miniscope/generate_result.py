@@ -5,7 +5,8 @@ Created on Tue Nov 19 17:27:19 2019
 @author: Sabri
 """
 #%%
-from mylab.miniscope.functions import *
+from mylab.miniscope.Mfunctions import *
+from mylab.miniscope.Mplot import *
 from mylab.Cvideo import Video
 import os,sys
 import glob
@@ -30,7 +31,6 @@ def sort_key(s):
         except:      
             HMS = -1          
         return [int(date),int(HMS)]
-
 behave_trackfiledir = os.path.join(behave_dir,"*.h5")
 behave_trackfiles = [i for i in glob.glob(behave_trackfiledir) if '2019111' not in i]
 behave_trackfiles.sort(key=sort_key)
@@ -103,17 +103,19 @@ del ms_ts
 #out put 'msblocks'
 
 #%% view trace
-#Traceview(ms['sigraw'].T,4)
-#Traceview(ms['sigdeconvolved'].T,40)
-#Traceview(dff,16)
-#Traceview(S_dff,40)
+#TracesView(ms['sigraw'].T,4)
+#TracesView(ms['sigdeconvolved'].T,40)
+#TracesView(dff,16)
+#TracesView(S_dff,40)
+
 #%% read track coordinates
 blocknames = []
 behaveblocks=[]
 logblocks=[]
-i=1
+i=1 
+
 for behave_trackfile,behave_timestamp,behave_logfile in zip(behave_trackfiles,behave_timestamps,behave_logfiles):    
-    print(f'{i}/{len(behave_trackfiles)}',end= ' ')
+    print(f'{i}/{len(behave_trackfiles)} blocks',end= ' ')
     blockname = os.path.basename(behave_timestamp).split('_ts.txt')[0]
     blocknames.append(blockname)
     print("generate 'blocknames'",end = ' ')
@@ -132,11 +134,12 @@ for behave_trackfile,behave_timestamp,behave_logfile in zip(behave_trackfiles,be
         behaveblock['Body_lh'] = track[track.columns[5]]
         behaveblock['Tail_x'] = track[track.columns[6]]
         behaveblock['Tail_y'] = track[track.columns[7]]
-        behaveblock['Tail_lh'] = track[track.columns[8]]        
-        behaveblock['Headspeeds'],behaveblock['Headspeed_angles'] = speed(behaveblock['Head_x'].tolist(),behaveblock['Head_y'].tolist(),behaveblock['be_ts'].tolist())
-        behaveblock['Bodyspeeds'],behaveblock['Bodyspeed_angles'] = speed(behaveblock['Body_x'].tolist(),behaveblock['Body_y'].tolist(),behaveblock['be_ts'].tolist())
-        behaveblock['Tailspeeds'],behaveblock['Tailspeed_angles'] = speed(behaveblock['Tail_x'],behaveblock['Tail_y'],behaveblock['be_ts'])
-        behaveblock['headdirections'],behaveblock['taildirections'], behaveblock['arch_angles'] = direction(behaveblock['Head_x'].tolist(),behaveblock['Head_y'].tolist(),behaveblock['Body_x'].tolist(),behaveblock['Body_y'].tolist(),behaveblock['Tail_x'].tolist(),behaveblock['Tail_y'].tolist())
+        behaveblock['Tail_lh'] = track[track.columns[8]]       
+# 如果每一帧都放进来做计算，那么点的抖动对速度值的影响非常大，因此根据miniscope的采样率来进行计算，降采样后大概是10fps,也就是每3个点才取一个点进行计算，这样会稍微降低一点速度的抖动
+#        behaveblock['Headspeeds'],behaveblock['Headspeed_angles'] = speed(behaveblock['Head_x'],behaveblock['Head_y'],behaveblock['be_ts'],s)
+#        behaveblock['Bodyspeeds'],behaveblock['Bodyspeed_angles'] = speed(behaveblock['Body_x'],behaveblock['Body_y'],behaveblock['be_ts'],s)
+#        behaveblock['Tailspeeds'],behaveblock['Tailspeed_angles'] = speed(behaveblock['Tail_x'],behaveblock['Tail_y'],behaveblock['be_ts'],s)
+#        behaveblock['headdirections'],behaveblock['taildirections'], behaveblock['arch_angles'] = direction(behaveblock['Head_x'].tolist(),behaveblock['Head_y'].tolist(),behaveblock['Body_x'].tolist(),behaveblock['Body_y'].tolist(),behaveblock['Tail_x'].tolist(),behaveblock['Tail_y'].tolist())
     print("generate 'behaveblocks'",end = ' ')
     if blockname in behave_logfile:
         logblock = pd.read_csv(behave_logfile,header=0)
@@ -150,9 +153,10 @@ del i
 # output behaveblocks, logblocks,blocknames
 
 #%% align timepoint of ms_ts & track/ts,log & track/ts, all are aligned to time of ms_ts
-
+result['video_scale'] = scale(behave_videos[0])
+s = result['video_scale'][0]
 for i,start in enumerate(ms_starts,0):
-    delta_t = behaveblocks[i]['be_ts'][start+1]
+    delta_t = behaveblocks[i]['be_ts'][start-1]
     behaveblocks[i]['correct_ts']=behaveblocks[i]['be_ts']-delta_t
     del i
     del start
@@ -164,16 +168,20 @@ i = 1
 for msblock,behaveblock in zip(msblocks,behaveblocks):
     aligned_behaveblock = pd.DataFrame()
     aligned_behaveblock['ms_ts'] = msblock['ms_ts'] 
-    print(f"{i}/{len(msblocks)} index behave DataFrame according to ms_ts")
+    print(f"{i}/{len(msblocks)} blocks index behave DataFrame according to ms_ts")
     aligned_behaveblock['be_frame']=[find_close_fast((behaveblock['correct_ts']*1000),i) for i in msblock['ms_ts']]
     aligned_behaveblock = aligned_behaveblock.join(behaveblock.iloc[aligned_behaveblock['be_frame'].tolist(),].reset_index())
+    aligned_behaveblock['Headspeeds'],aligned_behaveblock['Headspeed_angles'] = speed(aligned_behaveblock['Head_x'],aligned_behaveblock['Head_y'],aligned_behaveblock['be_ts'],s)
+    aligned_behaveblock['Bodyspeeds'],aligned_behaveblock['Bodyspeed_angles'] = speed(aligned_behaveblock['Body_x'],aligned_behaveblock['Body_y'],aligned_behaveblock['be_ts'],s)
+    aligned_behaveblock['Tailspeeds'],aligned_behaveblock['Tailspeed_angles'] = speed(aligned_behaveblock['Tail_x'],aligned_behaveblock['Tail_y'],aligned_behaveblock['be_ts'],s)
+    aligned_behaveblock['headdirections'],aligned_behaveblock['taildirections'], aligned_behaveblock['arch_angles'] = direction(aligned_behaveblock['Head_x'].tolist(),aligned_behaveblock['Head_y'].tolist(),aligned_behaveblock['Body_x'].tolist(),aligned_behaveblock['Body_y'].tolist(),aligned_behaveblock['Tail_x'].tolist(),aligned_behaveblock['Tail_y'].tolist())
     aligned_behaveblocks.append(aligned_behaveblock)    
     i = i+1
     del aligned_behaveblock
     del msblock
     del behaveblock
 del i
-
+#beframe的起始包括0，所以如果显示100，其实已经是101张
 #output ms_starts,aligned_behaveblock; update behaveblocks
 
 #%%

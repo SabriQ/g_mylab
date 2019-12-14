@@ -7,6 +7,26 @@ import re
 import platform,subprocess
 import time
 import glob
+
+def find_close_fast(arr, e):    
+    start_time = datetime.datetime.now()            
+    low = 0    
+    high = len(arr) - 1    
+    idx = -1     
+    while low <= high:        
+        mid = int((low + high) / 2)        
+        if e == arr[mid] or mid == low:            
+            idx = mid            
+            break        
+        elif e > arr[mid]:            
+            low = mid        
+        elif e < arr[mid]:            
+            high = mid     
+    if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
+        idx += 1            
+    use_time = datetime.datetime.now() - start_time    
+    return idx
+
 class Video():
     def __init__(self,video_path):
         self.video_path = video_path
@@ -202,6 +222,7 @@ class Video():
                 if state == "move":
                     coord = coord_current.tolist()
                 state = "stop"
+                print("stop")
                 mask = 255*np.ones_like(frame)
                 pts = np.array(coord,np.int32)
                 cv2.fillPoly(mask,[pts],0)
@@ -231,6 +252,11 @@ class Video():
                 print('please draw another aread')
                 cv2.destroyAllWindows()
                 return self.draw_rois(aim=aim,count = count)
+            if key==27:
+                print("exit")
+                cap.release()
+                cv2.destroyAllWindows()
+                sys.exit()
         cap.release()
         cv2.destroyAllWindows()
         return masks,coords
@@ -381,8 +407,100 @@ class Video():
                     cv2.destroyWindow('draw_led_location')
                     print("give up drawing led location")
                     sys.exit()
+    
+    
+    def check_frames_info(self,*args,speed,be_frame,x,y):
+        '''
+        'a':后退一帧
+        'd':前进一帧
+        'w':前进一百帧
+        's':后退一百帧
+        'n':下一个指定帧
+        '''
+        font = cv2.FONT_ITALIC
+        cap = cv2.VideoCapture(self.video_path)
+        total_frame = cap.get(7)
+        print(f"there are {total_frame} frames in total")
+        frame_No=1
+        led_ons = args
+        for i in led_ons:
+            if i < 1:
+                frame_No = 1
+                print(f"there is before the first frame")
+            elif i > total_frame:
+                frame_No = total_frame
+                print(f"{i} is after the last frame")
+            else:
+                frame_No = i
 
-
+            cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
+            ret,frame = cap.read()
+            cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+            cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+            speed_frame = find_close_fast(be_frame,frame_No)
+            cv2.putText(frame,f'{round(speed[speed_frame],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
+            cv2.imshow('check_frames',frame)
+            while 1:
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('d'):
+                    frame_No = frame_No +1
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+                    speed_frame = find_close_fast(be_frame,frame_No)
+                    cv2.putText(frame,f'{round(speed[speed_frame],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('a'):
+                    frame_No = frame_No - 1
+                    if frame_No <=1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+                    speed_frame = find_close_fast(be_frame,frame_No)
+                    cv2.putText(frame,f'{round(speed[speed_frame],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('w'):
+                    frame_No=frame_No +100
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+                    speed_frame = find_close_fast(be_frame,frame_No)
+                    cv2.putText(frame,f'{round(speed[speed_frame],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('s'):
+                    frame_No=frame_No -100
+                    if frame_No <= 1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+                    speed_frame = find_close_fast(be_frame,frame_No)
+                    cv2.putText(frame,f'{round(speed[speed_frame],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('n'):
+                    #led_ons.pop(i-1)
+                    print('end of checking')
+                    cv2.destroyAllWindows()
+                    break
+                if key == ord('q'):
+                    print('give up checking')
+                    cv2.destroyAllWindows()
+                    sys.exit()
+        print("finish checking")
+        
     def check_frames(self,*args):
         '''
         'a':后退一帧
@@ -410,6 +528,9 @@ class Video():
             cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
             ret,frame = cap.read()
             cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+            cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+            speed_frame = find_close_fast(be_frame,frame_No)
+            cv2.putText(frame,f'{speed[speed_frame]}',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
             cv2.imshow('check_frames',frame)
             while 1:
                 key = cv2.waitKey(1) & 0xFF
@@ -459,7 +580,7 @@ class Video():
                     cv2.destroyAllWindows()
                     sys.exit()
         print("finish checking")
-                        
+        
     def led_on_frames (self,*args,threshold1 = 240,threshold2 = 2):
         '''
         两种模式
@@ -581,8 +702,11 @@ class Video():
 
 if __name__ == '__main__':
     #%% led on frames
-    video_path = r"X:\miniscope\20191110\191172\191172B-20191110-152717.mp4"
-    Video(video_path).check_frames(0)  
+    Video(behave_videos[0]).check_frames_info(2000,
+          speed=result["behaveblocks"][0]["Bodyspeeds"].tolist(),
+          be_frame = result["aligned_behaveblocks"][0]["be_frame"],
+          x=np.array(result["behaveblocks"][0]["Body_x"].tolist()).astype(np.int),
+          y=np.array(result["behaveblocks"][0]["Body_y"].tolist()).astype(np.int))  
     #%% check frames
     
     #%%

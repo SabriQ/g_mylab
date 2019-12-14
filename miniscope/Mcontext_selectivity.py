@@ -8,7 +8,7 @@ Created on Tue Nov 26 23:43:57 2019
 #for blocks
 #for trails
 #for 
-from functions import *
+from mylab.miniscope.Mfunctions import *
 import pandas as pd
 import matplotlib.pyplot as plt 
 import seaborn as sns
@@ -45,7 +45,7 @@ def generete_context_selectivities(dataframe,*paired_context_args):
         context_selectivity = temp_diff/temp_sum
         context_selectivities.append(context_selectivity.tolist())
         #print(context_selectivity.shape,end=" ")
-    return context_selectivities            
+    return np.array(context_selectivities)            
 
 def bootstrap_context_selectivity(msblocks,blocknames,shuffle_times,*paired_context_args):
     temp = pd.DataFrame()
@@ -68,8 +68,8 @@ def bootstrap_context_selectivity(msblocks,blocknames,shuffle_times,*paired_cont
         context_selectivities = generete_context_selectivities(sf_block_context_average_tracevalues,*paired_context_args)
         boots_context_selectivites.append(context_selectivities)     
     return np.array(boots_context_selectivites)
-
-def context_selectivity(msblocks,blocknames,*paired_context_args):
+#%% 以下是希望进行并行运算的时候用到的 单次shuffle
+def shuffle_context_selectivity(msblocks,blocknames,*paired_context_args):
     sf_in_context_ms = pd.DataFrame()
     sf_block_context_average_tracevalues = pd.DataFrame()
     dims = []

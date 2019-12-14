@@ -7,6 +7,7 @@ import os
 import glob
 import datetime
 import math
+from mylab.Cvideo import Video
 
 def save_result(result,result_path):
     with open(result_path,'wb') as f:
@@ -72,32 +73,7 @@ def view_variable_structure(variable):
     else:
         pass
     
-def Traceview(RawTraces,neuronsToPlot):
-    maxRawTraces = np.amax(RawTraces)
-    plt.figure(figsize=(60,15))
-                              
-#    plt.subplot(2,1,1); 
-    plt.figure; plt.title(f'Example traces (first {neuronsToPlot} cells)')
-    plot_gain = 10 # To change the value gain of traces
-    
-    for i in range(neuronsToPlot):
-#        if i == 0:        
-#          plt.plot(RawTraces[i,:])
-#        else:             
-      trace = RawTraces[i,:] + maxRawTraces*i/plot_gain
-      plt.plot(trace)
 
-#    plt.subplot(2,1,2); 
-#    plt.figure; 
-#    plt.title(f'Deconvolved traces (first {neuronsToPlot} cells)')
-#    plot_gain = 20 # To change the value gain of traces
-   
-#    for i in range(neuronsToPlot):
-#        if i == 0:       
-#          plt.plot(DeconvTraces[i,:],'k')
-#        else:            
-#          trace = DeconvTraces[i,:] + maxRawTraces*i/plot_gain
-#          plt.plot(trace,'k')
 
 def generate_tsFileList(dateDir=r"X:\miniscope\20191028\191172"):    
     tsFileList = glob.glob(os.path.join(dateDir,"H*/timestamp.dat"))
@@ -206,14 +182,24 @@ def _angle(dx1,dy1,dx2,dy2):
     # print(angle2)
     return abs(angle1-angle2)
 # dx1 = 1,dy1 = 0,this is sure ,because we always want to know between the varial vector with vector[0,1,1,1]
-def speed(X,Y,T):
+#%%draw scale
+def scale(video_path):    
+    _,coords_in_pixel = Video(video_path).draw_rois(aim='scale')
+    print(coords_in_pixel[0][1],coords_in_pixel[0][0])
+    distance_in_pixel = np.sqrt(np.sum(np.square(coords_in_pixel[0][1]-coords_in_pixel[0][0])))
+    distance_in_cm = 40 #int(input("直线长(in cm)： "))
+    print(f"{distance_in_pixel} pixels in {distance_in_cm} cm")
+    unit = "cm/pixel"
+    return (distance_in_cm/distance_in_pixel,unit)
+def speed(X,Y,T,s):
     speeds=[0]
     speed_angles=[0]
     for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
         distance = np.sqrt(delta_x**2+delta_y**2)
-        speeds.append(distance*1000/delta_t)
+        speeds.append(distance*s/delta_t)
         speed_angles.append(_angle(1,0,delta_x,delta_y))
-    return pd.Series(speeds),pd.Series(speed_angles) # in pixel/s
+    return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
+
 def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
     headdirections=[] # head_c - body_c
     taildirections=[]
@@ -235,7 +221,9 @@ def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
     
         
 if __name__ == "__main__":
-    print()
+   video_path = r"X:/miniscope/20191028/191172/191172A-20191028-202245DeepCut_resnet50_linear_track_40cm_ABSep26shuffle1_500000_labeled.mp4"
+   s = scale(video_path)
+   
     #%% 产生ms_ts2.pkl 是ms_ts.pkl的纠正
 #    dateDir=r"X:\miniscope\20191*\191172"
 #    save_path=r'Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all\ms_ts2.pkl'
