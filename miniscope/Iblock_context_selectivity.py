@@ -35,12 +35,12 @@ if __name__ == "__main__":
     #%% output contextcoords (contextcoord in each block)
     contextcoords=result['contextcoords']
     TrackinZoneView(contextcoords,aligned_behaveblocks,blocknames)
-    aligned_behaveblocks
 
-    #%% add aligned_behaveblock['in_context']
-    
+    #%% add aligned_behaveblock['in_context']    
     for aligned_behaveblock, contextcoord in zip(aligned_behaveblocks,contextcoords):
         masks = contextcoord[0][0]
+#        plt.imshow(masks)
+#        plt.show()
         in_context = []
         for x,y in zip(aligned_behaveblock['Body_x'],aligned_behaveblock['Body_y']):
             if 255 in masks[int(y),int(x)]: # according the mask presenting the context area we have drawn, pick out any frame when mouse is in context area 
@@ -83,8 +83,8 @@ if __name__ == "__main__":
     plt.show()
     # view block_context_average_tracevalue for each neuon in each block
     #%%
-    result["results"]["block_context_selectivities"]=generete_context_selectivities(block_context_average_tracevalue,[[0,3,5,6,8],[1,2,4,7,9]],[0,1],[3,2],[5,4],[6,7],[8,9],[10,11]) 
-#    result["results"]["bootstrap_context_selectivities"] = bootstrap_context_selectivity(in_context_msblocks,blocknames, 10,[[0,3,5,6,8],[1,2,4,7,9]],[0,1],[3,2],[5,4],[6,7],[8,9],[10,11])
+    result["results"]["block_context_selectivities"]=generete_context_selectivities_blocks(block_context_average_tracevalue,[[0,3,5,6,8],[1,2,4,7,9]],[0,1],[3,2],[5,4],[6,7],[8,9],[10,11]) 
+#    result["results"]["bootstrap_context_selectivities"] = bootstrap_context_selectivity_blockss(in_context_msblocks,blocknames, 10,[[0,3,5,6,8],[1,2,4,7,9]],[0,1],[3,2],[5,4],[6,7],[8,9],[10,11])
 #    print("finish bootstrap")
     #%% for view context selectivity
 #    traces_no = 531

@@ -8,7 +8,7 @@ import glob
 import datetime
 import math
 from mylab.Cvideo import Video
-
+import seaborn as sns
 def save_result(result,result_path):
     with open(result_path,'wb') as f:
         pickle.dump(result,f)
@@ -217,12 +217,54 @@ def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
         if arch_angle>180:
             arch_angle = 360-arch_angle
         arch_angles.append(arch_angle)
-    return pd.Series(headdirections), pd.Series(taildirections), pd.Series(arch_angles)        
+    return pd.Series(headdirections), pd.Series(taildirections), pd.Series(arch_angles)
     
+def _rlc(x):
+    name=[]
+    length=[]
+    
+    for i,c in enumerate(x,0):
+        if i ==0:
+            name.append(x[0])
+            count=1
+        elif i>0 and x[i] == name[-1]:
+            count += 1
+        elif i>0 and x[i] != name[-1]:
+            name.append(x[i])
+            length.append(count)
+            count = 1
+    length.append(count)
+    return name,length   
+
+def rlc2(X):
+    name=[]
+    length=[]
+    idx_min=[]
+    idx_max=[]
+    for i,x in enumerate(X,0):
+        if i == 0:
+            name.append(x)
+            idx_min.append(i)
+            count =1
+        elif i>0 and x==name[-1]:
+            count = count +1
+        elif i>0 and x!=name[-1]:
+            idx_max.append(i)
+            idx_min.append(i)
+            name.append(x)
+            length.append(count)
+            count=1
+    length.append(count)
+    idx_max.append(i)
+    df = {"name":name,"length":length,"idx_min":idx_min,"idx_max":idx_max}
+    return pd.DataFrame(df)         
+
         
 if __name__ == "__main__":
-   video_path = r"X:/miniscope/20191028/191172/191172A-20191028-202245DeepCut_resnet50_linear_track_40cm_ABSep26shuffle1_500000_labeled.mp4"
-   s = scale(video_path)
+    print("done")
+    #%%
+#   video_path = r"X:/miniscope/20191028/191172/191172A-20191028-202245DeepCut_resnet50_linear_track_40cm_ABSep26shuffle1_500000_labeled.mp4"
+#   s = scale(video_path)
    
     #%% 产生ms_ts2.pkl 是ms_ts.pkl的纠正
 #    dateDir=r"X:\miniscope\20191*\191172"

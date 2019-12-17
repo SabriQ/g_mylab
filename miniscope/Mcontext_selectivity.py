@@ -31,7 +31,7 @@ def _shuffle(dataframe,shuffle_times):
         print(f"\rshuffled for {i+1}/{shuffle_times} times",end=" ")
         yield dataframe.sample(frac=1).reset_index(drop=True)
         
-def generete_context_selectivities(dataframe,*paired_context_args):
+def generete_context_selectivities_blocks(dataframe,*paired_context_args):
     #*args=[[0,3,5,6,8],[1,2,4,7,9]],[0,1],[3,2],[5,4],[6,7],[8,9],[10,11], for each list,list[0] for A, list[1] for B
     #dataframe here are trace for each row and block for each column 
     context_selectivities=[]
@@ -47,7 +47,7 @@ def generete_context_selectivities(dataframe,*paired_context_args):
         #print(context_selectivity.shape,end=" ")
     return np.array(context_selectivities)            
 
-def bootstrap_context_selectivity(msblocks,blocknames,shuffle_times,*paired_context_args):
+def bootstrap_context_selectivity_blocks(msblocks,blocknames,shuffle_times,*paired_context_args):
     temp = pd.DataFrame()
     dims = []
     for msblock in msblocks:
@@ -69,7 +69,7 @@ def bootstrap_context_selectivity(msblocks,blocknames,shuffle_times,*paired_cont
         boots_context_selectivites.append(context_selectivities)     
     return np.array(boots_context_selectivites)
 #%% 以下是希望进行并行运算的时候用到的 单次shuffle
-def shuffle_context_selectivity(msblocks,blocknames,*paired_context_args):
+def shuffle_context_selectivity_blocks(msblocks,blocknames,*paired_context_args):
     sf_in_context_ms = pd.DataFrame()
     sf_block_context_average_tracevalues = pd.DataFrame()
     dims = []
@@ -205,5 +205,15 @@ def shuffle_context_selectivity(msblocks,blocknames,*paired_context_args):
     
 
 #plot_context_selectivity(sf_block_context_selectivities,block_context_selectivies)
+def generete_context_selectivities_trials(in_context_trialblock,in_context_msblock,blockname):
+    context_selectivities_trials=[]
+    for df in in_context_trialblock:
+        context_selectivities_trials.append(in_context_msblock.loc[in_context_msblock["ms_ts"].isin(df["ms_ts"])].iloc[:,0:-1].mean().tolist())
+    return np.array(context_selectivities_trials)
+    
+    
+if __name__ == "__main__":
+    context_selectivities_trials = generete_context_selectivities_trials(in_context_trialblocks[0],in_context_msblocks[0],blocknames[0])
+    
         
     
