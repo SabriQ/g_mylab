@@ -10,6 +10,7 @@ import base64
 import smtplib
 import email.utils
 from email.mime.text import MIMEText
+import requests
 
 # 接收邮件地址
 def send_email(to_list, sub, content):
@@ -34,10 +35,14 @@ def send_email(to_list, sub, content):
     except Exception as e:
         print(str(e))
         return -1
-
-# main...
+def send_wechat_by_serverchan(key="https://sc.ftqq.com/SCU74964T6806c941309121c637fd52c641f1d1725e0c9d2434296.send"):
+    def send_wechat(text,context):
+        data={
+                "text": text,
+                "desp": context
+                }
+        requests.post(key,data)
+    return send_wechat
+    # main...
 if __name__ == '__main__':  
-    if send_email(to_email, "hello", "hello world, this is a python email test") == 0:  
-        print("send %s ok" % to_email)
-    else:  
-        print("send failed")
+    send_wechat = send_wechat_by_serverchan()

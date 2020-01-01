@@ -210,10 +210,34 @@ def generete_context_selectivities_trials(in_context_trialblock,in_context_msblo
     for df in in_context_trialblock:
         context_selectivities_trials.append(in_context_msblock.loc[in_context_msblock["ms_ts"].isin(df["ms_ts"])].iloc[:,0:-1].mean().tolist())
     return np.array(context_selectivities_trials)
-    
+
+def View_in_context_context_selectivities_trialblocks(in_context_context_selectivities_trialblocks,blocknames):
+    average_trace_value_in_trialblocks=[]
+    std_trace_value_in_trialblocks=[]
+    for in_context_context_selectivities_trialblock in in_context_context_selectivities_trialblocks:
+        average_trace_value_in_trials = np.mean(in_context_context_selectivities_trialblock,axis=0)
+        std_trace_value_in_trials = np.std(in_context_context_selectivities_trialblock,axis=0)
+        average_trace_value_in_trialblocks.append(average_trace_value_in_trials)
+        std_trace_value_in_trialblocks.append(std_trace_value_in_trials)
+        
+    neuron_no = 5
+    plt.figure(figsize=(10,5))
+    for i in range(len(blocknames)):
+        x = [i]*len(in_context_context_selectivities_trialblocks[i][:,neuron_no])
+        y = in_context_context_selectivities_trialblocks[i][:,neuron_no]
+        plt.plot(x,y,'r.',alpha=0.2)
+        y_mean = average_trace_value_in_trialblocks[i][neuron_no]
+        yerr = std_trace_value_in_trialblocks[i][neuron_no]
+        plt.plot(i,y_mean,'.',color='black',markersize=12)
+        plt.errorbar(i,y_mean,yerr=yerr,color="black",elinewidth=2,barsabove=True,visible=True)
+        plt.xticks([0,1,2,3,4,5,6,7,8,9,10,11],labels=blocknames,rotation=-90)
+        plt.title(neuron_no)           
+    plt.show()
     
 if __name__ == "__main__":
+    #%%
     context_selectivities_trials = generete_context_selectivities_trials(in_context_trialblocks[0],in_context_msblocks[0],blocknames[0])
-    
+    #%%
+#    View_in_context_context_selectivities_trialblocks(in_context_context_selectivities_trialblocks,blocknames)
         
     

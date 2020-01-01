@@ -7,6 +7,7 @@ Created on Thu Oct 31 16:07:26 2019
 import os,re
 from mylab.Cvideo import Video
 import scipy.io as spio
+import glob
 class File():
     def __init__ (self,file_path):
         self.file_path = file_path
@@ -60,6 +61,10 @@ class Free2pFile(File):
 
 
 if __name__ == "__main__":
+    #%%
+    pnglists= glob.glob(r"C:\Users\Sabri\Desktop\test\results\sum01\*145304*.png")
+    for pnglist in pnglists:    
+        File(pnglist).add_prefixAsuffix(prefix="6_90_",suffix="",keep_origin=True)
 #%%
 #    File(r"C:\Users\Sabri\Desktop\test\test_180228160127Cam-1_Test.asf").add_prefixAsuffix(prefix="test",suffix="Test",keep_origin=False)
 #    File(r"C:\Users\Sabri\Desktop\test\test_test_180228160127Cam-1_Test_Test.asf").copy2(r"C:\Users\Sabri\Desktop\test\tt")

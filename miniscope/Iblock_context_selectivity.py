@@ -18,6 +18,7 @@ import time
 if __name__ == "__main__":
     #load
     result_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all.pkl"
+    result_path = r"C:\Users\Sabri\Desktop\test\20191110_160835_all.pkl"
     result = load_result(result_path)
     view_variable_structure(result)
     #result["results"]={}

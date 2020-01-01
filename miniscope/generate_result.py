@@ -187,7 +187,6 @@ del i
 #output ms_starts,aligned_behaveblock; update behaveblocks
 
 #%%
-results={}
 result={"mouse_id":mouse_id,
        "ms_mat_path":ms_mat_path,
        "behave_trackfiles":behave_trackfiles,

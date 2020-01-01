@@ -7,6 +7,13 @@ import csv
 import matplotlib.pyplot as plt
 import cv2
 #######
+
+'''
+输入数据： MP4,h5,txt
+'''
+
+#######
+
 videolists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*mp4")
 ##print(videolists)
 h5lists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*h5")
@@ -40,7 +47,7 @@ def Count(masks,X,Y,T):
         count = count +1
     return time,distance
                     
-        
+
         
 for h5list in h5lists:
     f = pd.read_hdf(h5list)

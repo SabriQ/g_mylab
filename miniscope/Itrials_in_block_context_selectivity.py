@@ -22,13 +22,26 @@ if __name__ == "__main__":
     contextcoords = result["contextcoords"]
     blocknames = result["blocknames"]
     in_context_msblocks = result["in_context_msblocks"]
+##%%
+#    def traverse(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
+#        for aligned_behaveblock,contextcoord,in_context_msblock,blockname in zip(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
+#            yield [aligned_behaveblock,contextcoord,in_context_msblock,blockname]
+    
 
+    for i in range(531):
+        if i==0:
+            for aligned_behaveblock,contextcoord,in_context_msblock,blockname in zip(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
+#                trial_BodyXs_block,trial_BodyXspeeds_block,trial_traces_block = Extract_trials2(aligned_behaveblock,contextcoord,in_context_msblock,neuron_No=i,title = blockname,column="in_context")
+                Extract_trials2(aligned_behaveblock,contextcoord,in_context_msblock,neuron_No=i,title = blockname,column="in_context")
+        
+#    for aligned_behaveblock,contextcoord,in_context_msblock,blockname in zip(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
+#        trial_blocks = Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,neuron_No=i,title = blockname,column="in_context")
     #%% output result["in_context_behavetrialblocks"]
-    in_context_behavetrialblocks = []
-    for aligned_behaveblock,contextcoord, blockname in zip(aligned_behaveblocks,contextcoords,blocknames):
-        in_context_behavetrialblock = Extract_trials(aligned_behaveblock,contextcoord,title = blockname,column="in_context")
-        in_context_behavetrialblocks.append(in_context_behavetrialblock)
-    result["in_context_behavetrialblocks"] = in_context_behavetrialblocks    
+#    in_context_behavetrialblocks = []
+#    for aligned_behaveblock,contextcoord, blockname in zip(aligned_behaveblocks,contextcoords,blocknames):
+#        in_context_behavetrialblock = Extract_trials(aligned_behaveblock,contextcoord,title = blockname,column="in_context")
+#        in_context_behavetrialblocks.append(in_context_behavetrialblock)
+#    result["in_context_behavetrialblocks"] = in_context_behavetrialblocks    
     #%% in_context_trialblocks, there are 12 blocks. In each block, the number of trials is different
     in_context_context_selectivities_trialblocks=[]
     for in_context_trialblock, in_context_msblock,blockname in zip(in_context_trialblocks,in_context_msblocks,blocknames):

@@ -501,7 +501,7 @@ class Video():
                     sys.exit()
         print("finish checking")
         
-    def check_frames(self,*args):
+    def check_frames(self,location = "rightup",*args):
         '''
         'a':后退一帧
         'd':前进一帧
@@ -509,13 +509,21 @@ class Video():
         's':后退一百帧
         'n':下一个指定帧
         '''
+        if location == "leftup":
+            location_coords = (10,15)
+        if location == "rightup":
+            location_coords = (400,15)
         font = cv2.FONT_ITALIC
         cap = cv2.VideoCapture(self.video_path)
+        
         total_frame = cap.get(7)
         print(f"there are {total_frame} frames in total")
         frame_No=1
-        led_ons = args
-        for i in led_ons:
+        specific_frames = args
+        if len(specific_frames)==0:
+            specific_frames=[0]
+        marked_frames=[]
+        for i in specific_frames:
             if i < 1:
                 frame_No = 1
                 print(f"there is before the first frame")
@@ -527,10 +535,13 @@ class Video():
 
             cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
             ret,frame = cap.read()
-            cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+            cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
             cv2.imshow('check_frames',frame)
             while 1:
                 key = cv2.waitKey(1) & 0xFF
+                if key == ord('m'):
+                    marked_frames.append(frame_No)
+                    print(f"the {frame_No} frame is marked")
                 if key == ord('d'):
                     frame_No = frame_No +1
                     if frame_No >= total_frame:
@@ -538,7 +549,7 @@ class Video():
                         print(f"you have reached the final frame {total_frame}")
                     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
                     ret,frame = cap.read()
-                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
                     cv2.imshow('check_frames',frame)
                 if key == ord('a'):
                     frame_No = frame_No - 1
@@ -547,7 +558,7 @@ class Video():
                         print(f"you have reached the first frame")
                     cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
                     ret,frame = cap.read()
-                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
                     cv2.imshow('check_frames',frame)
                 if key == ord('w'):
                     frame_No=frame_No +100
@@ -556,7 +567,7 @@ class Video():
                         print(f"you have reached the final frame {total_frame}")
                     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
                     ret,frame = cap.read()
-                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
                     cv2.imshow('check_frames',frame)
                 if key == ord('s'):
                     frame_No=frame_No -100
@@ -565,7 +576,7 @@ class Video():
                         print(f"you have reached the first frame")
                     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
                     ret,frame = cap.read()
-                    cv2.putText(frame,f'frame_No:{frame_No} ',(10,15), font, 0.5, (255,255,255))
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
                     cv2.imshow('check_frames',frame)
                 if key == ord('n'):
                     #led_ons.pop(i-1)
@@ -573,10 +584,132 @@ class Video():
                     cv2.destroyAllWindows()
                     break
                 if key == ord('q'):
-                    print('give up checking')
+                    print('break out checking of this round')
                     cv2.destroyAllWindows()
-                    sys.exit()
+                    break
+                if key == 27:
+                    print("quit checking")
+                    cv2.destroyAllWindows()
+                    sys.exit()                    
         print("finish checking")
+        if len(marked_frames) !=0:
+            return marked_frames
+
+    def check_frames_trackbar(self,location = "rightup",*args):
+        '''
+        'a':后退一帧
+        'd':前进一帧
+        'w':前进一百帧
+        's':后退一百帧
+        'n':下一个指定帧
+        '''
+        if location == "leftup":
+            location_coords = (10,15)
+        if location == "rightup":
+            location_coords = (400,15)
+        font = cv2.FONT_ITALIC
+        cap = cv2.VideoCapture(self.video_path)
+        
+        def nothing(x):  
+            pass
+#            cap.set(cv2.CAP_PROP_POS_FRAMES,x-1)
+            
+        cv2.namedWindow("check_frames")
+        total_frame = cap.get(7)
+        cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
+        print(f"there are {int(total_frame)} frames in total")
+        
+        frame_No=1
+        specific_frames = args
+        if len(specific_frames)==0:
+            specific_frames=[0]
+        marked_frames=[]
+        
+        for i in specific_frames:
+            if i < 1:
+                frame_No = 1
+                print(f"there is before the first frame")
+            elif i > total_frame:
+                frame_No = total_frame
+                print(f"{i} is after the last frame")
+            else:
+                frame_No = i
+                
+            cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
+            cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+            
+            ret,frame = cap.read()
+            cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+            cv2.imshow('check_frames',frame)
+            while 1:                
+                key = cv2.waitKey(1) & 0xFF
+                frame_No = cv2.getTrackbarPos('frame_No','check_frames')                
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                ret,frame = cap.read()
+                cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                cv2.imshow('check_frames',frame)
+                
+                if key == ord('m'):
+                    marked_frames.append(frame_No)
+                    print(f"the {frame_No} frame is marked")
+                if key == ord('d'):
+                    frame_No = frame_No +1
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('a'):
+                    frame_No = frame_No - 1
+                    if frame_No <=1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No-1)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('w'):
+                    frame_No=frame_No +100
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('s'):
+                    frame_No=frame_No -100
+                    if frame_No <= 1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('n'):
+                    #led_ons.pop(i-1)
+                    print('end of checking')
+                    cv2.destroyAllWindows()
+                    break
+                if key == ord('q'):
+                    print('break out checking of this round')
+                    cv2.destroyAllWindows()
+                    break
+                if key == 27:
+                    print("quit checking")
+                    cv2.destroyAllWindows()
+                    sys.exit()                    
+        print("finish checking")
+        if len(marked_frames) !=0:
+            print(marked_frames)
+            return marked_frames
+        
         
     def led_on_frames (self,*args,threshold1 = 240,threshold2 = 2):
         '''
@@ -699,7 +832,7 @@ class Video():
 
 if __name__ == '__main__':
     #%% led on frames
-    Video(behave_videos[0]).check_frames_info(2000,
+    Video(result["behave_videos"][0]).check_frames_info(2000,
           speed=result["aligned_behaveblocks"][0]["Bodyspeeds"].tolist(),
           be_frame = result["aligned_behaveblocks"][0]["be_frame"],
           x=np.array(result["behaveblocks"][0]["Body_x"].tolist()).astype(np.int),
