@@ -4,15 +4,16 @@ from mylab.Ccsv import Csv
 import glob,os,sys,platform
 import subprocess
 import csv
+import time
 #import concurrent.futures # for parallel computing
 
-videolists = glob.glob(r'C:\Users\Sabri\Desktop\test\180228160127Cam-1.asf')
+videolists = glob.glob(r'C:\Users\Sabri\Desktop\Optogenetic behavior video\baitao_data\dca1_batch_3\*.AVI')
 coordinates = os.path.join(os.path.dirname(videolists[0]),'xy.txt')
 
 freezing_stat = {}
-frame_interval=2 # 产生_freezing_csv文件时，coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
+frame_interval=7 # 产生_freezing_csv文件时，coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
 diff_gray_value=30 #前后两帧同样像素点位置是否变化的阈值，一般不变，但是当曝光很暗，比如低于10lux时可以适当降低这个值
-threshold = 0.52 #当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.52%
+threshold = 0.05 #当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.52%
 #另外还有一个参数并没有写出来用于修改，即小鼠不动的时间要不小于1s,才会认为是freezing，这个值一般不动.
 
 #判断是否选中视频
@@ -35,13 +36,17 @@ for video in videolists:
         v2c(video,Interval_number=frame_interval,diff_gray_value=diff_gray_value,show = True)
     else:
         print(video,"*_freezing.csv file already exists")
-    freezing_stat[os.path.basename(video)]=Csv(freeze_video.videofreezing_path).freezing_percentage(threshold=threshold,start=0,stop=300,show_detail=True,save_epoch = True)
+    freezing_stat[os.path.basename(video)]=Csv(freeze_video.videofreezing_path).freezing_percentage(threshold=threshold,start=0,stop=500,show_detail=True,save_epoch = True)
 
 
 #将结果存储到同目录下的freezing_stat.csv中
+current_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 with open(os.path.join(os.path.dirname(videolists[0]),'freezing_stat.csv'),'w',newline="") as csv_file:
     writer = csv.writer(csv_file)
-    writer.writerow(['video_id','freezing%',threshold])
+    writer.writerow(['Time',current_time])
+    writer.writerow(['diff_gray_value',diff_gray_value])
+    writer.writerow(['threshold',threshold])
+    writer.writerow(['video_id','freezing%'])
     for row in freezing_stat.items():
         writer.writerow(row)
         print("threshold is:",threshold,row)

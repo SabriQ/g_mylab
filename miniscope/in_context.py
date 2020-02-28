@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Nov 19 17:27:19 2019
+Created on Mon Feb 24 16:45:06 2020
 
 @author: Sabri
+in_context.py
+
 """
 #%%
 from mylab.miniscope.Mfunctions import *
@@ -17,32 +19,34 @@ import pickle
 import re
 #%% info
 mouse_id = "191172"
-ms_mat_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all\ms.mat"
-behave_dir = os.path.join(r"X:\miniscope\2019*" , mouse_id)
-ms_starts = [979,403,168,251,315,187,283,223,501,154,211,171]# the frame in behave_bideo which present the start of ms
-def sort_key(s):     
-    if s:            
-        try:         
-            date = re.findall('-(\d{8})-', s)[0]
-        except:      
-            date = -1            
-        try:         
-            HMS = re.findall('-(\d{6})[_|D]',s)[0]
-        except:      
-            HMS = -1          
-        return [int(date),int(HMS)]
-behave_trackfiledir = os.path.join(behave_dir,"*.h5")
-behave_trackfiles = [i for i in glob.glob(behave_trackfiledir) if '2019111' not in i]
-behave_trackfiles.sort(key=sort_key)
-behave_timestampdir = os.path.join(behave_dir,"*_ts.txt")
-behave_timestamps = [i for i in glob.glob(behave_timestampdir) if '2019111' not in i]
-behave_timestamps.sort(key=sort_key)
-behave_logffiledir = os.path.join(behave_dir,"*log.csv")
-behave_logfiles = [i for i in glob.glob(behave_logffiledir) if '2019111' not in i]
-behave_logfiles.sort(key=sort_key)
-behave_videodir = os.path.join(behave_dir,"*_labeled.mp4")
-behave_videos = [i for i in glob.glob(behave_videodir) if '2019111' not in i]
-behave_videos.sort(key=sort_key)
+ms_mat_path = r"C:\Users\Sabri\Desktop\program\data\miniscope\191172_ms.mat"
+context_orders=["A","B","B","A","B","A","A","B","A","B","A1","B1"]
+context_angles=["90","90","135","135","90","90","45","45","90","90","90","90"]
+#behave_dir = os.path.join(r"X:\miniscope\2019*" , mouse_id)
+#ms_starts = [979,403,168,251,315,187,283,223,501,154,211,171]# the frame in behave_bideo which present the start of ms
+#def sort_key(s):     
+#    if s:            
+#        try:         
+#            date = re.findall('-(\d{8})-', s)[0]
+#        except:      
+#            date = -1            
+#        try:         
+#            HMS = re.findall('-(\d{6})[_|D]',s)[0]
+#        except:      
+#            HMS = -1          
+#        return [int(date),int(HMS)]
+#behave_trackfiledir = os.path.join(behave_dir,"*.h5")
+#behave_trackfiles = [i for i in glob.glob(behave_trackfiledir) if '2019111' not in i]
+#behave_trackfiles.sort(key=sort_key)
+#behave_timestampdir = os.path.join(behave_dir,"*_ts.txt")
+#behave_timestamps = [i for i in glob.glob(behave_timestampdir) if '2019111' not in i]
+#behave_timestamps.sort(key=sort_key)
+#behave_logffiledir = os.path.join(behave_dir,"*log.csv")
+#behave_logfiles = [i for i in glob.glob(behave_logffiledir) if '2019111' not in i]
+#behave_logfiles.sort(key=sort_key)
+#behave_videodir = os.path.join(behave_dir,"*_labeled.mp4")
+#behave_videos = [i for i in glob.glob(behave_videodir) if '2019111' not in i]
+#behave_videos.sort(key=sort_key)
 result = {}
 result_path =os.path.dirname(ms_mat_path)+'.pkl'
 #%% read miniscale trace
@@ -115,7 +119,6 @@ blocknames = []
 behaveblocks=[]
 logblocks=[]
 i=1 
-
 for behave_trackfile,behave_timestamp,behave_logfile in zip(behave_trackfiles,behave_timestamps,behave_logfiles):    
     print(f'{i}/{len(behave_trackfiles)} blocks',end= ' ')
     blockname = os.path.basename(behave_timestamp).split('_ts.txt')[0]
@@ -187,10 +190,45 @@ for msblock,behaveblock in zip(msblocks,behaveblocks):
 del i
 #beframe的起始包括0，所以如果显示100，其实已经是101张
 #output ms_starts,aligned_behaveblock; update behaveblocks
-
+#%% crop video get the interested areas
+contextcoords=[]
+for video in behave_videos:
+    masks,coords = Video(video).draw_rois(aim="context",count=1)
+    contextcoords.append((masks,coords))
+#%% add aligned_behaveblock['in_context']    
+for aligned_behaveblock, contextcoord in zip(aligned_behaveblocks,contextcoords):
+    masks = contextcoord[0][0]
+#        plt.imshow(masks)
+#        plt.show()
+    in_context = []
+    for x,y in zip(aligned_behaveblock['Body_x'],aligned_behaveblock['Body_y']):
+        if 255 in masks[int(y),int(x)]: # according the mask presenting the context area we have drawn, pick out any frame when mouse is in context area 
+            in_context.append(0)
+        else:
+            in_context.append(1)
+    aligned_behaveblock['in_context'] = in_context
+#%% for each block(context),calculate the averate trace value of each neuron
+in_context_msblocks=[]
+in_context_behaveblocks=[]
+for blockname, msblock,aligned_behaveblock in zip(blocknames,msblocks,aligned_behaveblocks):
+    in_context  = aligned_behaveblock['in_context']
+#    print(len(in_context))
+    in_context_msblock = msblock.iloc[(in_context==1).tolist(),]
+    in_context_behaveblock = aligned_behaveblock.iloc[(in_context==1).tolist(),]
+    # for each neuron in each block
+    in_context_msblocks.append(in_context_msblock)
+    in_context_behaveblocks.append(in_context_behaveblock)
+#output in_context_msblocks,in_context_behaveblock
+#%% output result["in_context_behavetrialblocks"]
+in_context_behavetrialblocks = []
+for aligned_behaveblock,contextcoord, in_context_msblock,blockname in zip(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
+    in_context_behavetrialblock = Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,title = blockname,column="in_context")
+    in_context_behavetrialblocks.append(in_context_behavetrialblock) 
 #%%
 result={"mouse_id":mouse_id,
        "ms_mat_path":ms_mat_path,
+       "context_orders":context_orders,
+       "context_angles":context_angles,
        "behave_trackfiles":behave_trackfiles,
        "behave_timestamps":behave_timestamps,
        "behave_logfiles":behave_logfiles,  
@@ -201,19 +239,21 @@ result={"mouse_id":mouse_id,
        "blocknames":blocknames,
        "ms_starts":ms_starts,
        "aligned_behaveblocks":aligned_behaveblocks,
-       "results":results}
-del mouse_id
-del ms_mat_path
-del behave_trackfiles
-del behave_timestamps
-del behave_logfiles
-del msblocks
-del behaveblocks
-del logblocks
-del blocknames
-del ms_starts
-del aligned_behaveblocks
+       "contextcoords":contextcoords,
+       "in_context_msblocks":in_context_msblocks,
+       "in_context_behaveblocks":in_context_behaveblocks,
+       "in_context_behavetrialblocks":in_context_behavetrialblocks
+       }
 # output result
 #%%
 view_variable_structure(result)
 save_result(result,result_path)
+#%%
+def savemat(result_path,result):
+    spio.savemat(r"C:\Users\Sabri\Desktop\191172_in_context.mat",
+     {'in_context_columns':np.array(result["in_context_msblocks"][0].columns),
+       'in_context_msblocks':np.array([i.values for i in result["in_context_msblocks"]]),
+      'in_context_behaveblocks':np.array([i.values for i in result["in_context_behaveblocks"]]),
+      'in_context_behavetrial_columns':np.array(result["in_context_behavetrialblocks"][0][0].columns),
+      'in_context_behavetrialblocks':np.array([np.array([j.values for j in i]) for i in result["in_context_behavetrialblocks"]])})
+savemat()

@@ -120,7 +120,7 @@ class Video():
         coords = []
         for eachline in temp:
             eachline = str(eachline)
-            if aim in str(eachline):
+            if aim+' ' in str(eachline):
                 #print (eachline)
                 coord = []
                 pattern_x = re.compile('\[(\d+),')
@@ -156,7 +156,7 @@ class Video():
         state = "go"
         if os.path.exists(self.xy):
             existed_coords = self._extract_coord(self.xy,aim)
-            print("you have drawn before")
+#            print("you have drawn before")
             for existed_coord in existed_coords:
 ##                print(len(coords),count)
                 if len(existed_coord) >0:
@@ -174,8 +174,9 @@ class Video():
                 print(coords[0:count])
                 return masks[0:count],coords[0:count]
             if len(existed_coords) == count:
-                print(f"the coords is: ")
-                print(coords)
+                print(f"you have drawn {aim}")
+#                print(f"the coords is: ")
+#                print(coords)
                 return masks,coords
         def draw_polygon(event,x,y,flags,param):
             nonlocal state, origin,coord,coord_current,mask,frame
@@ -221,7 +222,7 @@ class Video():
             if event == cv2.EVENT_LBUTTONDBLCLK:
                 if state == "move":
                     coord = coord_current.tolist()
-                state = "stop"
+                state = "end of this arena"
                 print("stop")
                 mask = 255*np.ones_like(frame)
                 pts = np.array(coord,np.int32)
@@ -501,7 +502,7 @@ class Video():
                     sys.exit()
         print("finish checking")
         
-    def check_frames(self,location = "rightup",*args):
+    def check_frames(self,*args,location = "rightup"):
         '''
         'a':后退一帧
         'd':前进一帧
@@ -526,7 +527,7 @@ class Video():
         for i in specific_frames:
             if i < 1:
                 frame_No = 1
-                print(f"there is before the first frame")
+                print(f"the minimum frame_No is 1")
             elif i > total_frame:
                 frame_No = total_frame
                 print(f"{i} is after the last frame")
@@ -709,7 +710,6 @@ class Video():
         if len(marked_frames) !=0:
             print(marked_frames)
             return marked_frames
-        
         
     def led_on_frames (self,*args,threshold1 = 240,threshold2 = 2):
         '''

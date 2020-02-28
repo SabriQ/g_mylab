@@ -35,8 +35,9 @@ class Csv():
         # na.omit    
         data = data.dropna(axis=0)             
         #print(f"{self.csvPath}")
-        
+        data = data.reset_index()
         # slice (start->stop)
+        
         #start_index
         if start>stop:
             start,stop = stop,start
@@ -47,7 +48,7 @@ class Csv():
         elif start <=min(data['ts(s)']):            
             start_index = 0
         else:
-            start_index = [i for i in range(len(data['ts(s)'])) if data['ts(s)'][2*i]<=start and  data['ts(s)'][2*(i+1)]>start][0]+1
+            start_index = [i for i in range(len(data['ts(s)'])) if data['ts(s)'][i]<=start and  data['ts(s)'][i+1]>start][0]+1
 
         #stop_index
         if stop >= max(data['ts(s)']):
@@ -57,12 +58,14 @@ class Csv():
             warnings.warn("the selected period stop is earlier than the start of experiment")
             sys.exit()
         else:            
-            stop_index = [i for i in range(len(data['ts(s)'])) if data['ts(s)'][2*i]<=stop and  data['ts(s)'][2*(i+1)]>stop][0]
+            stop_index = [i for i in range(len(data['ts(s)'])) if data['ts(s)'][i]<=stop and  data['ts(s)'][i+1]>stop][0]
 ##            print(data)
         selected_data = data.iloc[start_index:stop_index+1]
 ##        print(selected_data)
         # freezing
-        values,lengthes = self._rlc(np.int64(np.array(selected_data.iloc[:,2].tolist())<=threshold))
+        #values,lengthes = self._rlc(np.int64(np.array(selected_data.iloc[:,2].tolist())<=threshold))
+        values,lengthes = self._rlc(np.int64(np.array(selected_data['percentage'].tolist())<=threshold))
+
 ##        print(values)
 ##        print(lengthes)
         
@@ -98,7 +101,7 @@ class Csv():
         if  percent:
             return sum_freezing_time*100/(stop-start)
         else:
-            return sum_freezing_time/(stop-start)8
+            return sum_freezing_time/(stop-start)
 
 
         

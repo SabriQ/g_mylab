@@ -18,6 +18,15 @@ def load_result(result_path):
         result = pickle.load(f)
     print("result is loaded")
     return result
+
+def savemat(result_path,result):
+    spio.savemat(r"C:\Users\Sabri\Desktop\191172_in_context.mat",
+     {'in_context_columns':np.array(result["in_context_msblocks"][0].columns),
+       'in_context_msblocks':np.array([i.values for i in result["in_context_msblocks"]]),
+      'in_context_behaveblocks':np.array([i.values for i in result["in_context_behaveblocks"]]),
+      'in_context_behavetrial_columns':np.array(result["in_context_behavetrialblocks"][0][0].columns),
+      'in_context_behavetrialblocks':np.array([np.array([j.values for j in i]) for i in result["in_context_behavetrialblocks"]])})
+    
 def loadmat(filename):
     '''
     this function should be called instead of direct spio.loadmat
@@ -50,6 +59,8 @@ def _todict(matobj):
         else:
             dict[strg] = elem
     return dict
+
+
 
 level = 0
 def view_variable_structure(variable):       

@@ -93,7 +93,7 @@ def TrackINTrialsView(aligned_behaveblock,contextcoord,title):
     plt.title(title)
     plt.show()
     
-def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,neuron_No,column="in_context",title="title",):
+def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="in_context",title="title",):
     df = rlc2(aligned_behaveblock[column])
     trials_in_block=[]
 #    sns.distplot(df['length'])    

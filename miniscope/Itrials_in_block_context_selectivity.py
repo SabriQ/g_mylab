@@ -14,7 +14,8 @@ from mylab.miniscope.Mcontext_selectivity import *
 #%%
 if __name__ == "__main__":
 
-    result_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all.pkl"
+#    result_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all.pkl"
+    result_path = r"C:\Users\Sabri\Desktop\program\data\miniscope\processed_191172_20191110_160835_all.pkl"
     result = load_result(result_path)
     view_variable_structure(result)
     #%% parameter to extract
@@ -37,11 +38,11 @@ if __name__ == "__main__":
 #    for aligned_behaveblock,contextcoord,in_context_msblock,blockname in zip(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
 #        trial_blocks = Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,neuron_No=i,title = blockname,column="in_context")
     #%% output result["in_context_behavetrialblocks"]
-#    in_context_behavetrialblocks = []
-#    for aligned_behaveblock,contextcoord, blockname in zip(aligned_behaveblocks,contextcoords,blocknames):
-#        in_context_behavetrialblock = Extract_trials(aligned_behaveblock,contextcoord,title = blockname,column="in_context")
-#        in_context_behavetrialblocks.append(in_context_behavetrialblock)
-#    result["in_context_behavetrialblocks"] = in_context_behavetrialblocks    
+    in_context_behavetrialblocks = []
+    for aligned_behaveblock,contextcoord, in_context_msblock,blockname in zip(aligned_behaveblocks,contextcoords,in_context_msblocks,blocknames):
+        in_context_behavetrialblock = Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,title = blockname,column="in_context")
+        in_context_behavetrialblocks.append(in_context_behavetrialblock)
+    result["in_context_behavetrialblocks"] = in_context_behavetrialblocks    
     #%% in_context_trialblocks, there are 12 blocks. In each block, the number of trials is different
     in_context_context_selectivities_trialblocks=[]
     for in_context_trialblock, in_context_msblock,blockname in zip(in_context_trialblocks,in_context_msblocks,blocknames):

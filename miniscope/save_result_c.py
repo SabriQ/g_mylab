@@ -7,10 +7,10 @@ Created on Thu Nov 21 14:57:37 2019
 #%%
 import pickle
 import pandas as pd
-from mylab.miniscope.functions import *
+from mylab.miniscope.Mfunctions import *
 
 #%%
-result_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_all.pkl"
+result_path = r"C:\Users\Sabri\Desktop\program\data\miniscope\processed_191172_20191110_160835_all.pkl"
 with open(result_path,'rb') as f:
     result = pickle.load(f)
 
