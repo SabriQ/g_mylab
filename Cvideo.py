@@ -9,6 +9,9 @@ import time
 import glob
 
 def find_close_fast(arr, e):    
+    '''
+    返回arr列表中与e最相近的值的idx
+    '''
     start_time = datetime.datetime.now()            
     low = 0    
     high = len(arr) - 1    
@@ -596,7 +599,7 @@ class Video():
         if len(marked_frames) !=0:
             return marked_frames
 
-    def check_frames_trackbar(self,location = "rightup",*args):
+    def check_frames_trackbar(self,*args,location = "rightup"):
         '''
         'a':后退一帧
         'd':前进一帧

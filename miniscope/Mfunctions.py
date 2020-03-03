@@ -61,6 +61,27 @@ def _todict(matobj):
     return dict
 
 
+def sigraw2msblocks(ms_ts,sigraw,acceptedPool):
+    '''
+    according to ms_ts, we divided sigraw, a [(531,79031),(cell_number,frames)] numpy.ndarray into msblocks, a list of dataframe
+    '''
+    start = 0
+    end=0
+    len_ms_ts=[]
+    msblocks=[]
+    for i, ts in enumerate(ms_ts,1):
+        len_ms_ts.append(len(ts))        
+        start = end
+        end = end+len(ts)        
+        block=pd.DataFrame(sigraw[start:end,:],columns=acceptedPool)
+        block['ms_ts']=ts
+        print('trace and ms_ts[',start,end,']constructed as DataFrame')
+        msblocks.append(block)
+    print("sigraw have been constructed as a list of DataFrame as ms_ts. ")
+    return msblocks
+        
+
+
 
 level = 0
 def view_variable_structure(variable):       
@@ -194,14 +215,14 @@ def _angle(dx1,dy1,dx2,dy2):
     return abs(angle1-angle2)
 # dx1 = 1,dy1 = 0,this is sure ,because we always want to know between the varial vector with vector[0,1,1,1]
 #%%draw scale
-def scale(video_path):    
+def scale(video_path,distance):    
     _,coords_in_pixel = Video(video_path).draw_rois(aim='scale')
     print(coords_in_pixel[0][1],coords_in_pixel[0][0])
     distance_in_pixel = np.sqrt(np.sum(np.square(coords_in_pixel[0][1]-coords_in_pixel[0][0])))
-    distance_in_cm = 40 #int(input("直线长(in cm)： "))
-    print(f"{distance_in_pixel} pixels in {distance_in_cm} cm")
-    unit = "cm/pixel"
-    return (distance_in_cm/distance_in_pixel,unit)
+    distance_in_cm = distance #int(input("直线长(in cm)： "))
+    s = distance_in_cm/distance_in_pixel
+    print(f"{s} cm/pixel")
+    return s
 def speed(X,Y,T,s):
     speeds=[0]
     speed_angles=[0]

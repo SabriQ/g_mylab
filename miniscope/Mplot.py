@@ -93,7 +93,7 @@ def TrackINTrialsView(aligned_behaveblock,contextcoord,title):
     plt.title(title)
     plt.show()
     
-def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="in_context",title="title",):
+def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="in_context",title="title",example_neuron=1):
     df = rlc2(aligned_behaveblock[column])
     trials_in_block=[]
 #    sns.distplot(df['length'])    
@@ -109,7 +109,7 @@ def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="i
             x = aligned_behaveblock["Body_x"][row['idx_min']:row['idx_max']]
             x_max2 = max(x)
             x_min2 = min(x)   
-            if (x_max2-x_min2)>0.5*(x_max-x_min):
+            if (x_max2-x_min2)>0.5*(x_max-x_min): # 轨迹要大于一半的context长度
                 trials_in_block.append(aligned_behaveblock.iloc[row['idx_min']:row['idx_max']].as_matrix())
                 trial_traces_in_block.append(in_context_msblock.loc[in_context_msblock["ms_ts"].isin(aligned_behaveblock["ms_ts"][row['idx_min']:row['idx_max']])])
                 trial_num = [i]                
@@ -145,10 +145,10 @@ def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="i
     
     plt.figure(figsize=(20,2))
     x = list(range(1,len(colors)+1))
-    y = pd.concat(trial_traces_in_block,ignore_index=True).iloc[:,1].tolist()
+    y = pd.concat(trial_traces_in_block,ignore_index=True).iloc[:,example_neuron].tolist()
 #    plt.plot(x,y,'black',alpha=0.5)
     plt.scatter(x,y,c=colors,marker='.')
-
+    plt.title("neuron_id:"+str(in_context_msblock.columns[example_neuron]))
     plt.xticks([])
 #    plt.yticks([])
     plt.show()    
