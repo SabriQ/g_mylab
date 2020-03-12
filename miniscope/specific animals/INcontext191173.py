@@ -246,9 +246,9 @@ def savemat(result_path,result):
       'in_context_msblocksCaEvent':np.array([i.values for i in result["in_context_msblocks2"]]),
       'in_context_behaveblocks':np.array([i.values for i in result["in_context_behaveblocks"]]),
       'in_context_behavetrial_columns':np.array(result["aligned_behaveblocks"][0].columns),
-      'in_context_behavetrialblocks':np.array([np.array([j for j in i[0]]) for i in result["in_context_behavetrialblocks"]]),
+      'in_context_behavetrialblocks':np.array([np.array([j for j in i]) for i in result["in_context_behavetrialblocks"]]),
       'in_context_coords' :np.array( result["contextcoords"])
       
       })
 #%% Save <result>    
-savemat(r"G:\data\miniscope\Results_191173\20191110_160946_20191028-1102all\191173_in_context.mat",result)
+savemat(r"G:\data\miniscope\LinearTrackAll\191173_in_context.mat",result)

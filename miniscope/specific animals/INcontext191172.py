@@ -19,7 +19,7 @@ import re
 import scipy
 #%% info
 mouse_id = "191172"
-ms_mat_path = r"G:\data\miniscope\Results_191172\20191110_160835_20191028-1102all\191172_post_processed2.mat"
+ms_mat_path = r"G:\data\miniscope\Results_191172\20191110_160835_20191028-1102all\191172_post_processed4.mat"
 ms_ts_pkl_path = os.path.join(os.path.dirname(ms_mat_path),'ms_ts.pkl')
 result_path = os.path.join(os.path.dirname(ms_mat_path),'191172_in_context.pkl')
 
@@ -237,7 +237,7 @@ result={"mouse_id":mouse_id,
 # output result
 #%%
 #view_variable_structure(result)
-save_result(result,result_path)
+#save_result(result,result_path)
 #%% Define <savemat>
 def savemat(result_path,result):
     spio.savemat(result_path,

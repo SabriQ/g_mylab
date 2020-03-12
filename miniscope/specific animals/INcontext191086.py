@@ -249,7 +249,7 @@ result={"mouse_id":mouse_id,
 # output result
 #%%
 #view_variable_structure(result)
-save_result(result,result_path)
+#save_result(result,result_path)
 #%% Define <savemat>
 def savemat(result_path,result):
     spio.savemat(result_path,
@@ -258,9 +258,9 @@ def savemat(result_path,result):
       'in_context_msblocksCaEvent':np.array([i.values for i in result["in_context_msblocks2"]]),
       'in_context_behaveblocks':np.array([i.values for i in result["in_context_behaveblocks"]]),
       'in_context_behavetrial_columns':np.array(result["aligned_behaveblocks"][0].columns),
-      'in_context_behavetrialblocks':np.array([np.array([j for j in i[0]]) for i in result["in_context_behavetrialblocks"]]),
+      'in_context_behavetrialblocks':np.array([np.array([j for j in i]) for i in result["in_context_behavetrialblocks"]]),
       'in_context_coords' :np.array( result["contextcoords"])
       
       })
 #%% Save <result>    
-savemat(r"G:\data\miniscope\Results_191086\20191016_102454_all\191086_in_context.mat",result)
+savemat(r"G:\data\miniscope\LinearTrackAll\191086_in_context.mat",result)

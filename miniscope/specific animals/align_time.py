@@ -101,25 +101,37 @@ for tsFile in tsFileList:
     framenums.append(sum(framenum))
 print(sum(ts_lens),sum(framenums))
 
-    
 #%%
-print("loading ms_mat ...") 
-ms_load = loadmat(ms_mat_path)
-print("load ms_ts successfully")
-dff =np.transpose( ms_load['ms']['dff'])
-del ms_load
-print(dff.shape)
-#%%
-block_orders=[1,2,3,4,5,6,7,8,9,10,11,12]
-keep_blocks=[1,1,0,0,0,1,1,1,1,1,1,1]
-block_context_orders=["A","B","B","A","A","B","A","A","A","B","A","B"]
+#block_orders=[1,2,3,4,5,6,7,8,9,10,11,12]
+#keep_blocks=[1,1,0,0,0,1,1,1,1,1,1,1]
+#block_context_orders=["A","B","B","A","A","B","A","A","A","B","A","B"]
 tsFile_orders=[1,2,3,4,5,6,6,6,7,8,9,9,10,10,11,12]
+
+keep_tsfiles=[1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1]
 block_conditions = []
 for i in range(len(ts_lens)):
     ts = (sum(ts_lens[0:i]),sum(ts_lens[0:(i+1)]))
     frame = (sum(framenums[0:i]),sum(framenums[0:(i+1)]))
-    print(keep_blocks[i])
-#    block_conditions.append(keep_blocks[i],ts,frame])
+#    print(keep_blocks[i])
+    block_conditions.append([keep_tsfiles[i],ts,frame])
 print(block_conditions)
+#%% load ms.mat come from CAIMAN
+print("loading ms_mat ...") 
+ms_load = loadmat(ms_mat_path)
+print("load ms_ts successfully")
+#cell ids mannually accepted
+acceptedPool = ms_load['acceptedPool'] # start from 1,generated from miniscopeGUI
+deletePool = ms_load['deletePool'] # start from 1, generated from miniscopeGUI
+#cell ids caiman accepted
+idx_accepted = ms_load['ms']['idx_accepted'] # start from 0
+idx_deleted = ms_load['ms']['idx_deleted'] # start from 0
+#sigraw and sigdeconvolved and CaTraces (removed baseline from sigdeconvolved) contains cells only involved in the acceptedPool 
+sigraw = ms_load['ms']['sigraw'][:,acceptedPool-1] # estimate.c
+sigdeconvolved=ms_load['ms']['sigdeconvolved'][:,acceptedPool-1] # estimate.s
+CaTraces = np.transpose(np.array([i for i in ms_load['CaTraces'][:,0]]))[:,acceptedPool-1] # removeing the baseline of sigraw
+print("only keep cells in acceptedPool!")
+#idx_accepted deltf/f0 based on sigraw
+dff =np.transpose( ms_load['ms']['dff'])
+
     
          

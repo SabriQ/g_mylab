@@ -105,7 +105,7 @@ def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="i
     trial_traces_in_block = []
     colors_in_block=[]
     for index,row in df.iterrows():
-        if row['name'] == 1:          
+        if row['name'] == 1 and row['idx_min']<row['idx_max']:     
             x = aligned_behaveblock["Body_x"][row['idx_min']:row['idx_max']]
             x_max2 = max(x)
             x_min2 = min(x)   
