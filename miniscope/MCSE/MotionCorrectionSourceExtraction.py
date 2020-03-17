@@ -31,7 +31,14 @@ logging.basicConfig(format=
                     level=logging.WARNING)
 
 def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],motion_correction = True,source_extraction = True,n_processes=None):
-
+	"""for motioncorrection and sourceextraction
+	fnames is a list of of video , the length of which is 1
+	motion_correction = True
+	source_extraction = True 
+	n_process = None # how many cores are used for parallel computing, default to be None
+	problem
+	if running in ipython, accident termination will not stop the parallel server. it needs to restart ipython.
+	"""
 	try:
 		cm.stop_server()
 	except:
