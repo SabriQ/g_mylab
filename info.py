@@ -38,10 +38,10 @@ def send_email(to_list, sub, content):
     except Exception as e:
         print(str(e))
         return -1
-def send_wechat(text,context):
+def send_wechat(topic,context):
     key="https://sc.ftqq.com/SCU74964T6806c941309121c637fd52c641f1d1725e0c9d2434296.send"    
     data={
-            "text": text,
+            "text": topic,
             "desp": context
             }
     requests.post(key,data)
