@@ -218,7 +218,7 @@ def _angle(dx1,dy1,dx2,dy2):
 def scale(video_path,distance):    
     _,coords_in_pixel = Video(video_path).draw_rois(aim='scale')
     print(coords_in_pixel[0][1],coords_in_pixel[0][0])
-    distance_in_pixel = np.sqrt(np.sum(np.square(coords_in_pixel[0][1]-coords_in_pixel[0][0])))
+    distance_in_pixel = np.sqrt(np.sum(np.square(np.array(coords_in_pixel[0][1])-np.array(coords_in_pixel[0][0]))))
     distance_in_cm = distance #int(input("直线长(in cm)： "))
     s = distance_in_cm/distance_in_pixel
     print(f"{s} cm/pixel")
