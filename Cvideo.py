@@ -140,6 +140,8 @@ class Video():
             speed = behaveblock["Headspeeds"]
         else:
             print("pleas choose from 'Body' and 'Head'")
+        t = [i for i in behaveblock["be_ts"]]
+
         font = cv2.FONT_ITALIC
         cap = cv2.VideoCapture(self.video_path)
         wait=30
@@ -151,6 +153,13 @@ class Video():
                 # gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
                 cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
                 cv2.putText(frame,f'{round(speed[frame_No],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
+                for i in range(frame_No,0,-1):
+                    if (t[frame_No]-t[i])<10:
+                        pts1=(x[i],y[i]);pts2=(x[i-1],y[i-1])
+                        thickness=1
+                        if (t[frame_No]-t[i])<5:
+                            thickness=2
+                        cv2.line(frame, pts1, pts2, (0, 0, 255), thickness)
                 cv2.imshow(self.video_name,frame)
                 frame_No = frame_No + 1
                 if cv2.waitKey(wait) & 0xFF == ord('q'):
@@ -168,18 +177,6 @@ class Video():
                 break
         cap.release()
         cv2.destroyAllWindows()
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     def generate_ts_txt(self):
@@ -233,7 +230,11 @@ class Video():
             click of left mouse button to choose point
         '''
         cap = cv2.VideoCapture(self.video_path)
+        cap.set(cv2.CAP_PROP_POS_FRAMES,1000)
         ret,frame = cap.read()
+        cap.release()
+        cv2.destroyAllWindows()
+
         origin = []
         coord = []
         coord_current = [] # used when move
@@ -345,8 +346,7 @@ class Video():
                 cap.release()
                 cv2.destroyAllWindows()
                 sys.exit()
-        cap.release()
-        cv2.destroyAllWindows()
+        
         return masks,coords
 
     def check_frames(self,location = "rightup",*args):

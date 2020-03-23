@@ -77,6 +77,8 @@ class CFCvideo(Video):
 	def freezing_percentage(self,Interval_number=3,diff_gray_value=30,show = True
 		,threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True):
 		"""
+		Syntax:
+			CFCvideo(video).freezing_percentage(*args)
 		Args:
 			Interval_number=3,
 			diff_gray_value=30,
@@ -100,8 +102,12 @@ class CFCvideo(Video):
 	def freezing_percentages(cls,videolists,Interval_number=3,diff_gray_value=30,show = True,
 		threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True):
 		"""
+		syntax:
+			confirm the *args with `CFCvideo(video).freezing_percentage(*args)`, then,
+			CFCvideo.freezing_percentage(videolists,*args).
+			result will be saved named as `freezing_stat.csv` at the same directory
 		Args:
-			videolists
+			videolists: a list of video to calculate freezing 
 			Interval_number=3,
 			diff_gray_value=30,
 			show = True,
