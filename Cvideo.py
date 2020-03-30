@@ -64,7 +64,7 @@ class Video():
         distance_in_pixel = np.sqrt(np.sum(np.square(np.array(coords_in_pixel[0][1])-np.array(coords_in_pixel[0][0]))))
         distance_in_cm = int(distance) #int(input("直线长(in cm)： "))
         s = distance_in_cm/distance_in_pixel
-        print(f"{s} cm/pixel")
+        print(f"scale: {s} cm/pixel")
         return s
 
     @staticmethod
@@ -94,7 +94,7 @@ class Video():
             speed_angles.append(cls._angle(1,0,delta_x,delta_y))
         return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
-    def play_with_track(self,show = "Body"):
+    def play_with_track(self,show = "Head"):
         """
         instructions:
             'q' for quit
@@ -105,6 +105,7 @@ class Video():
         """
         if not os.path.exists(self.videots_path):
             try:
+                print("generating timestamps by ffmpeg")
                 self.generate_ts_txt()
             except:
                 print("fail to generate timestamps by ffprobe")
@@ -119,13 +120,13 @@ class Video():
             track = pd.read_hdf(self.video_track_path)
 
 
-        s = self.scale(20)
+        s = self.scale(70)
         try:
             behaveblock=pd.DataFrame(track[track.columns[0:9]].values,columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
-            print("take track of head, body and tail")
+            print("get track of head, body and tail")
         except:
             behaveblock=pd.DataFrame(track[track.columns[0:6]].values,columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh'])
-            print("take track of head and body")
+            print("get track of head and body")
         behaveblock['be_ts'] = ts[0]
         behaveblock['Headspeeds'],behaveblock['Headspeed_angles'] = self.speed(behaveblock['Head_x'],behaveblock['Head_y'],behaveblock['be_ts'],s)
         behaveblock['Bodyspeeds'],behaveblock['Bodyspeed_angles'] = self.speed(behaveblock['Body_x'],behaveblock['Body_y'],behaveblock['be_ts'],s)
@@ -135,8 +136,8 @@ class Video():
             y = [int(i) for i in behaveblock["Body_y"]]
             speed = behaveblock["Bodyspeeds"]
         elif show == "Head":
-            x = behaveblock["Head_x"]
-            y = behaveblock["Head_y"]
+            x = [int(i) for i in behaveblock["Head_x"]]
+            y = [int(i) for i in behaveblock["Head_y"]]
             speed = behaveblock["Headspeeds"]
         else:
             print("pleas choose from 'Body' and 'Head'")
@@ -262,10 +263,14 @@ class Video():
                 print(coords[0:count])
                 return masks[0:count],coords[0:count]
             if len(existed_coords) == count:
-                print(f"you have drawn {aim} roi")
+                print("you have drawn rois of %s"%aim)
 #                print(f"the coords is: ")
 #                print(coords)
                 return masks,coords
+            if len(existed_coords) < count:
+                print("please draw left rois of %s"%aim)
+        else:
+            print("please draw rois of %s"%aim)
         def draw_polygon(event,x,y,flags,param):
             nonlocal state, origin,coord,coord_current,mask,frame
             try:
@@ -278,29 +283,29 @@ class Video():
                 for i,existed_coord in enumerate(existed_coords,1):
                     if len(existed_coord)>0:
                         existed_coord = np.array(existed_coord,np.int32)
-                        cv2.fillPoly(black_bg,[existed_coord],(127,255,10))
+                        cv2.fillPoly(black_bg,[existed_coord],(127,255,100))
                         cv2.putText(black_bg,f'{i}',tuple(np.trunc(existed_coord.mean(axis=0)).astype(np.int32)), font, 1, (0,0,255))
             if state == "go" and event == cv2.EVENT_LBUTTONDOWN:
                 coord.append([x,y])
             if event == cv2.EVENT_MOUSEMOVE:
                 if state == "go":
                     if len(coord) ==1:
-                        cv2.line(black_bg,tuple(coord[0]),(x,y),(127,255,10),2)
+                        cv2.line(black_bg,tuple(coord[0]),(x,y),(127,255,100),2)
                     if len(coord) >1:
                         pts = np.append(coord,[[x,y]],axis = 0)
 ##                        print(pts)
-                        cv2.fillPoly(black_bg,[pts],(127,255,10))
+                        cv2.fillPoly(black_bg,[pts],(127,255,100))
                     frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)
                     cv2.imshow("draw_roi",frame)
                 if state == "stop":
                     pts = np.array(coord,np.int32)
-                    cv2.fillPoly(black_bg,[pts],(127,255,10))
+                    cv2.fillPoly(black_bg,[pts],(127,255,100))
                     frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)
                     cv2.imshow("draw_roi",frame)
                 if state == "move":
                     coord_current = np.array(coord,np.int32) +(np.array([x,y])-np.array(origin) )
                     pts = np.array(coord_current,np.int32)
-                    cv2.fillPoly(black_bg,[pts],(127,255,10))
+                    cv2.fillPoly(black_bg,[pts],(127,255,100))
                     cv2.fillPoly(mask,[pts],0)
                     frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)
                     cv2.imshow("draw_roi",frame)
