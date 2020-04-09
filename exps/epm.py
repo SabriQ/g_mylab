@@ -1,88 +1,41 @@
-from mylab.Cvideo import Video
-import pandas as pd
-import numpy as np
 import sys,os
-import glob
-import csv
-import matplotlib.pyplot as plt
-import cv2
-#######
+import time
+class EPM(Exp):
+    def __init__(self,port):
+        super().__init__(port)
 
-'''
-输入数据： MP4,h5,txt
-'''
+    def __call__(self,mouse_id,app=self.Epm_opto,video_dir="",):
+        self.mouse_id = mouse_id
+        video_name = "EPM_"+self.mouse_id+'-'+time.strftime("%Y%m%d-%H%M%S", time.localtime())+'.mp4'
+        self.video_path = os.path.join(video_dir,video_name)
 
-#######
+        self.run(app=app)
 
-videolists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*mp4")
-##print(videolists)
-h5lists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*h5")
-##print(h5lists)
-ts_lists = glob.glob(r"Y:\zhangna\3. EPM and open field\tracked\epm_opto\20190813\196516\*txt")
-##print(ts_lists)
+    def run(self,app):
+        p = self.record_camera(self.video_path)
+        app()
+        self.stop_camera(p)
 
-def Count(masks,X,Y,T):
-    time = {}
-    distance = {} # in pixel
-    for i in range(len(masks)):
-        time[i+1]=0
-        distance[i+1]=0
-    time["others"]=0
-    distance["others"]=0
-    count = 0
-
-    for x,y in zip(X,Y):
-        if count >0:
-            delt_t = T[count]-T[count-1]
-            delt_d = np.sqrt((X[count]-X[count-1])**2+(Y[count]-Y[count-1])**2)
-            target_masks = np.add(np.where(np.array([sum(masks[j][int(round(y)),int(round(x))]) for j in range(len(masks))])==0)[0],1)
-            if len(target_masks):
-                for target_mask in target_masks:
-                    time[target_mask] = delt_t + time[target_mask]
-                    distance[target_mask] =delt_d +distance[target_mask]
-            else:
-                time['others']=delt_t+time['others']
-                distance['others'] = delt_d + distance['others']            
-              
-        count = count +1
-    return time,distance
-                    
-
+    def Epm_opto(self):     
+        '''
+        1 start the video recording
+        2 3min for arms exploration without laser
+        3 3min for arms exploration with laser, led on when laser on or off
+        4 3min for arms exploration without laser
+        5 3min for arms exploration with laser
+        ''' 
+        print(">>>without laser for 3 mins: ")
+        self.ser.write("2".encode())
+        self.countdown(180)
+        print(">>>with laser(20HZ,5ms on and 45ms off) for 3mins: ")
+        self.ser.write('1'.encode())
+        self.countdown(180) 
+        print(">>>without laser for 3mins: ")
+        self.ser.write('2'.encode())
+        self.countdown(180)
         
-for h5list in h5lists:
-    f = pd.read_hdf(h5list)
-##    print(f.DeepCut_resnet50_ephy_si_mp4Jun9shuffle1_500000.)
-    training_set = f.columns[0][0]
-    X =np.array(f[training_set].Body['x'])
-    Y =np.array(f[training_set].Body['y'])
-    L = np.array(f[training_set].Body['likelihood'])
-    ts_list = [i for i in ts_lists if os.path.basename(h5list)[0:12] in i]
-
-    T = np.array(pd.read_csv(ts_list[0],sep='\n',encoding='utf-16',header=None)[0])
-    Frame_No = np.linspace(1,len(T),len(T),dtype=np.int16)
-
-    videolist = [i for i in videolists if os.path.basename(h5list)[0:14] in i]
-##    plt.scatter(X,Y)
-##    plt.show()
-    if videolist:
-        masks,coords = Video(videolist[0]).draw_rois(aim="epm",count=2)
-##        for i,mask in enumerate(masks,1):
-##            cv2.imshow(f"test{i}",mask)
-    else:
-        print(f'{videolist[0]} does exist!')
-        sys.exit()
-
-    time,distance = Count(masks,X,Y,T)
-    print(f'{os.path.basename(videolist[0])} process done.')
-    output_head = ["video"]+[str(key)+"_time" for key,value in time.items()]+[str(key)+"_distance" for key,value in distance.items()]
-    output_count= [os.path.basename(videolist[0])]+[value for key,value in time.items()]+[value for key,value in distance.items()]
-    outfile = os.path.join(os.path.dirname(videolist[0]),"output.csv")
-    with open(outfile,'a+') as f:
-        f_csv = csv.writer(f)
-        if os.path.getsize(outfile) == 0:
-            f_csv.writerow(output_head)
-        f_csv.writerow(output_count)
-
-
-
     
+
+if __name__ =="__main__":
+    epm = EPM()
+    epm()
