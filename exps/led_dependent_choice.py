@@ -1,7 +1,7 @@
 import sys,os
 import time
 import csv
-class LT_stage4(Exp):
+class Led_dependent_choice(Exp):
     def __init__(self,port,mode="Train",video_dir=""):
         super().__init__(port)
         self.video_dir = video_dir
@@ -114,5 +114,5 @@ class LT_stage4(Exp):
             print(f"\r{show_info}".ljust(24),f"{round(time_elapse,1)}s".ljust(8),end="")
 
 if __name__ =="__main__":
-    lt = LT("com12","C:\Users\Sabri\Desktop\test")
-    lt(191174)
+    ldc = Led_dependent_choice("com12","C:\Users\Sabri\Desktop\test")
+    ldc(191174)
