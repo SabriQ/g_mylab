@@ -7,19 +7,18 @@ import sys
 from mylab.sys_camera import video_online_play
 from mylab.sys_camera import video_recording
 
-class Exp ():
+class Exp():
     def __init__(self,port):
         self.port = port
 
-        # try:
-        #   self.ser = serial.Serial(self.port,baudrate=9600)
-        # except Exception as e:
-        #   print(e)
-        #   ports = [i.device for i in serial.tools.list_ports.comports()]
-        #   print("choose port from %s"% ports)
-        #   sys.exit()
-        # else:
-        #   print("wait for %ds, connecting to Arduino %s"%(self.countdown(3) self.port))
+        try:
+          self.ser = serial.Serial(self.port,baudrate=9600,timeout=0.1)   
+          self.countdown(3) 
+        except Exception as e:
+          print(e)
+          ports = [i.device for i in serial.tools.list_ports.comports()]
+          print("choose port from %s"% ports)
+          sys.exit()
 
 
     @staticmethod

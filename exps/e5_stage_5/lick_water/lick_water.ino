@@ -57,6 +57,7 @@ void loop() {
     Serial.print(left_time);Serial.print(" ");
     Serial.print(enter_time);Serial.print(" ");
     Serial.print(exit_time);Serial.print(" ");
+    Serial.print(right_time);Serial.print(" ");
     Serial.print(r_enter_time);Serial.print(" ");
     Serial.println(r_exit_time);}
     
