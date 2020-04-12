@@ -5,8 +5,10 @@ from mylab.exps.Cexps import *
 class Lick_water(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
         super().__init__(port)
-        self.data_dir = data_dir
-
+        self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
+            print("%s is created"%self.data_dir)
     def __call__(self,mouse_id):
         self.mouse_id =str(mouse_id)
 
@@ -99,6 +101,8 @@ class Lick_water(Exp):
                     print("\r",row[0].ljust(8),str(round(row[7],1)).ljust(8),str(round(row[10],1)).ljust(8),"          ")
                     show_info = "Ready "
                     self.graph_by_trial(Trial_Num,P_left,P_right)
+                if "All_done" in info:
+                    send_wechat(self.mouse_id,"finish lick_water")
 if __name__ =="__main__":
     lw = Lick_water("/dev/ttyUSB0")
     lw(191174)
