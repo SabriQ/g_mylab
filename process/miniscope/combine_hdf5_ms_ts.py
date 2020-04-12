@@ -1,5 +1,5 @@
 import numpy as np
-from caiman.source_extraction.cnmf.cnmf import load_CNMF
+
 
 import matplotlib.pyplot as plt
 
@@ -12,7 +12,7 @@ class ResultHdf5():
 			sys.exit()
 		print("loading hdf5Path...")
 		self.cnm = load_CNMF(hdf5Path)
-		print("successful load")
+		print("successfully loaded")
 
 	def keys():
 		return self.cnm.keys()

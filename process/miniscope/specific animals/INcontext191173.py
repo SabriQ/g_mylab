@@ -25,7 +25,7 @@ result_path = os.path.join(os.path.dirname(ms_mat_path),'191173_in_context.pkl')
 
 context_orders=["B","A","A","B","A","B","B","A","B","A","B1","A1"]
 context_angles=["90","90","135","135","90","90","45","45","90","90","90","90"]
-behave_dir = os.path.join(r"W:\qiushou\miniscope\2019*" , mouse_id)
+behave_dir = os.path.join(r"X:\miniscope\2019*" , mouse_id)
 ms_starts = [557,197,382,160,438,179,327,200,381,144,409,139]# the frame in behave_bideo which present the start of ms
 def sort_key(s):     
     if s:            

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from mylab.miniscope.Mfunctions import *
+from mylab.process.miniscope.Mfunctions import *
 import os
 import seaborn as sns
 import gc
@@ -97,8 +97,8 @@ def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="i
     df = rlc2(aligned_behaveblock[column])
     trials_in_block=[]
 #    sns.distplot(df['length'])    
-    x_max = max(contextcoord[1][0][:,0])
-    x_min = min(contextcoord[1][0][:,0])
+    x_max = max(np.array(contextcoord[1][0])[:,0])
+    x_min = min(np.array(contextcoord[1][0])[:,0])
     i=1
     plt.figure(figsize=(5,10))
     plt.subplot(1,2,1)

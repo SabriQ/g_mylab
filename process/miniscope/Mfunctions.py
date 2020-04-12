@@ -214,7 +214,7 @@ def _angle(dx1,dy1,dx2,dy2):
     # print(angle2)
     return abs(angle1-angle2)
 # dx1 = 1,dy1 = 0,this is sure ,because we always want to know between the varial vector with vector[0,1,1,1]
-#%%draw scale
+
 def scale(video_path,distance):    
     _,coords_in_pixel = Video(video_path).draw_rois(aim='scale')
     print(coords_in_pixel[0][1],coords_in_pixel[0][0])

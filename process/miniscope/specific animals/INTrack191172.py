@@ -21,7 +21,7 @@ import scipy
 mouse_id = "191172"
 ms_mat_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_20191028-1102all\191172_post_processed3.mat"
 ms_ts_pkl_path = os.path.join(os.path.dirname(ms_mat_path),'ms_ts.pkl')
-result_path = os.path.join(os.path.dirname(ms_mat_path),'191172_whole_track.pkl')
+result_path = os.path.join(os.path.dirname(ms_mat_path),'191172_in_track.pkl')
 
 context_orders=["A","B","B","A","B","A","A","B","A","B","A1","B1"]
 context_angles=["90","90","135","135","90","90","45","45","90","90","90","90"]
@@ -176,41 +176,41 @@ del i
 contextcoords=[]
 for video in behave_videos:
     print(os.path.basename(video),end=': ')
-    masks,coords = Video(video).draw_rois(aim="context",count=1)
+    masks,coords = Video(video).draw_rois(aim="Track",count=1)
     contextcoords.append((masks,coords))
 TrackinZoneView(contextcoords,aligned_behaveblocks,blocknames)
-#%% add aligned_behaveblock['in_context']    
+#%% add aligned_behaveblock['Track']    
 for aligned_behaveblock, contextcoord in zip(aligned_behaveblocks,contextcoords):
     masks = contextcoord[0][0]
-    in_context = []
+    in_track = []
     for x,y in zip(aligned_behaveblock['Body_x'],aligned_behaveblock['Body_y']):
         if 255 in masks[int(y),int(x)]: # according the mask presenting the context area we have drawn, pick out any frame when mouse is in context area 
-            in_context.append(0)
+            in_track.append(0)
         else:
-            in_context.append(1)
-    aligned_behaveblock['in_context'] = in_context
-print("add condition 'in_context'")
+            in_track.append(1)
+    aligned_behaveblock['in_track'] = in_track
+print("add condition 'in_track'")
 #%% for each block(context),calculate the averate trace value of each neuron
-in_context_msblocks=[]
-in_context_msblocks2=[]
-in_context_behaveblocks=[]
+in_track_msblocks=[]
+in_track_msblocks2=[]
+in_track_behaveblocks=[]
 for msblock,msblock2,aligned_behaveblock in zip(msblocks,msblocks2,aligned_behaveblocks):
-    in_context  = aligned_behaveblock['in_context']
-#    print(len(in_context))
-    in_context_msblock = msblock.iloc[(in_context==1).tolist(),]
-    in_context_msblock2 = msblock2.iloc[(in_context==1).tolist(),]
-    in_context_behaveblock = aligned_behaveblock.iloc[(in_context==1).tolist(),]
+    in_track  = aligned_behaveblock['in_track']
+#    print(len(in_track))
+    in_track_msblock = msblock.iloc[(in_track==1).tolist(),]
+    in_track_msblock2 = msblock2.iloc[(in_track==1).tolist(),]
+    in_track_behaveblock = aligned_behaveblock.iloc[(in_track==1).tolist(),]
     # for each neuron in each block
-    in_context_msblocks.append(in_context_msblock)
-    in_context_msblocks2.append(in_context_msblock2)
-    in_context_behaveblocks.append(in_context_behaveblock)
-#output in_context_msblocks,in_context_behaveblock    
-print("generated 'in_context_msblocks' and 'in_context_behaveblocks")
-#%% output result["in_context_behavetrialblocks"]
-in_context_behavetrialblocks = []
-for aligned_behaveblock,contextcoord, blockname, in_context_msblock in zip(aligned_behaveblocks,contextcoords,blocknames, in_context_msblocks2):
-    in_context_behavetrialblock,_ = Extract_trials(aligned_behaveblock,contextcoord, in_context_msblock, title = blockname,column="in_context",example_neuron=3)
-    in_context_behavetrialblocks.append(in_context_behavetrialblock) 
+    in_track_msblocks.append(in_track_msblock)
+    in_track_msblocks2.append(in_track_msblock2)
+    in_track_behaveblocks.append(in_track_behaveblock)
+#output in_track_msblocks,in_track_behaveblock    
+print("generated 'in_track_msblocks' and 'in_track_behaveblocks")
+#%% output result["in_track_behavetrialblocks"]
+# in_track_behavetrialblocks = []
+# for aligned_behaveblock,contextcoord, blockname, in_track_msblock in zip(aligned_behaveblocks,contextcoords,blocknames, in_track_msblocks2):
+#     in_track_behavetrialblock,_ = Extract_trials(aligned_behaveblock,contextcoord, in_track_msblock, title = blockname,column="in_track",example_neuron=3)
+#     in_track_behavetrialblocks.append(in_track_behavetrialblock) 
 #%%
 result={"mouse_id":mouse_id,
        "ms_mat_path":ms_mat_path,
@@ -228,27 +228,27 @@ result={"mouse_id":mouse_id,
        "ms_starts":ms_starts,
        "aligned_behaveblocks":aligned_behaveblocks,
        "contextcoords":contextcoords,
-       "in_context_msblocks":in_context_msblocks,    
-       "in_context_msblocks2":in_context_msblocks2,
-       "in_context_behaveblocks":in_context_behaveblocks,
-       "in_context_behavetrialblocks":in_context_behavetrialblocks
+       "in_track_msblocks":in_track_msblocks,    
+       "in_track_msblocks2":in_track_msblocks2,
+       "in_track_behaveblocks":in_track_behaveblocks,
+       # "in_track_behavetrialblocks":in_track_behavetrialblocks
        }
 
 # output result
 #%%
 #view_variable_structure(result)
-#save_result(result,result_path)
+save_result(result,result_path)
 #%% Define <savemat>
 def savemat(result_path,result):
     spio.savemat(result_path,
-     {'in_context_columns':np.array(result["in_context_msblocks"][0].columns), # cell ID.
-      'in_context_msblocks':np.array([i.values for i in result["in_context_msblocks"]]),
-      'in_context_msblocksCaEvent':np.array([i.values for i in result["in_context_msblocks2"]]),
-      'in_context_behaveblocks':np.array([i.values for i in result["in_context_behaveblocks"]]),
-      'in_context_behavetrial_columns':np.array(result["aligned_behaveblocks"][0].columns),
-      'in_context_behavetrialblocks':np.array([np.array([j for j in i]) for i in result["in_context_behavetrialblocks"]]),
-      'in_context_coords' :np.array( result["contextcoords"])
+     {'in_track_columns':np.array(result["in_track_msblocks"][0].columns), # cell ID.
+      'in_track_msblocks':np.array([i.values for i in result["in_track_msblocks"]]),
+      'in_track_msblocksCaEvent':np.array([i.values for i in result["in_track_msblocks2"]]),
+      'in_track_behaveblocks':np.array([i.values for i in result["in_track_behaveblocks"]]),
+      'in_track_behavetrial_columns':np.array(result["aligned_behaveblocks"][0].columns),
+      # 'in_track_behavetrialblocks':np.array([np.array([j for j in i]) for i in result["in_track_behavetrialblocks"]]),
+      'in_track_coords' :np.array( result["contextcoords"])
       
       })
 #%% Save <result>    
-savemat(r"G:\data\miniscope\Results_191172\20191110_160835_20191028-1102all\191172_in_context.mat",result)
+savemat(r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\LinearTrackAll\191172_in_track.mat",result)
