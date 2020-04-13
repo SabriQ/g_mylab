@@ -101,7 +101,7 @@ class Lick_water(Exp):
                     print("\r",row[0].ljust(8),str(round(row[7],1)).ljust(8),str(round(row[10],1)).ljust(8),"          ")
                     show_info = "Ready "
                     self.graph_by_trial(Trial_Num,P_left,P_right)
-                if "All_done" in info:
+                if "Stat7:" in info:
                     send_wechat(self.mouse_id,"finish lick_water")
 if __name__ =="__main__":
     lw = Lick_water("/dev/ttyUSB0")

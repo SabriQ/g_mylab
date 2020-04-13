@@ -61,7 +61,7 @@ void loop() {
     Serial.print(r_enter_time);Serial.print(" ");
     Serial.println(r_exit_time);}
     
-   Serial.println("All_done");
+   process(6);
 }
 ///////////////////////////////////////////////
 /*
@@ -110,6 +110,8 @@ void process(int p){
       r_exit_time = millis();
       Serial.println("Stat6: r_exit");
       break;
+    case 6://all done
+      Serial.println("Stat7: All_done");
     default:
       break;
   }}  
