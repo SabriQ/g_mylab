@@ -105,4 +105,4 @@ class Lick_water(Exp):
                     send_wechat(self.mouse_id,"finish lick_water")
 if __name__ =="__main__":
     lw = Lick_water("/dev/ttyUSB0")
-    lw(191174)
+    lw(sys.argv[1])

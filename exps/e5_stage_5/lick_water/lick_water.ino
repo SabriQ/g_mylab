@@ -61,7 +61,7 @@ void loop() {
     Serial.print(r_enter_time);Serial.print(" ");
     Serial.println(r_exit_time);}
     
-   Serial.println("All done!");
+   Serial.println("All_done");
 }
 ///////////////////////////////////////////////
 /*
