@@ -9,7 +9,7 @@ int pump_right = 6;
 
 int ir_nose = A0;
 int ir_enter = A1;
-int ir_exit = A2
+int ir_exit = A2;
 int ir_left = A3;
 int ir_right =A6;
 //A4 A5 are used for IIC communication
@@ -75,12 +75,17 @@ void loop() {
     process(5);
     Serial.print("Sum: ");
     Serial.print(Trial_num);Serial.print(" ");
-    Serial.printf(cur_context);Serial.print(" ");
+    Serial.print(cur_context);Serial.print(" ");
 
     Serial.print(left_choice);Serial.print(" ");
     Serial.print(right_choice);Serial.print(" ");
-    Serial.print(Choice_class);Serial.print(" ")
-
+    Serial.print(Choice_class);Serial.print(" ");
+    if (Choice_class==1){
+      i = i;}
+    else if(Choice_class==0){
+      i = i-1;}
+    else{
+      i=0;}   
     Serial.print(nose_poke_time);Serial.print(" ");
     Serial.print(enter_time);Serial.print(" ");
     Serial.print(exit_time);Serial.print(" ");
@@ -111,7 +116,7 @@ void process(int p){
       nose_poke_time = millis();//记录时间
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-      if (trial[i]==0){Sgial(51);cur_context=0;}else{Sgial(52);cur_context=1;} //切换context       
+      if (trial[i]==0){Signal(51);cur_context=0;}else{Signal(52);cur_context=1;}; //切换context       
       break;
     case 1://waiting for enter
       do{Read_ir();}while(on_signal < 0.90 || ir[1]==0);//while循环，直到小鼠enter context
@@ -124,7 +129,7 @@ void process(int p){
       Serial.println("Stat3: exit");//打印stat
       break;
     case 3://waiting for choice
-      do{Read_id();}while(on_signal>0.5 && ir[1]==0 && ir[2]==0); //while 循环，直到小鼠exit context
+      do{Read_ir();}while(on_signal>0.5 && ir[1]==0 && ir[2]==0); //while 循环，直到小鼠exit context
       choice_time = millis(); //记录时间
       Serial.print("Stat2: choice");//打印stat 
       if (ir[3]==1){
@@ -190,16 +195,14 @@ void Signal(int s){
       break;
     case 51://to context0
       //from context1 to context0
-      if (cur_context == 1):
-      {
-        send2slave1_motor=1;
+      if (cur_context == 1){
+        send2slave1_motor=0;
         write2slave(1,send2slave1_motor);
       }       
       break;
     case 52://to context1
       //from context0 to context1
-      if (cur_context==0):
-      {
+      if (cur_context == 1) {
         send2slave1_motor=2;
         write2slave(1,send2slave1_motor);
       }      

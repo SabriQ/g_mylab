@@ -6,12 +6,9 @@ int pul=4;
 //input
 int c_0=5;
 int c_1=6;
-int c_2=7;
-int led = 9;//pwm
+byte num;//default to turn off the led 
 //variables
-byte num=5;//default to turn off the led 
-int led_switch = 1;
-int ctx[3];
+int ctx[2];
 int c_ctx=0;
 //int ctx[2];
 void setup() {
@@ -21,8 +18,7 @@ pinMode(dir,OUTPUT);digitalWrite(dir,LOW);
 pinMode(pul,OUTPUT);digitalWrite(pul,LOW);
 pinMode(c_0,INPUT);int c_0_value = 0;
 pinMode(c_1,INPUT);int c_1_value = 0;
-pinMode(c_2,INPUT);int c_2_value = 0;
-pinMode(led,OUTPUT);digitalWrite(led,LOW);
+
 Wire.begin(1);
 Wire.onReceive(receiveinfo);
 Serial.begin(9600);
@@ -36,48 +32,28 @@ void rec(){
   switch (num)
   {
     case 0:// go to context 0
-    //0 left and right doors go left (approaching motor)
+     
       Serial.println("move to context 0");
       digitalWrite(ena,LOW);
-      digitalWrite(dir,LOW);
-      do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0 && ctx[2]==0 ); // between 1-2.2
+      if (c_ctx==1){
+        digitalWrite(dir,LOW);//approaching motor
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0 && ctx[1]==0 ); 
+      }      
       digitalWrite(ena,HIGH);
       c_ctx=0;
       break;
+      
     case 1://go to context 1
       Serial.println("move to context 1");
       digitalWrite(ena,LOW);
-      if (c_ctx==0){digitalWrite(dir,HIGH);}
-      else if(c_ctx==2){digitalWrite(dir,LOW);}
-      else{c_ctx=1;}
-      do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[0]==0 && ctx[1]==0);
+      if (c_ctx==0){
+        digitalWrite(dir,HIGH);//leaving motor
+        do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[0]==0 && ctx[1]==0);
+      }      
       digitalWrite(ena,HIGH);
       c_ctx=1;
       break;
-    case 2://go to context 2
-      Serial.println("move to context 2");
-      digitalWrite(ena,LOW);
-      digitalWrite(dir,HIGH);
-      do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0 && ctx[0]==0);
-      digitalWrite(ena,HIGH);
-      c_ctx=2;
-      break;
-    case 3://led flash
-      while(led_switch==1){
-        for (int i=1;i<10;i++){
-          analogWrite(led,i);
-          delay(20);}
-        for (int i=10;i>0;i--){
-          analogWrite(led,i);
-          delay(20);}}
-        led_switch =1;
-        break;    
-    case 4://led on
-      analogWrite(led,25);
-      break;    
-    case 5://led off
-      digitalWrite(led,LOW);
-      break;
+      
     default:
       break;}}
 
@@ -85,9 +61,9 @@ void rec(){
 void receiveinfo() {  
   while (Wire.available()) {
     num = Wire.read();
-    if(num==3){led_switch=1;}else if (num ==5){led_switch=0;}else{led_switch=led_switch;}
-    Serial.print("Recieve: ");
-    Serial.println(num);
+//    if(num==3){led_switch=1;}else if (num ==5){led_switch=0;}else{led_switch=led_switch;}
+//    Serial.print("Recieve: ");
+//    Serial.println(num);
     }}
 
 void pulse_stepper(int port_out, float Freq)
