@@ -63,6 +63,10 @@ class Lick_water(Exp):
     def test(self):
         while True:
             print(f"\r{time.time()}".ljust(24),end="")
+    def left_water(self):
+        self.ser.writer("0".encode())
+    def right_water(self):
+        self.ser.writer("1".encode())
     def lick_water(self):
         '''
         学习往返舔水
