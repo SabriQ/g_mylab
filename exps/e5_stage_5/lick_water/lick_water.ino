@@ -44,7 +44,8 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
- 
+  signal(48);signal(48);
+  signal(49);signal(49);
   for (i=0;i<trial_length;i++){
     process(0);//left
     process(1);//enter
@@ -121,10 +122,10 @@ void signal(int s){
   switch (s)
   {
     case 48://left_pump
-      water_deliver(pump_left,10);
+      water_deliver(pump_left,15);
       break;
     case 49://right_pump
-      water_deliver(pump_right,10);
+      water_deliver(pump_right,15);
       break;
     default:
     break;}}

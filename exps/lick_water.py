@@ -69,6 +69,8 @@ class Lick_water(Exp):
         while True:
             info = self.ser.readline().decode("utf-8").strip().split(" ")
             time_elapse = time.time()-start_time
+            if time_elapse > 1200:
+                send_wechat("%s: already 1200s"%self.mouse_id,"Trial number: %s"%Trial_Num[-1])
             print(f"\r{show_info}".ljust(24),f"{round(time_elapse,1)}s".ljust(8),end="")
             if len(info)>1:
                 show_info = ''.join([i for i in info])
