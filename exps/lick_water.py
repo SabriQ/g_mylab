@@ -103,7 +103,7 @@ class Lick_water(Exp):
                     self.graph_by_trial(Trial_Num,P_left,P_right)
                 
                     if int(Trial_Num[-1])%20 == 0:
-                        send_wechat("Trial number: %s"%Trial_Num[-1])
+                        send_wechat("Trial number: %s"%Trial_Num[-1],"Null ")
                 if "Stat7:" in info:
                     send_wechat(self.mouse_id,"finish lick_water")
 if __name__ =="__main__":

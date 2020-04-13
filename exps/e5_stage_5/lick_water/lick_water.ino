@@ -47,8 +47,8 @@ void loop() {
 
   for (i=0;i<trial_length;i++){
     if (i==0 && on_signal > 0.90){
-        signal(48);signal(48);
-        signal(49);signal(49);
+        Signal(48);Signal(48);
+        Signal(49);Signal(49);
     }
     process(0);//left
     process(1);//enter
@@ -73,7 +73,7 @@ void process(int process)
   experiments could be devided into several process:
     process 0: waiting for nosepoke
     process 1: waiting for choice 
-void signal(int py_signal)
+void Signal(int py_Signal)
 void Read_ir()
 void water_deliver(int pump, int milliseconds)
 void write_data(int slave,byte send2slave1_led)
@@ -85,7 +85,7 @@ void process(int p){
       do{Read_ir();}while(on_signal < 0.90 || ir[0]==0);      
       left_time = millis();
       Serial.println("Stat1: left");
-      signal(48);
+      Signal(48);
       Trial_num =Trial_num+1;
       break;
     case 1://waiting for enter
@@ -102,7 +102,7 @@ void process(int p){
       do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);
       right_time = millis();
       Serial.println("Stat4: right");
-      signal(49);
+      Signal(49);
       break;
     case 4://waiting for r_enter
       do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
@@ -120,7 +120,7 @@ void process(int p){
       break;
   }}  
 
-void signal(int s){
+void Signal(int s){
   /*除了自身控制之外，还可以由python控制输入，比如控制给水*/
   switch (s)
   {
@@ -142,7 +142,7 @@ void Read_ir(){
   on_signal = Read_digital(ON, 10);
 //  Serial.print(on_signal);Serial.print(" ");
   if(on_signal >= 0.90){ 
-      if (Serial.available()){int py_signal = Serial.read();signal(py_signal);}
+      if (Serial.available()){int py_Signal = Serial.read();Signal(py_Signal);}
       float ir_left_value = Read_analog(ir_left,5);
       float ir_enter_value = Read_analog(ir_enter,5);
       float ir_exit_value = Read_analog(ir_exit,5);      
