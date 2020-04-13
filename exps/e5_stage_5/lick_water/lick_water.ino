@@ -76,7 +76,7 @@ void process(int process)
 void Signal(int py_Signal)
 void Read_ir()
 void water_deliver(int pump, int milliseconds)
-void write_data(int slave,byte send2slave1_led)
+void write2slave(int slave,byte send2slave1_led)
 */
 void process(int p){
   switch (p)
@@ -116,6 +116,7 @@ void process(int p){
       break;
     case 6://all done
       Serial.println("Stat7: All_done");
+      break;
     default:
       break;
   }}  
@@ -192,7 +193,7 @@ digitalWrite(pump,HIGH);
 delay(milliseconds);
 digitalWrite(pump,LOW);  }
 
-void write_data(int slave,byte send2slave1_led){
+void write2slave(int slave,byte send2slave1_led){
   Wire.beginTransmission(slave);
   Wire.write(send2slave1_led);
   Serial.print("send ");
@@ -200,3 +201,4 @@ void write_data(int slave,byte send2slave1_led){
   Serial.print(" to slave");
   Serial.println(slave);
   Wire.endTransmission();}
+write2slave
