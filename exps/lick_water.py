@@ -2,22 +2,24 @@ import sys,os
 import time
 import csv
 from mylab.exps.Cexps import *
+from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
 class Lick_water(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
-        super().__init__(port)
+        super().__init__(port,data_dir)
 
         plt.ion()
         self.fig = plt.figure()
-
+        plt.title("Lick_water_ITI-Trial_Num")
     def __call__(self,mouse_id):
         self.mouse_id =str(mouse_id)
 
         current_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         log_name = "Lick_water-"+self.mouse_id+'-'+current_time+'_log.csv'
+        fig_name = "Lick_water_ITI-Trial_Num-"+self.mouse_id+'-'+current_time+'.png'
         self.log_path = os.path.join(self.data_dir,log_name)
-
+        self.fig_path = os.path.join(self.data_dir,fig_name)
 
         input("请按Enter开始实验:")
 
@@ -29,7 +31,7 @@ class Lick_water(Exp):
 
         self.lick_water()
 #        self.test()
-    def graph_by_trial(self,Trial_Num,P_left,P_right):
+    def graph_by_trial(self,Trial_Num,P_left):
         """
         正确率， Accuracy
         left_choice_accuracy
@@ -41,12 +43,46 @@ class Lick_water(Exp):
         w_history
         """
         plt.cla()
+        plt.title(self.mouse_id+" Lick_water_ITI-Trial_Num")
+        plt.xlabel("Trial_Num")
+        plt.ylabel("ITI(s)")
+        x_major_locator=MultipleLocator(4)
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(x_major_locator)
         if not "0" in Trial_Num:            
             ITI = np.insert(np.diff(P_left),0,0)
-            self.line = plt.plot(Trial_Num,ITI,'--')
+            if len(Trial_Num)>=60:
+                xright = len(Trial_Num)
+            else:
+                xright=60
+            if max(ITI)>=20:
+                yup = max(ITI)
+            else:
+                yup=20
+            plt.xlim(1,xright)
+            plt.ylim(1,yup)
+            plt.plot(Trial_Num,ITI,'r-')
+            plt.scatter(Trial_Num,ITI,s=2,c='green')
             self.fig.canvas.draw()
             plt.pause(0.5)
-
+        else:
+            ITI = np.insert(np.diff(P_left),0,0)
+            if len(Trial_Num)>=60:
+                xright = len(Trial_Num)-1
+            else:
+                xright=60
+            if max(ITI)>=20:
+                yup = max(ITI)
+            else:
+                yup=20
+            plt.xlim(1,xright)
+            plt.ylim(1,yup)
+            plt.plot(Trial_Num,ITI,'r-')
+            plt.scatter(Trial_Num[0:-1],ITI[0:-1],s=2,c='green')
+            plt.savefig(self.fig_path) 
+            plt.close()
+            print("result fig is saved!")
+            sys.exit()
         
     def test(self):
         while True:
@@ -101,7 +137,6 @@ class Lick_water(Exp):
                     A_r_enter.append(info[6])
                     A_r_exit.append(info[7])
 
-                    self.graph_by_trial(Trial_Num,P_left,P_right)
 
                     if not Trial_Num[-1]=="0":
                         row = [Trial_Num[-1],A_left[-1],A_enter[-1],A_exit[-1],A_right[-1],A_r_enter[-1],A_r_exit[-1],P_left[-1],P_enter[-1],P_exit[-1],P_right[-1],P_r_enter[-1],P_r_exit[-1]]
@@ -112,13 +147,14 @@ class Lick_water(Exp):
 
                     else:
                         row = ["terminated"]
-                        print("\r",row[0].ljust(8))
-
+                        print("\r",row[0])
+                        
                     with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
                         writer = csv.writer(csvfile)
                         writer.writerow(row)
                     # if int(Trial_Num[-1])%20 == 0:
                     #     send_wechat("Trial number: %s"%Trial_Num[-1],"Null ")
+                    self.graph_by_trial(Trial_Num,P_left)
 
                 if "Stat7:" in info:
                     send_wechat(self.mouse_id,"finish lick_water")
