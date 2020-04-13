@@ -73,7 +73,7 @@ void process(int process)
 void signal(int py_signal)
 void Read_ir()
 void water_deliver(int pump, int milliseconds)
-void write_data(int slave,byte send2slave1_led)
+void write2slave(int slave,byte send2slave1_led)
 */
 void process(int p){
   switch (p)
@@ -82,7 +82,7 @@ void process(int p){
       do{Read_ir();}while(on_signal < 0.90 || ir[0]==0);      
       left_time = millis();
       Serial.println("Stat1: left");
-      signal(48);
+      Signal(48);
       Trial_num =Trial_num+1;
       break;
     case 1://waiting for enter
@@ -99,7 +99,7 @@ void process(int p){
       do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);
       right_time = millis();
       Serial.println("Stat4: right");
-      signal(49);
+      Signal(49);
       break;
     case 4://waiting for r_enter
       do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
@@ -113,11 +113,12 @@ void process(int p){
       break;
     case 6://all done
       Serial.println("Stat7: All_done");
+      break;
     default:
       break;
   }}  
 
-void signal(int s){
+void Signal(int s){
   /*除了自身控制之外，还可以由python控制输入，比如控制给水*/
   switch (s)
   {
@@ -189,7 +190,7 @@ digitalWrite(pump,HIGH);
 delay(milliseconds);
 digitalWrite(pump,LOW);  }
 
-void write_data(int slave,byte send2slave1_led){
+void write2slave(int slave,byte send2slave1_led){
   Wire.beginTransmission(slave);
   Wire.write(send2slave1_led);
   Serial.print("send ");
@@ -197,3 +198,4 @@ void write_data(int slave,byte send2slave1_led){
   Serial.print(" to slave");
   Serial.println(slave);
   Wire.endTransmission();}
+write2slave
