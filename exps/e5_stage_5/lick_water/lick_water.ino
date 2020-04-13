@@ -47,8 +47,8 @@ void loop() {
 
   for (i=0;i<trial_length;i++){
     if (i==0 && on_signal > 0.90){
-        signal(48);signal(48);
-        signal(49);signal(49);
+        Signal(48);Signal(48);
+        Signal(49);Signal(49);
     }
     process(0);//left
     process(1);//enter
