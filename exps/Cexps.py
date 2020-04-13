@@ -6,10 +6,14 @@ import os
 import sys
 from mylab.sys_camera import video_online_play
 from mylab.sys_camera import video_recording
-from mylab.info import *
+
 class Exp():
-    def __init__(self,port):
+    def __init__(self,port,data_dir):
         self.port = port
+        self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
+        if not os.path.exists(self.data_dir):
+            os.makedirs(self.data_dir)
+            print("%s is created"%self.data_dir)
 
         try:
           self.ser = serial.Serial(self.port,baudrate=9600,timeout=0.1)   

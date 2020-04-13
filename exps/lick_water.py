@@ -2,13 +2,15 @@ import sys,os
 import time
 import csv
 from mylab.exps.Cexps import *
+import matplotlib.pyplot as plt
+import numpy as np
 class Lick_water(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
         super().__init__(port)
-        self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
-            print("%s is created"%self.data_dir)
+
+        plt.ion()
+        self.fig = plt.figure()
+
     def __call__(self,mouse_id):
         self.mouse_id =str(mouse_id)
 
@@ -27,7 +29,7 @@ class Lick_water(Exp):
 
         self.lick_water()
 #        self.test()
-    def graph_by_trial(self,P_left,P,right):
+    def graph_by_trial(self,Trial_Num,P_left,P_right):
         """
         正确率， Accuracy
         left_choice_accuracy
@@ -38,8 +40,14 @@ class Lick_water(Exp):
         c_history
         w_history
         """
+        plt.cla()
+        if not "0" in Trial_Num:            
+            ITI = np.insert(np.diff(P_left),0,0)
+            self.line = plt.plot(Trial_Num,ITI,'--')
+            self.fig.canvas.draw()
+            plt.pause(0.5)
+
         
-        pass
     def test(self):
         while True:
             print(f"\r{time.time()}".ljust(24),end="")
@@ -92,22 +100,30 @@ class Lick_water(Exp):
                     A_right.append(info[5])
                     A_r_enter.append(info[6])
                     A_r_exit.append(info[7])
-                    
-                    row = [Trial_Num[-1],A_left[-1],A_enter[-1],A_exit[-1],A_right[-1],A_r_enter[-1],A_r_exit[-1],P_left[-1],P_enter[-1],P_exit[-1],P_right[-1],P_r_enter[-1],P_r_exit[-1]]
+
+                    self.graph_by_trial(Trial_Num,P_left,P_right)
+
+                    if not Trial_Num[-1]=="0":
+                        row = [Trial_Num[-1],A_left[-1],A_enter[-1],A_exit[-1],A_right[-1],A_r_enter[-1],A_r_exit[-1],P_left[-1],P_enter[-1],P_exit[-1],P_right[-1],P_r_enter[-1],P_r_exit[-1]]
+
+                        print("\r",row[0].ljust(8),str(round(row[7],1)).ljust(8),str(round(row[10],1)).ljust(8),"          ")
+                        show_info = "Ready "
+                        
+
+                    else:
+                        row = ["terminated"]
+                        print("\r",row[0].ljust(8))
 
                     with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
                         writer = csv.writer(csvfile)
                         writer.writerow(row)
-                    print("\r",row[0].ljust(8),str(round(row[7],1)).ljust(8),str(round(row[10],1)).ljust(8),"          ")
-                    show_info = "Ready "
-                    self.graph_by_trial(Trial_Num,P_left,P_right)
-                
-                    if int(Trial_Num[-1])%20 == 0:
-                        send_wechat("Trial number: %s"%Trial_Num[-1],"Null ")
+                    # if int(Trial_Num[-1])%20 == 0:
+                    #     send_wechat("Trial number: %s"%Trial_Num[-1],"Null ")
+
                 if "Stat7:" in info:
                     send_wechat(self.mouse_id,"finish lick_water")
+                    print("\r","All Done!")
 if __name__ =="__main__":
     lw = Lick_water("/dev/ttyUSB0")
     lw(sys.argv[1])
-    # Trian_Num = 0时要解决 录入问题
     # 画图测试
