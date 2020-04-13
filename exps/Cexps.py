@@ -6,7 +6,7 @@ import os
 import sys
 from mylab.sys_camera import video_online_play
 from mylab.sys_camera import video_recording
-
+from mylab.info import *
 class Exp():
     def __init__(self,port):
         self.port = port

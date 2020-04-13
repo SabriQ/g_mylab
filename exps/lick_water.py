@@ -69,8 +69,6 @@ class Lick_water(Exp):
         while True:
             info = self.ser.readline().decode("utf-8").strip().split(" ")
             time_elapse = time.time()-start_time
-            if time_elapse > 1200:
-                send_wechat("%s: already 1200s"%self.mouse_id,"Trial number: %s"%Trial_Num[-1])
             print(f"\r{show_info}".ljust(24),f"{round(time_elapse,1)}s".ljust(8),end="")
             if len(info)>1:
                 show_info = ''.join([i for i in info])
@@ -103,6 +101,9 @@ class Lick_water(Exp):
                     print("\r",row[0].ljust(8),str(round(row[7],1)).ljust(8),str(round(row[10],1)).ljust(8),"          ")
                     show_info = "Ready "
                     self.graph_by_trial(Trial_Num,P_left,P_right)
+                
+                    if int(Trial_Num[-1])%20 == 0:
+                        send_wechat("Trial number: %s"%Trial_Num[-1])
                 if "Stat7:" in info:
                     send_wechat(self.mouse_id,"finish lick_water")
 if __name__ =="__main__":
