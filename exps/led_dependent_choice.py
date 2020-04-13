@@ -2,8 +2,8 @@ import sys,os
 import time
 import csv
 class Led_dependent_choice(Exp):
-    def __init__(self,port,mode="Train",video_dir=""):
-        super().__init__(port)
+    def __init__(self,port,mode="Train",data_dir=""):
+        super().__init__(port,data_dir)
         self.video_dir = video_dir
         self.mode=mode
 

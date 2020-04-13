@@ -1,10 +1,10 @@
 import sys,os
 import time
 class EPM(Exp):
-    def __init__(self,port):
-        super().__init__(port)
+    def __init__(self,port,data_dir):
+        super().__init__(port,data_dir)
 
-    def __call__(self,mouse_id,app=self.Epm_opto,video_dir="",):
+    def __call__(self,mouse_id,data_dir="",):
         self.mouse_id = mouse_id
         video_name = "EPM_"+self.mouse_id+'-'+time.strftime("%Y%m%d-%H%M%S", time.localtime())+'.mp4'
         self.video_path = os.path.join(video_dir,video_name)

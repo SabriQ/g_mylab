@@ -2,6 +2,8 @@ import sys,os
 import time
 import csv
 from mylab.exps.Cexps import *
+import matplotlib.pyploy as plt
+import numpy as np
 class Lick_water(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
         super().__init__(port)
@@ -9,6 +11,9 @@ class Lick_water(Exp):
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
             print("%s is created"%self.data_dir)
+
+        
+
     def __call__(self,mouse_id):
         self.mouse_id =str(mouse_id)
 
@@ -25,9 +30,9 @@ class Lick_water(Exp):
             writer.writerow(["stage","Lick_water"])
             writer.writerow(["exp_time",current_time])
 
-        self.lick_water()
+        self.graph_by_trial()
 #        self.test()
-    def graph_by_trial(self,P_left,P,right):
+    def graph_by_trial(self):
         """
         正确率， Accuracy
         left_choice_accuracy
@@ -38,8 +43,23 @@ class Lick_water(Exp):
         c_history
         w_history
         """
+        plt.ion()
+        self.fig = plt.figure()
+        trial = self.lick_water()
+        while True:
+            try:
+                Trial_Num,P_left,P_right = next()
+                interval = np.array(P_right)-np.array(P_left)
+            except Exception as e:
+                plt.ioff()
+                plt.show()
+                break
+            else:
+                plt.cla()        
+                self.line = plt.plot(Trial_Num,interval,'--')[0]
+                self.fig.canvas.draw()
+                plt.pause(0.5)
         
-        pass
     def test(self):
         while True:
             print(f"\r{time.time()}".ljust(24),end="")
@@ -100,7 +120,7 @@ class Lick_water(Exp):
                         writer.writerow(row)
                     print("\r",row[0].ljust(8),str(round(row[7],1)).ljust(8),str(round(row[10],1)).ljust(8),"          ")
                     show_info = "Ready "
-                    self.graph_by_trial(Trial_Num,P_left,P_right)
+                    yield (Trial_Num,P_left,P_right)
                 if "All_done" in info:
                     send_wechat(self.mouse_id,"finish lick_water")
 if __name__ =="__main__":
