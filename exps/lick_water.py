@@ -109,3 +109,5 @@ class Lick_water(Exp):
 if __name__ =="__main__":
     lw = Lick_water("/dev/ttyUSB0")
     lw(sys.argv[1])
+    # Trian_Num = 0时要解决 录入问题
+    # 画图测试

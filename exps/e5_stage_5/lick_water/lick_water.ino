@@ -1,5 +1,5 @@
 #include <Wire.h>
-byte send2slave1_led=0;
+byte send2slave1=0;
 
 int ON = 13;
 
@@ -76,47 +76,46 @@ void process(int process)
 void Signal(int py_Signal)
 void Read_ir()
 void water_deliver(int pump, int milliseconds)
-void write2slave(int slave,byte send2slave1_led)
+void write2slave(int slave,byte send2slave1)
 */
 void process(int p){
   switch (p)
   {
     case 0://waiting for left
-      do{Read_ir();}while(on_signal < 0.90 || ir[0]==0);      
+      do{Read_ir();}while(ir[0]==0);      
       left_time = millis();
       Serial.println("Stat1: left");
       Signal(48);
       Trial_num =Trial_num+1;
       break;
     case 1://waiting for enter
-      do{Read_ir();}while(on_signal < 0.90 || ir[1]==0);
+      do{Read_ir();}while(on_signal >  0.50 && ir[1]==0);
       enter_time = millis();
       Serial.println("Stat2: enter");    
       break;
     case 2://waiting for exit
-      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
+      do{Read_ir();}while(on_signal >  0.50 &&ir[2]==0);
       exit_time = millis();
       Serial.println("Stat3: exit");
       break;
     case 3://waiting for right
-      do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);
+      do{Read_ir();}while(on_signal >  0.50 &&ir[3]==0);
       right_time = millis();
       Serial.println("Stat4: right");
       Signal(49);
       break;
     case 4://waiting for r_enter
-      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
+      do{Read_ir();}while(on_signal >  0.50 &&ir[2]==0);
       r_enter_time = millis();
       Serial.println("Stat5: r_enter");
       break;      
     case 5://waiting for r_exit
-      do{Read_ir();}while(on_signal < 0.90 || ir[1]==0);
+      do{Read_ir();}while(on_signal >  0.50 &&ir[1]==0);
       r_exit_time = millis();
       Serial.println("Stat6: r_exit");
       break;
     case 6://all done
       Serial.println("Stat7: All_done");
-      break;
     default:
       break;
   }}  
@@ -193,12 +192,11 @@ digitalWrite(pump,HIGH);
 delay(milliseconds);
 digitalWrite(pump,LOW);  }
 
-void write2slave(int slave,byte send2slave1_led){
+void write2slave(int slave,byte send2slave1){
   Wire.beginTransmission(slave);
-  Wire.write(send2slave1_led);
+  Wire.write(send2slave1);
   Serial.print("send ");
-  Serial.print(send2slave1_led);
+  Serial.print(send2slave1);
   Serial.print(" to slave");
   Serial.println(slave);
   Wire.endTransmission();}
-write2slave
