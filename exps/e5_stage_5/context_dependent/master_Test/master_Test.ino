@@ -60,7 +60,6 @@ pinMode(ir_rl,INPUT);digitalWrite(ir_rl,LOW);
 pinMode(ir_rr,INPUT);digitalWrite(ir_rr,LOW);
 
 //默认切换至context 0 
-Signal(52);cur_enter_context=0;
 
 Wire.begin();
 Serial.begin(9600);
@@ -68,11 +67,12 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
- 
+ Signal(52);cur_enter_context=0;
   for (i=0;i<trial_length;i++){
     if (i==0){
       Signal(48);//默认第一个trial的开始nose poke给水
     }
+    Serial.println("test3>>>");
     process(0);
     process(1);
     process(2);
@@ -91,7 +91,7 @@ void loop() {
     // else if(Choice_class==0){
     //   i = i-1;}
     // else{
-    //   i=0;}   
+    //   i=0;}
     Serial.print(nose_poke_time);Serial.print(" ");
     Serial.print(enter_time);Serial.print(" ");
     Serial.print(exit_time);Serial.print(" ");
@@ -226,39 +226,36 @@ void Signal(int s){
   
 
 void Read_ir(){
-//int ir_ll = A0;
-//int ir_enter = A1;
-//int ir_exit = A2
-//int ir_rl = A3;
-//int ir_rr =A6;
 
-  on_signal = Read_digital(ON, 20);
+  on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
   if(on_signal >= 0.90){ 
       if (Serial.available()){int py_Signal = Serial.read();Signal(py_Signal);}
       float ir_ll_value = Read_analog(ir_ll,5);
       float ir_lr_value = Read_analog(ir_lr,5);
-      float ir_enter_value = Read_analog(ir_ll,5);
-      float ir_exit_value = Read_analog(ir_ll,5);
+      float ir_enter_value = Read_analog(ir_enter,5);
+      float ir_exit_value = Read_analog(ir_exit,5);
       float ir_rl_value = Read_analog(ir_rl,5);
       float ir_rr_value = Read_analog(ir_rr,5); 
       if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
-      if (ir_lr_value< 500 && ir_rl_value>5) {ir[0] = 1;}else{ir[1] = 0;} 
-      if (ir_enter_value< 500 && ir_ll_value>5) {ir[1] = 1;}else{ir[2] = 0;}
-      if (ir_exit_value< 500 && ir_ll_value>5) {ir[2] = 1;}else{ir[3] = 0;}
-      if (ir_rl_value< 900 && ir_rl_value>5) {ir[3] = 1;}else{ir[4] = 0;} 
-      if (ir_rr_value< 800 && ir_rr_value>5) {ir[4] = 1;}else{ir[5] = 0;} 
-    //  Serial.print(ir_ll_value);Serial.print(" ");
-    //  Serial.print(ir_enter_value);Serial.print(" ");
-    //  Serial.print(ir_exit_value);Serial.print(" ");
-    //  Serial.print(ir_rl_value);Serial.print(" ");
-    //  Serial.print(ir_rr_value);Serial.print(" ");
-    //  Serial.print(ir[0]);Serial.print(" ");
-    //  Serial.print(ir[1]);Serial.print(" ");
-    //  Serial.print(ir[2]);Serial.print(" ");
-    //  Serial.print(ir[3]);Serial.print(" ");
-    //  Serial.println(ir[4]); 
-    //  delay(200);
+      if (ir_lr_value< 500 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
+      if (ir_enter_value< 500 && ir_enter_value>0.5) {ir[2] = 1;}else{ir[2] = 0;}
+      if (ir_exit_value< 500 && ir_exit_value>0.5) {ir[3] = 1;}else{ir[3] = 0;}
+      if (ir_rl_value< 500 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
+      if (ir_rr_value< 400 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+//      Serial.print(ir_ll_value);Serial.print(" ");
+//      Serial.print(ir_lr_value);Serial.print(" ");
+//      Serial.print(ir_enter_value);Serial.print(" ");
+//      Serial.print(ir_exit_value);Serial.print(" ");
+//      Serial.print(ir_rl_value);Serial.print(" ");
+//      Serial.print(ir_rr_value);Serial.print(" ");
+//      Serial.print(ir[0]);Serial.print(" ");
+//      Serial.print(ir[1]);Serial.print(" ");
+//      Serial.print(ir[2]);Serial.print(" ");
+//      Serial.print(ir[3]);Serial.print(" ");
+//      Serial.print(ir[4]);Serial.print(" ");
+//      Serial.println(ir[5]); 
+//      delay(200);
   }else{
     i = 0;
     Trial_num = 0;  
