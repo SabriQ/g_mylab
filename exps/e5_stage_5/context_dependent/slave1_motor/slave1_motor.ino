@@ -9,10 +9,11 @@ int c_0=5;
 int c_1=6;
 int c_2=7;
 
-byte num;//default to turn off the led 
+byte num=-1;//default to turn off the led 
 //variables
 int ctx[3];
-int c_ctx=0;
+int c_ctx;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -39,41 +40,52 @@ void rec(){
      
       Serial.println("move to context 0");
       digitalWrite(ena,LOW);
-      digitalWrite(dir,LOW);//approaching motor
+      digitalWrite(dir,LOW);//leaving motor
       if (c_ctx==1){
         do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0); 
       }else if(c_ctx==2){
-        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0 ); 
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0); 
+      }else{
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0);               
       }
+      Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=0;
+      num=-1;
       break;
       
     case 1://go to context 1
       Serial.println("move to context 1");
-      digitalWrite(ena,HIGH);
-
+      digitalWrite(ena,LOW);
       if (c_ctx==0){
-        digitalWrite(dir,HIGH);//leaving motor
-        do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[1]==0 && ctx[2]==0);
+        digitalWrite(dir,HIGH);//approaching motor
+        do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[1]==0);
       }else if (c_ctx==2){
         digitalWrite(dir,LOW);//approaching motor
-        do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[1]==0 && ctx[0]==0);
+        do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[1]==0);
+      }else{
+        digitalWrite(dir,HIGH);//approaching motor
+        do{Read_ctx();pulse_stepper(pul, 40);}while(ctx[1]==0);
       }
+      Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=1;
+      num=-1;
       break;
 
       case 2://go to context 2
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//leaving motor
       if (c_ctx==0){
-        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0 ); 
+        do{Read_ctx();pulse_stepper(pul,20);}while(ctx[2]==0 ); 
       }else if(c_ctx==1){
-        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0); 
+        do{Read_ctx();pulse_stepper(pul,20);}while(ctx[2]==0); 
       }
+      Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=2;
+      num=-1;
+      break;
 
     default:
       break;}}
@@ -90,9 +102,13 @@ void Read_ctx(){
 void receiveinfo() {  
   while (Wire.available()) {
     num = Wire.read();
-//    if(num==3){led_switch=1;}else if (num ==5){led_switch=0;}else{led_switch=led_switch;}
-//    Serial.print("Recieve: ");
-//    Serial.println(num);
+//    if(num==0){go_ctx=0;}
+//    else if (num==1){go_ctx=1;}
+//    else if (num==2){go_ctx=2;}
+//    else{go_ctx = go_ctx;}
+    
+    Serial.print("Recieve: ");
+    Serial.println(num);
     }}
 
 void pulse_stepper(int port_out, float Freq)
@@ -108,7 +124,7 @@ void pulse_stepper(int port_out, float Freq)
 
 float Read_digital(int digital, int times) {
   float sum = 0;
-  for (int i = 0; i <= times; i++) {
+  for (int i = 0; i < times; i++) {
     int value = digitalRead(digital);
     sum = sum + value;
   }
