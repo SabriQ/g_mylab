@@ -3,17 +3,20 @@ byte send2slave1_motor=0;
 
 int ON = 13;
 
-int pump_nose = 4;
-int pump_left = 5;
-int pump_right = 6;
 
-int ir_nose = A0;
-int ir_enter = A1;
-int ir_exit = A2;
-int ir_left = A3;
-int ir_right =A6;
+int pump_ll = 2;
+int pump_lr = 3;
+int pump_rl = 4;
+int pump_rr = 5;
+
+int ir_ll = A0;
+int ir_lr = A1;
+int ir_enter = A2;
+int ir_exit = A3;
+int ir_rl = A6;
+int ir_rr =A7;
 //A4 A5 are used for IIC communication
-int ir[5];
+int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
 int trial[60] = {0,1,0,1,0,1,1,0,1,0,
@@ -29,7 +32,8 @@ int Trial_num = 0;
 int left_choice = 0;
 int right_choice = 0;
 int Choice_class = 0;
-int cur_context = 0;
+int cur_enter_context = 0;
+int cur_exit_context = 0;
 
 
 unsigned long nose_poke_time;
@@ -43,18 +47,20 @@ void setup() {
   // put your setup code here, to run once:
 pinMode(ON,INPUT);
 
-pinMode(pump_nose,OUTPUT);digitalWrite(pump_nose,LOW);
-pinMode(pump_left,OUTPUT);digitalWrite(pump_left,LOW);
-pinMode(pump_right,OUTPUT);digitalWrite(pump_right,LOW);
+pinMode(pump_ll,OUTPUT);digitalWrite(pump_ll,LOW);
+pinMode(pump_lr,OUTPUT);digitalWrite(pump_lr,LOW);
+pinMode(pump_rl,OUTPUT);digitalWrite(pump_rl,LOW);
+pinMode(pump_rr,OUTPUT);digitalWrite(pump_rr,LOW);
 
-pinMode(ir_nose,INPUT);digitalWrite(ir_nose,LOW);
+pinMode(ir_ll,INPUT);digitalWrite(ir_ll,LOW);
+pinMode(ir_lr,INPUT);digitalWrite(ir_ll,LOW);
 pinMode(ir_enter,INPUT);digitalWrite(ir_enter,LOW);
 pinMode(ir_exit,INPUT);digitalWrite(ir_exit,LOW);
-pinMode(ir_left,INPUT);digitalWrite(ir_left,LOW);
-pinMode(ir_right,INPUT);digitalWrite(ir_right,LOW);
+pinMode(ir_rl,INPUT);digitalWrite(ir_rl,LOW);
+pinMode(ir_rr,INPUT);digitalWrite(ir_rr,LOW);
 
 //默认切换至context 0 
-Signal(51);
+Signal(52);cur_enter_context=0;
 
 Wire.begin();
 Serial.begin(9600);
@@ -75,11 +81,11 @@ void loop() {
     process(5);
     Serial.print("Sum: ");
     Serial.print(Trial_num);Serial.print(" ");
-    Serial.print(cur_context);Serial.print(" ");
-
-    Serial.print(left_choice);Serial.print(" ");
-    Serial.print(right_choice);Serial.print(" ");
+    Serial.print(cur_enter_context);Serial.print(" ");
+    Serial.print(cur_exit_context);Serial.print(" ");
     Serial.print(Choice_class);Serial.print(" ");
+    Serial.print(left_choice);Serial.print(" ");
+    Serial.print(right_choice);Serial.print(" ");   
     if (Choice_class==1){
       i = i;}
     else if(Choice_class==0){
@@ -112,41 +118,41 @@ void process(int p){
   {
     case 0://waiting for nosepoke
       do{Read_ir();}while(on_signal < 0.90 || ir[0]==0);//while循环，直到小鼠完成nosepoke
-      Signal(48);//给水
+      Signal(48);//pump_ll给水
       nose_poke_time = millis();//记录时间
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-      if (trial[i]==0){Signal(51);cur_context=0;}else{Signal(52);cur_context=1;}; //切换context       
+      if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
       break;
     case 1://waiting for enter
-      do{Read_ir();}while(on_signal < 0.90 || ir[1]==0);//while循环，直到小鼠enter context
+      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);//while循环，直到小鼠enter context
       enter_time = millis();//记录时间
       Serial.println("Stat2: enter");//打印stat 
       break;
     case 2://waiting for exit
-      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);//while循环知道小鼠exit context
+      do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);//while循环知道小鼠exit context
       exit_time = millis();//记录时间
       Serial.println("Stat3: exit");//打印stat
       break;
     case 3://waiting for choice
-      do{Read_ir();}while(on_signal>0.5 && ir[1]==0 && ir[2]==0); //while 循环，直到小鼠exit context
+      do{Read_ir();}while(on_signal>0.5 && ir[4]==0 && ir[5]==0); //while 循环，直到小鼠exit context
       choice_time = millis(); //记录时间
-      Serial.print("Stat2: choice");//打印stat 
-      if (ir[3]==1){
+      Serial.print("Stat4: choice");//打印stat 
+      if (ir[4]==1){
         Serial.print("_l");
         left_choice= left_choice + 1;   
         if (trial[i]==0){
-          Signal(49);//左边给水
+          Signal(50);//pump_rl给水
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
           Choice_class = 0;}
       }
-       else if (ir[4]==1){
+       else if (ir[5]==1){
         Serial.print("_r") ;
         right_choice=right_choice + 1;          
         if (trial[i]==1){  
-          Signal(50);//右边给水
+          Signal(51);//pump_rr给水
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
@@ -156,14 +162,17 @@ void process(int p){
           Serial.println(" terminated");
           Choice_class = 2;
        }
+
+       // Signal(54);
+       cur_exit_context=cur_enter_context;
       break;
     case 4://waiting for r_enter
-      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
+      do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);
       r_enter_time = millis();
       Serial.println("Stat5: r_enter");
       break;      
     case 5://waiting for r_exit
-      do{Read_ir();}while(on_signal < 0.90 || ir[1]==0);
+      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
       r_exit_time = millis();
       Serial.println("Stat6: r_exit");
       break;
@@ -176,68 +185,74 @@ void process(int p){
 
 void Signal(int s){
   /*除了自身控制之外，还可以由python控制输入，比如控制给水
-  0 for nose pump
-  1 for left pump
-  2 for right pump
-  3 for motor, swith to context0
-  4 for motor, swith to context1
+  0 for ll pump, also named as nosepoke
+  1 for lr pump
+  2 for rl pump
+  3 for rr pump
+  4 for motor, switch to context0
+  5 for motor, switch to context1
+  6 for motor, switch to context2
   */
   switch (s)
   {
-    case 48://nose_pump
-      water_deliver(pump_nose,5);
+    case 48://ll_pump
+      water_deliver(pump_ll,10);
       break;
-    case 49://left_pump
-      water_deliver(pump_left,7);
+    case 49://lr_pump
+      water_deliver(pump_lr,10);
       break;
-    case 50://right_pump
-      water_deliver(pump_right,5);
+    case 50://rl_pump
+      water_deliver(pump_rl,7);
       break;
-    case 51://to context0
+    case 51://rl_pump
+      water_deliver(pump_rr,5);
+      break;
+    case 52://to context0
       //from context1 to context0
-      if (cur_context == 1){
         send2slave1_motor=0;
         write2slave(1,send2slave1_motor);
-      }       
       break;
-    case 52://to context1
+    case 53://to context1
       //from context0 to context1
-      if (cur_context == 1) {
+        send2slave1_motor=1;
+        write2slave(1,send2slave1_motor);
+      break;    
+    case 54://to context2
         send2slave1_motor=2;
         write2slave(1,send2slave1_motor);
-      }      
-      break;    
     default:
-    break;}
+      break;}
     }
   
 
 void Read_ir(){
-//int ir_nose = A0;
+//int ir_ll = A0;
 //int ir_enter = A1;
 //int ir_exit = A2
-//int ir_left = A3;
-//int ir_right =A6;
+//int ir_rl = A3;
+//int ir_rr =A6;
 
   on_signal = Read_digital(ON, 20);
 //  Serial.print(on_signal);Serial.print(" ");
   if(on_signal >= 0.90){ 
       if (Serial.available()){int py_Signal = Serial.read();Signal(py_Signal);}
-      float ir_nose_value = Read_analog(ir_nose,5);
-      float ir_enter_value = Read_analog(ir_nose,5);
-      float ir_exit_value = Read_analog(ir_nose,5);
-      float ir_left_value = Read_analog(ir_left,5);
-      float ir_right_value = Read_analog(ir_right,5); 
-      if (ir_nose_value< 500 && ir_nose_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
-      if (ir_enter_value< 500 && ir_nose_value>5) {ir[1] = 1;}else{ir[1] = 0;}
-      if (ir_exit_value< 500 && ir_nose_value>5) {ir[2] = 1;}else{ir[2] = 0;}
-      if (ir_left_value< 900 && ir_left_value>5) {ir[3] = 1;}else{ir[3] = 0;} 
-      if (ir_right_value< 800 && ir_right_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
-    //  Serial.print(ir_nose_value);Serial.print(" ");
+      float ir_ll_value = Read_analog(ir_ll,5);
+      float ir_lr_value = Read_analog(ir_lr,5);
+      float ir_enter_value = Read_analog(ir_ll,5);
+      float ir_exit_value = Read_analog(ir_ll,5);
+      float ir_rl_value = Read_analog(ir_rl,5);
+      float ir_rr_value = Read_analog(ir_rr,5); 
+      if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
+      if (ir_lr_value< 500 && ir_rl_value>5) {ir[0] = 1;}else{ir[1] = 0;} 
+      if (ir_enter_value< 500 && ir_ll_value>5) {ir[1] = 1;}else{ir[2] = 0;}
+      if (ir_exit_value< 500 && ir_ll_value>5) {ir[2] = 1;}else{ir[3] = 0;}
+      if (ir_rl_value< 900 && ir_rl_value>5) {ir[3] = 1;}else{ir[4] = 0;} 
+      if (ir_rr_value< 800 && ir_rr_value>5) {ir[4] = 1;}else{ir[5] = 0;} 
+    //  Serial.print(ir_ll_value);Serial.print(" ");
     //  Serial.print(ir_enter_value);Serial.print(" ");
     //  Serial.print(ir_exit_value);Serial.print(" ");
-    //  Serial.print(ir_left_value);Serial.print(" ");
-    //  Serial.print(ir_right_value);Serial.print(" ");
+    //  Serial.print(ir_rl_value);Serial.print(" ");
+    //  Serial.print(ir_rr_value);Serial.print(" ");
     //  Serial.print(ir[0]);Serial.print(" ");
     //  Serial.print(ir[1]);Serial.print(" ");
     //  Serial.print(ir[2]);Serial.print(" ");
