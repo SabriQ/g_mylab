@@ -2,9 +2,12 @@ import sys,os
 import time
 import csv
 from mylab.exps.Cexps import *
-class Context-Dependent-Choice(Exp):
+from matplotlib.pyplot import MultipleLocator
+import matplotlib.pyplot as plt
+import numpy as np
+class CDC(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
-        super().__init__(port)
+        super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
 
         plt.ion()
@@ -67,18 +70,18 @@ class Context-Dependent-Choice(Exp):
         Trial_Num=[];Enter_ctx=[];Exit_ctx=[];Choice_class=[];Left_choice=[];Right_choice=[];
         A_nose_poke=[];A_enter=[];A_exit=[];A_choice=[];A_r_enter=[];A_r_exit=[];
         P_nose_poke=[];P_enter=[];P_exit=[];P_choice=[];P_r_enter=[];P_r_exit=[];
-        print("Trial_Num","Enter_ctx","Exit_ctx","Left_choice","Right_choice","Choice_class")
+        print("Trial_Num","Enter_ctx","Exit_ctx","Choice_class","Left_choice","Right_choice")
         
         show_info = "Ready "
     
         while True:
             info = self.ser.readline().decode("utf-8").strip().split(" ")
             time_elapse = time.time()-start_time
-            if time_elapse > 1200:
-                send_wechat("%s: already 1200s"%self.mouse_id,"Trial number: %s"%Trial_Num[-1])
-            print(f"\r{show_info}".ljust(24),f"{round(time_elapse,1)}s".ljust(8),end="")
+            #if time_elapse > 1200:
+            #    send_wechat("%s: already 1200s"%self.mouse_id,"Trial number: %s"%Trial_Num[-1])
+            print(f"\r{show_info}".ljust(55),f"{round(time_elapse,1)}s".ljust(8),end="")
             if len(info)>1:
-                show_info = ''.join([i for i in info])
+                show_info = ' '.join([i for i in info])
                 if "Stat1:" in info:
                     P_nose_poke.append(time_elapse)
                 if "Stat2:" in info:
@@ -111,7 +114,12 @@ class Context-Dependent-Choice(Exp):
                         ,A_nose_poke[-1],A_enter[-1],A_exit[-1],A_choice[-1],A_r_enter[-1],A_r_exit[-1]
                         ,P_nose_poke[-1],P_enter[-1],P_exit[-1],P_choice[-1],P_r_enter[-1],P_r_exit[-1]]
 
-                        print("\r",row[0:6])
+                        print("\r",row[0].center(9)
+                                    ,row[1].center(9)
+                                    ,row[2].center(8)
+                                    ,row[3].center(7)
+                                    ,row[4].center(15)
+                                    ,row[5].center(14))
                         show_info = "Ready "
                     else:
                         row=["Terminated"]
@@ -121,11 +129,11 @@ class Context-Dependent-Choice(Exp):
                         writer = csv.writer(csvfile)
                         writer.writerow(row)
 
-                    self.graph_by_trial(Trial_Num,P_nose_poke,P_choice)
+                    #self.graph_by_trial(Trial_Num,P_nose_poke,P_choice)
 
                 if "Stat7:" in info:
                     print("\r","All Done!")
 
 if __name__ =="__main__":
-    cdc = CDC("/dev/ttyUSB0")
+    cdc = CDC("/dev/ttyUSB2")
     cdc(sys.argv[1])
