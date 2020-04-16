@@ -12,15 +12,18 @@ class CDC(Exp):
         #plt.axes(rect, projection=None, polar=False, **kwargs)
         #rect [left, bottom, width, height]
         plt.ion()
-        self.fig = plt.figure()
-        ax1 = plt.axes([0.1,0.4,0.8,0.4]) # ax_ITI
-        ax1.set_titile("ITI-Trial_Num")
-        ax1.set_ylable=("ITI(s)")
-        ax2 = plt.axes([0.1,1.0,0.8,0.4]) # ax_accuracy
-        ax2.set_titile("Accuracy(%)-Trial_Num")
-        ax2.set_ylable=("Accuracy(%)")
+        self.fig = plt.figure(figsize=[6,8])
+        self.fig.canvas.manager.window.move(0,0) 
 
-        plt.title("Context-Dependent-Choice")
+        self.ax1 = plt.axes([0.15,0.55,0.75,0.4]) # ax_ITI
+        self.ax1.set_title("ITI-Trial_Num")
+        self.ax1.set_ylabel("ITI(s)")
+
+        self.ax2 = plt.axes([0.15,0.05,0.75,0.4]) # ax_accuracy
+        self.ax2.set_title("Accuracy(%)-Trial_Num")
+        self.ax2.set_xlabel("Trial")
+        self.ax2.set_ylabel("Accuracy(%)")
+
 
     def __call__(self,mouse_id):
         self.mouse_id =str(mouse_id)
@@ -29,7 +32,7 @@ class CDC(Exp):
         log_name = "CDC-"+self.mouse_id+'-'+current_time+'_log.csv'
 
         self.log_path = os.path.join(self.data_dir,log_name)
-        fig_name = "CDC"+self.mouse_id+'-'+current_time+'.png'
+        fig_name = "CDC-"+self.mouse_id+'-'+current_time+'.png'
         self.log_path = os.path.join(self.data_dir,log_name)
         self.fig_path = os.path.join(self.data_dir,fig_name)
 
@@ -56,12 +59,13 @@ class CDC(Exp):
         """
         plt.cla()
         plt.title(self.mouse_id+" CDC real-time monitoring")
-        ax1.set_titile("ITI-Trial_Num")
-        ax1.set_ylable=("ITI(s)")
-        ax2.set_titile("Accuracy(%)-Trial_Num")
-        ax2.set_ylable=("Accuracy(%)")
+        self.ax1.set_title("ITI-Trial_Num")
+        self.ax1.set_ylable=("ITI(s)")
+        self.ax2.set_title("Accuracy(%)-Trial_Num")
+        self.ax2.set_ylable=("Accuracy(%)")
         x_major_locator=MultipleLocator(4)
-        ax2.xaxis.set_major_locator(x_major_locator)
+        self.ax1.xaxis.set_major_locator(x_major_locator)
+        self.ax2.xaxis.set_major_locator(x_major_locator)
         if not "0" in Trial_Num:
             ITI = np.array(P_r_exit)-np.array(P_nose_poke)
 
@@ -76,14 +80,14 @@ class CDC(Exp):
 
             colors = ["green" if i =="1" else "red" for i in Choice_class]
 
-            ax1.set_ylim(1,yup)
-            ax1.scatter(Trial_Num,ITI,s=3,c=colors)
-            ax1.plot(Trial_Num,ITI,'gray-',sharex=ax2)
-            # ax1.legend(())
+            self.ax1.set_ylim(1,yup)
+            self.ax1.plot(Trial_Num,ITI,color='black',linestyle='-')
+            self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
+            self.ax1.legend(())
 
-            ax2.set_ylim(0,100)
-            ax2.scatter(Trial_Num,Accuracy,s=3,c=colors)
-            ax2.plot(Trial_Num,Accuracy,'gray')
+            self.ax2.set_ylim(0,105)
+            self.ax2.plot(Trial_Num,Accuracy,'black')
+            self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
 
             self.fig.canvas.draw()
             plt.pause(0.5)
@@ -101,15 +105,16 @@ class CDC(Exp):
 
             colors = ["green" if i =="1" else "red" for i in Choice_class]
 
-            ax1.set_ylim(1,yup)
-            ax1.scatter(Trial_Num,ITI,s=3,c=colors)
-            ax1.plot(Trial_Num,ITI,'gray-',sharex=ax2)
+            self.ax1.set_ylim(1,yup)
+            self.ax1.plot(Trial_Num,ITI,color='black',linestyle='-')
+            self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
 
-            ax2.set_ylim(0,100)
-            ax2.scatter(Trial_Num,Accuracy,s=3,c=colors)
-            ax2.plot(Trial_Num,Accuracy,'gray')
-
+            self.ax2.set_ylim(0,100)
+            self.ax2.plot(Trial_Num,Accuracy,'black')
+            self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
+            
             plt.savefig(self.fig_path)
+            plt.ioff()
             plt.close()
             print("result fig is saved!")
             sys.exit()
