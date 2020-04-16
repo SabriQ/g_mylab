@@ -44,7 +44,7 @@ class CDC(Exp):
             writer.writerow(["stage","Context-Dependent-Choice"])
             writer.writerow(["exp_time",current_time])
 
-        self.lick_water()
+        self.run()
 #        self.test()
     def graph_by_trial(self,Trial_Num,Accuracy,Choice_class,P_nose_poke,P_r_exit):
         """
@@ -122,7 +122,7 @@ class CDC(Exp):
 
 
 
-    def lick_water(self):
+    def run(self):
         '''
         学习往返舔水
         时间结构包括:

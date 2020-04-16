@@ -29,7 +29,7 @@ class Lick_water(Exp):
             writer.writerow(["stage","Lick_water"])
             writer.writerow(["exp_time",current_time])
 
-        self.lick_water()
+        self.run()
 #        self.test()
     def graph_by_trial(self,Trial_Num,P_left):
         """
@@ -87,7 +87,7 @@ class Lick_water(Exp):
     def test(self):
         while True:
             print(f"\r{time.time()}".ljust(24),end="")
-    def lick_water(self):
+    def run(self):
         '''
         学习往返舔水
         时间结构包括:
