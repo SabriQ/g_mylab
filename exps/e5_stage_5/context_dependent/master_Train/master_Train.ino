@@ -195,7 +195,7 @@ void Signal(int s){
   switch (s)
   {
     case 48://ll_pump
-      water_deliver(pump_ll,10);
+      water_deliver(pump_ll,7);
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
@@ -203,7 +203,7 @@ void Signal(int s){
     case 50://rl_pump
       water_deliver(pump_rl,10);
       break;
-    case 51://rl_pump
+    case 51://rr_pump
       water_deliver(pump_rr,10);
       break;
     case 52://to context0
