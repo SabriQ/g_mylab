@@ -201,10 +201,10 @@ void Signal(int s){
       water_deliver(pump_lr,10);
       break;
     case 50://rl_pump
-      water_deliver(pump_rl,7);
+      water_deliver(pump_rl,10);
       break;
     case 51://rl_pump
-      water_deliver(pump_rr,5);
+      water_deliver(pump_rr,10);
       break;
     case 52://to context0
       //from context1 to context0
