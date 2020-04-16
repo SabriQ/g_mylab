@@ -204,7 +204,7 @@ void Signal(int s){
       water_deliver(pump_rl,10);
       break;
     case 51://rr_pump
-      water_deliver(pump_rr,10);
+      water_deliver(pump_rr,7);
       break;
     case 52://to context0
       //from context1 to context0
