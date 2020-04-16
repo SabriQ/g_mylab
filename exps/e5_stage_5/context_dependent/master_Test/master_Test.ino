@@ -72,7 +72,6 @@ void loop() {
     if (i==0){
       Signal(48);//默认第一个trial的开始nose poke给水
     }
-    Serial.println("test3>>>");
     process(0);
     process(1);
     process(2);
@@ -117,7 +116,7 @@ void process(int p){
   switch (p)
   {
     case 0://waiting for nosepoke
-      do{Read_ir();}while(on_signal < 0.90 || ir[0]==0);//while循环，直到小鼠完成nosepoke
+      do{Read_ir();}while(ir[0]==0);//while循环，直到小鼠完成nosepoke
       Signal(48);//pump_ll给水
       nose_poke_time = millis();//记录时间
       Serial.println("Stat1: nose_poke");//打印stat
@@ -125,12 +124,12 @@ void process(int p){
       if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
       break;
     case 1://waiting for enter
-      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);//while循环，直到小鼠enter context
+      do{Read_ir();}while(on_signal >  0.50 && ir[2]==0);//while循环，直到小鼠enter context
       enter_time = millis();//记录时间
       Serial.println("Stat2: enter");//打印stat 
       break;
     case 2://waiting for exit
-      do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);//while循环知道小鼠exit context
+      do{Read_ir();}while(on_signal >  0.50 && ir[3]==0);//while循环知道小鼠exit context
       exit_time = millis();//记录时间
       Serial.println("Stat3: exit");//打印stat
       break;
@@ -167,12 +166,12 @@ void process(int p){
        cur_exit_context=cur_enter_context;
       break;
     case 4://waiting for r_enter
-      do{Read_ir();}while(on_signal < 0.90 || ir[3]==0);
+      do{Read_ir();}while(on_signal >  0.50 &&  ir[3]==0);
       r_enter_time = millis();
       Serial.println("Stat5: r_enter");
       break;      
     case 5://waiting for r_exit
-      do{Read_ir();}while(on_signal < 0.90 || ir[2]==0);
+      do{Read_ir();}while(on_signal >  0.50 &&  ir[2]==0);
       r_exit_time = millis();
       Serial.println("Stat6: r_exit");
       break;
@@ -289,8 +288,8 @@ void water_deliver(int pump, int milliseconds){
 void write2slave(int slave,byte send2slave1_motor){
   Wire.beginTransmission(slave);
   Wire.write(send2slave1_motor);
-  Serial.print("send ");
-  Serial.print(send2slave1_motor);
-  Serial.print(" to slave");
-  Serial.println(slave);
+//  Serial.print("send ");
+//  Serial.print(send2slave1_motor);
+//  Serial.print(" to slave");
+//  Serial.println(slave);
   Wire.endTransmission();}

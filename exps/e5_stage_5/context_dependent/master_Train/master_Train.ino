@@ -90,7 +90,7 @@ void loop() {
     else if(Choice_class==0){
       i = i-1;}
     else{
-      i=0;}   
+      i=0;}
     Serial.print(nose_poke_time);Serial.print(" ");
     Serial.print(enter_time);Serial.print(" ");
     Serial.print(exit_time);Serial.print(" ");
