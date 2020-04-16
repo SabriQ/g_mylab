@@ -9,9 +9,17 @@ class CDC(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
         super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
-
+        #plt.axes(rect, projection=None, polar=False, **kwargs)
+        #rect [left, bottom, width, height]
         plt.ion()
         self.fig = plt.figure()
+        ax1 = plt.axes([0.1,0.4,0.8,0.4]) # ax_ITI
+        ax1.set_titile("ITI-Trial_Num")
+        ax1.set_ylable=("ITI(s)")
+        ax2 = plt.axes([0.1,1.0,0.8,0.4]) # ax_accuracy
+        ax2.set_titile("Accuracy(%)-Trial_Num")
+        ax2.set_ylable=("Accuracy(%)")
+
         plt.title("Context-Dependent-Choice")
 
     def __call__(self,mouse_id):
@@ -35,7 +43,7 @@ class CDC(Exp):
 
         self.lick_water()
 #        self.test()
-    def graph_by_trial(self,P_nose_poke,P_choice):
+    def graph_by_trial(self,Trial_Num,Accuracy,Choice_class,P_nose_poke,P_r_exit):
         """
         正确率， Accuracy
         left_choice_accuracy
@@ -46,8 +54,68 @@ class CDC(Exp):
         c_history
         w_history
         """
-        
-        pass
+        plt.cla()
+        plt.title(self.mouse_id+" CDC real-time monitoring")
+        ax1.set_titile("ITI-Trial_Num")
+        ax1.set_ylable=("ITI(s)")
+        ax2.set_titile("Accuracy(%)-Trial_Num")
+        ax2.set_ylable=("Accuracy(%)")
+        x_major_locator=MultipleLocator(4)
+        ax2.xaxis.set_major_locator(x_major_locator)
+        if not "0" in Trial_Num:
+            ITI = np.array(P_r_exit)-np.array(P_nose_poke)
+
+            if len(Trial_Num)>=60:
+                xright=len(Trial_Num)
+            else:
+                xright=60
+            if max(ITI)>=20:
+                yup = max(ITI)
+            else:
+                yup=20
+
+            colors = ["green" if i =="1" else "red" for i in Choice_class]
+
+            ax1.set_ylim(1,yup)
+            ax1.scatter(Trial_Num,ITI,s=3,c=colors)
+            ax1.plot(Trial_Num,ITI,'gray-',sharex=ax2)
+            # ax1.legend(())
+
+            ax2.set_ylim(0,100)
+            ax2.scatter(Trial_Num,Accuracy,s=3,c=colors)
+            ax2.plot(Trial_Num,Accuracy,'gray')
+
+            self.fig.canvas.draw()
+            plt.pause(0.5)
+        else:
+            ITI = np.array(P_r_exit)-np.array(P_nose_poke)
+
+            if len(Trial_Num)>=60:
+                xright=len(Trial_Num)
+            else:
+                xright=60
+            if max(ITI)>=20:
+                yup = max(ITI)
+            else:
+                yup=20
+
+            colors = ["green" if i =="1" else "red" for i in Choice_class]
+
+            ax1.set_ylim(1,yup)
+            ax1.scatter(Trial_Num,ITI,s=3,c=colors)
+            ax1.plot(Trial_Num,ITI,'gray-',sharex=ax2)
+
+            ax2.set_ylim(0,100)
+            ax2.scatter(Trial_Num,Accuracy,s=3,c=colors)
+            ax2.plot(Trial_Num,Accuracy,'gray')
+
+            plt.savefig(self.fig_path)
+            plt.close()
+            print("result fig is saved!")
+            sys.exit()
+
+
+
 
     def lick_water(self):
         '''
@@ -73,7 +141,7 @@ class CDC(Exp):
         print("Trial_Num","Enter_ctx","Exit_ctx","Choice_class","Left_choice","Right_choice")
         
         show_info = "Ready "
-    
+        Accuracy = []
         while True:
             info = self.ser.readline().decode("utf-8").strip().split(" ")
             time_elapse = time.time()-start_time
@@ -129,7 +197,9 @@ class CDC(Exp):
                         writer = csv.writer(csvfile)
                         writer.writerow(row)
 
-                    #self.graph_by_trial(Trial_Num,P_nose_poke,P_choice)
+                    Accuracy.append(sum([int(i) for i in Choice_class])/len(Choice_class)*100)
+
+                    self.graph_by_trial(Trial_Num,Accuracy,Choice_class,P_nose_poke,P_r_exit)
 
                 if "Stat7:" in info:
                     print("\r","All Done!")
