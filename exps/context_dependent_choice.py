@@ -12,7 +12,7 @@ class CDC(Exp):
         #plt.axes(rect, projection=None, polar=False, **kwargs)
         #rect [left, bottom, width, height]
         plt.ion()
-        self.fig = plt.figure(figsize=[6,8])
+        self.fig = plt.figure(figsize=[6,9])
         self.fig.canvas.manager.window.move(0,0) 
 
         self.ax1 = plt.axes([0.15,0.55,0.75,0.4]) # ax_ITI
@@ -86,7 +86,7 @@ class CDC(Exp):
             self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
             #self.ax1.legend(())
 
-            self.ax2.set_ylim(0,105)
+            self.ax2.set_ylim(-1,105)
             self.ax2.plot(Trial_Num,Accuracy,'black')
             self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
 
