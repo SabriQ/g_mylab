@@ -177,6 +177,7 @@ void process(int p){
       break;
     case 6://all done
       Serial.println("Stat7: All_done");
+      break;
         //打印choice的时间点，判断选择类型，决定是否给水
     default:
       break;
@@ -201,7 +202,7 @@ void Signal(int s){
       water_deliver(pump_lr,10);
       break;
     case 50://rl_pump
-      water_deliver(pump_rl,10);
+      water_deliver(pump_rl,7);
       break;
     case 51://rr_pump
       water_deliver(pump_rr,7);

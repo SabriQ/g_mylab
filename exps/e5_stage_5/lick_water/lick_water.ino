@@ -115,6 +115,7 @@ void process(int p){
       break;
     case 6://all done
       Serial.println("Stat7: All_done");
+      break;
     default:
       break;
   }}  

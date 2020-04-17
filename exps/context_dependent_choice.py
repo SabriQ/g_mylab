@@ -196,8 +196,8 @@ class CDC(Exp):
                                     ,row[5].center(14))
                         show_info = "Ready "
                     else:
-                        row=["Terminated"]
-                        print("\r",row[0])
+                        row=[]
+                        print("\r","Terminated")
 
                     with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
                         writer = csv.writer(csvfile)
