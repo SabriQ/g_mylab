@@ -83,9 +83,10 @@ class CDC(Exp):
             self.ax1.set_ylim(1,yup)
             self.ax1.plot(Trial_Num,ITI,color='black',linestyle='-')
             self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
-            self.ax1.legend(())
+            #self.ax1.legend(())
 
             self.ax2.set_ylim(0,105)
+            self.ax2.set_xlabel("Trial")
             self.ax2.plot(Trial_Num,Accuracy,'black')
             self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
 
@@ -110,6 +111,7 @@ class CDC(Exp):
             self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
 
             self.ax2.set_ylim(0,100)
+            self.ax2.set_xlabel("Trial")
             self.ax2.plot(Trial_Num,Accuracy,'black')
             self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
             
