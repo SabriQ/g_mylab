@@ -1,23 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+import os,sys
+import json
 class MiniResult():
-	def __init__(self,result_dir,mouse_info):
+	def __init__(self,result_dir,mouse_info_path):
 
 		self.hdf5Path=
 		self.ms_tsPath=
 		self.result_matpath=
 		self.result_pklpath=
-		self.mouse_info=
+		self.mouse_info_path = mouse_info_path
+		f = open(self.mouse_info_path, encoding='utf-8')
+		self.mouse_info=json.load(f)
 
-	def keys():
-		return self.cnm.keys()
-	def save_mat():
-		pass
-	def plot_SFP():
-		pass
-	def load_mouseinfo(self):
-		pass
+
+	def save_mouseinfo(self):
+		with open(self.mouse_info_path,'a') as f:
+			json.dump(self.mouse_info,f)
+			print("update %s" %os.base.name(self.mouse_info_path))
+			
 	def load_hdf5(self):
 		try:
 			from caiman.source_extraction.cnmf.cnmf import load_CNMF
@@ -27,19 +28,19 @@ class MiniResult():
 		print("loading hdf5Path...")
 		self.cnm = load_CNMF(hdf5Path)
 		print("successfully loaded")
-	def load_msts(self):
-		# attention to check whether frames of ms_ts are equal to that of traces
-		pass
 
 	def load_result(self):
 		if os.path.exists(self.result_pklpath):
 			pass
 		else:
 			self.load_hdf5
+
+
 	def savepkl(self):
 		pass
 	def savemat(self):
 		pass
+
 	def plot_demo(self,self.filepath):
 		print("loading results...")
 		cnm = load_CNMF(filepath,n_processes=4,dview=dview)
