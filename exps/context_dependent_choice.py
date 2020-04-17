@@ -60,9 +60,10 @@ class CDC(Exp):
         plt.cla()
         plt.title(self.mouse_id+" CDC real-time monitoring")
         self.ax1.set_title("ITI-Trial_Num")
-        self.ax1.set_ylable=("ITI(s)")
+        self.ax1.set_ylabel("ITI(s)")
         self.ax2.set_title("Accuracy(%)-Trial_Num")
-        self.ax2.set_ylable=("Accuracy(%)")
+        self.ax2.set_xlabel("Trial")
+        self.ax2.set_ylabel("Accuracy(%)")
         x_major_locator=MultipleLocator(4)
         self.ax1.xaxis.set_major_locator(x_major_locator)
         self.ax2.xaxis.set_major_locator(x_major_locator)
@@ -86,7 +87,6 @@ class CDC(Exp):
             #self.ax1.legend(())
 
             self.ax2.set_ylim(0,105)
-            self.ax2.set_xlabel("Trial")
             self.ax2.plot(Trial_Num,Accuracy,'black')
             self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
 
@@ -111,7 +111,6 @@ class CDC(Exp):
             self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
 
             self.ax2.set_ylim(0,100)
-            self.ax2.set_xlabel("Trial")
             self.ax2.plot(Trial_Num,Accuracy,'black')
             self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
             
