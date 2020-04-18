@@ -1,6 +1,6 @@
 # miniscope 分析流程
 # class MiniResult
-
+	整合由CNMF产生的数据，产生info_mouse_id.txt
 ## info
 	new info
 		ms_starts
@@ -31,3 +31,22 @@
 	result["in_track_behavetrialblocks"]
 	result["in_track_msblocks"]
 
+
+result.hdf5
+	ms.mat
+		post_processed.mat
+			in_context_191172.py
+			in_context_191172.mat
+			in_track_191172.py
+			in_track_191172.mat
+
+result
+	blocknames 每一个单独的文件名一个blockname
+
+	msblocks 每一个单独的视频一个block
+	behaveblocks 每一个单独个视频一个behave block
+	logblocks 每一个单独的logfile一个logblock
+
+	aligned_behaveblocks, 每一天的行为学数据和miniscope数据对其之之后，合并一个aligned_behaveblock,
+	contextcoords 每天的视频一个坐标，每天可能有多个
+	video_scale
