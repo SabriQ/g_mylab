@@ -1,5 +1,6 @@
 # miniscope 分析流程
-#class MiniResult
+# class MiniResult
+
 ## info
 	new info
 		ms_starts
