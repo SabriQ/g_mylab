@@ -4,17 +4,22 @@ import pandas as pd
 import numpy as numpy
 import matplotlib.pyplot as pyplot
 from mylab.Cvideo import Video
+from mylab.Cmouseinfo import MouseInfo
 class MiniLWResult(MR):
-    def __init__(self,result_dir,mouse_info_path,behave_dir):
-        super().__init__(result_dir,mouse_info_path)
+    def __init__(self,mouse_info_path,result_dir,behave_dir):
+        super().__init__(mouse_info_path,result_dir)
         self.exp_name = "lick_water"
-        self.behave_dir = behave_dir
-        # here are all the possible format of result generesulted by CNMF
-        self.hdf5_Path=glob.glob(os.path.join(self.result_dir),'*/hdf5')[0]
-        self.ms_ts_Path=glob.glob(os.path.join(self.result_dir),'ms_ts.pkl')[0]
-        self.msmat_Path=glob.glob(os.path.join(self.result_dir),'ms.mat')[0]
-        self.mspkl_Path=glob.glob(os.path.join(self.result_dir),'ms.pkl')[0]
+        if not self.exp_name in self._info.keys():
+            self._info[self.exp_name]={}
+            print("add json %s"%self.exp_name)
 
+        self.behave_dir = behave_dir
+        self._info[self.exp_name]["behave_dir"] = self.behave_dir
+        # here are all the possible format of result generesulted by CNMF
+        self.ms_ts_Path=glob.glob(os.path.join(self.result_dir),'ms_ts.pkl')[0]        
+        self.mspkl_Path=glob.glob(os.path.join(self.result_dir),'ms.pkl')[0]
+        self.msmat_Path=glob.glob(os.path.join(self.result_dir),'ms.mat')[0]
+        self.hdf5_Path=glob.glob(os.path.join(self.result_dir),'*/hdf5')[0]
 
         self.neccessary_info = ["video_scale","context_orders","context_angles","ms_starts","behave_trackfiles","behave_timestamps","behave_logfiles","behave_videos"]
         if not self.__check_behave_info(self.neccessary_info):
@@ -22,22 +27,11 @@ class MiniLWResult(MR):
 
 
     @property
-    def keys(self):
-        self._mouse_info[self.exp_name].keys()
-
+    def expinfo(self):
+        self._info[self.exp_name]
     @property
-    def allkeys(self):
-        self._mouse_info.keys()
-    
-    def __getitem__(self,key):
-        return self._mouse_info[self.exp_name][key]
-
-    def __setitem__(self,key,value):
-        if not key in self.keys: 
-            self._mouse_info[self.exp_name][key] = value
-            print("%s is added"%key)
-        else:
-            print("reset or update is not allowed")
+    def expkeys(self):
+        return self._info[self.exp_name].keys()
 
     def __add_behave_info(self,):
         def sort_key(s):     
@@ -53,30 +47,31 @@ class MiniLWResult(MR):
                 return [int(date),int(HMS)]
 
         behave_trackfiledir = os.path.join(behave_dir,"*.h5")
-        self._mouse_info[self.exp_name]["behave_trackfiles"] = [i for i in glob.glob(behave_trackfiledir) if '2019111' not in i]
-        if len(self._mouse_info[self.exp_name]["behave_trackfiles"])==0:
+        self.expinfo["behave_trackfiles"] = [i for i in glob.glob(behave_trackfiledir) if '2019111' not in i]
+        if len(self.expinfo["behave_trackfiles"])==0:
             print("%s is wrong",nothing is found%self.behave_dir)
                 sys.exit()
-        self._mouse_info[self.exp_name]["behave_trackfiles"].sort(key=sort_key)
+        self.expinfo["behave_trackfiles"].sort(key=sort_key)
         print("add info behave_trackfiles")
         behave_timestampdir = os.path.join(behave_dir,"*_ts.txt")
-        self._mouse_info[self.exp_name]["behave_timestamps"] = [i for i in glob.glob(behave_timestampdir) if '2019111' not in i]
-        self._mouse_info[self.exp_name]["behave_timestamps"].sort(key=sort_key)
+        self.expinfo["behave_timestamps"] = [i for i in glob.glob(behave_timestampdir) if '2019111' not in i]
+        self.expinfo["behave_timestamps"].sort(key=sort_key)
         print("add info behave_timestamps")
         behave_logffiledir = os.path.join(behave_dir,"*log.csv")
-        self._mouse_info[self.exp_name]["behave_logfiles"] = [i for i in glob.glob(behave_logffiledir) if '2019111' not in i]
-        self._mouse_info[self.exp_name]["behave_logfiles"].sort(key=sort_key)
+        self.expinfo["behave_logfiles"] = [i for i in glob.glob(behave_logffiledir) if '2019111' not in i]
+        self.expinfo["behave_logfiles"].sort(key=sort_key)
         print("add info behave_logfiles")
         behave_videodir = os.path.join(behave_dir,"*_labeled.mp4")
-        self._mouse_info[self.exp_name]["behave_videos"] = [i for i in glob.glob(behave_videodir) if '2019111' not in i]
-        self._mouse_info[self.exp_name]["behave_videos"].sort(key=sort_key)
+        self.expinfo["behave_videos"] = [i for i in glob.glob(behave_videodir) if '2019111' not in i]
+        self.expinfo["behave_videos"].sort(key=sort_key)
         print("add info behave_videos")
-        self._mouse_info[self.exp_name]["behave_blocknames"] = [os.path.basename(i).split('_ts.txt')[0] for i in self._mouse_info[self.exp_name]["behave_timestamps"]]
+        self.expinfo["behave_blocknames"] = [os.path.basename(i).split('_ts.txt')[0] for i in self.expinfo["behave_timestamps"]]
         print("add info behave_blocknames")
 
     def __add_videoscale(self,distance=40):
-        self._mouse_info[self.exp_name]["video_scale"] = Video(self._mouse_info[self.exp_name]["behave_videos"][0]).scale(distance)
-
+        self.expinfo["video_scale"] = Video(self.expinfo["behave_videos"][0]).scale(distance)
+        if len(self.expinfo["video_scale"]) == 0:
+            return self.__add_videoscale(distance)
     def __check_behave_info(self):
         j1 = [i for i in ["context_orders","context_angles","ms_starts"] if i not in self.keys ]
         if j1:
@@ -86,10 +81,6 @@ class MiniLWResult(MR):
             self.__add_behave_info()
         if not "video_scale" in self.keys:
             self.__add_videoscale()
-
-
-
-
 
 
     def _equal_frames(self,dff,ms_ts):
@@ -178,9 +169,9 @@ class MiniLWResult(MR):
             aligned_msblocks_behaveblock['be_frame']=[find_close_fast((behaveblock['correct_ts']*1000),i) for i in msblock['ms_ts']]
             print('-->aligned.',end=' ')
             aligned_msblocks_behaveblock = aligned_msblocks_behaveblock.join(behaveblock.iloc[aligned_msblocks_behaveblock['be_frame'].tolist(),].reset_index())
-            aligned_msblocks_behaveblock['Headspeeds'],aligned_msblocks_behaveblock['Headspeed_angles'] = self._speed(aligned_msblocks_behaveblock['Head_x'],aligned_msblocks_behaveblock['Head_y'],aligned_msblocks_behaveblock['be_ts'],self._mouse_info[self.exp_name]["video_scale"])
-            aligned_msblocks_behaveblock['Bodyspeeds'],aligned_msblocks_behaveblock['Bodyspeed_angles'] = self._(aligned_msblocks_behaveblock['Body_x'],aligned_msblocks_behaveblock['Body_y'],aligned_msblocks_behaveblock['be_ts'],self._mouse_info[self.exp_name]["video_scale"])
-            aligned_msblocks_behaveblock['Tailspeeds'],aligned_msblocks_behaveblock['Tailspeed_angles'] = self._speed(aligned_msblocks_behaveblock['Tail_x'],aligned_msblocks_behaveblock['Tail_y'],aligned_msblocks_behaveblock['be_ts'],self._mouse_info[self.exp_name]["video_scale"])
+            aligned_msblocks_behaveblock['Headspeeds'],aligned_msblocks_behaveblock['Headspeed_angles'] = self._speed(aligned_msblocks_behaveblock['Head_x'],aligned_msblocks_behaveblock['Head_y'],aligned_msblocks_behaveblock['be_ts'],self.expinfo["video_scale"])
+            aligned_msblocks_behaveblock['Bodyspeeds'],aligned_msblocks_behaveblock['Bodyspeed_angles'] = self._(aligned_msblocks_behaveblock['Body_x'],aligned_msblocks_behaveblock['Body_y'],aligned_msblocks_behaveblock['be_ts'],self.expinfo["video_scale"])
+            aligned_msblocks_behaveblock['Tailspeeds'],aligned_msblocks_behaveblock['Tailspeed_angles'] = self._speed(aligned_msblocks_behaveblock['Tail_x'],aligned_msblocks_behaveblock['Tail_y'],aligned_msblocks_behaveblock['be_ts'],self.expinfo["video_scale"])
             aligned_msblocks_behaveblock['headdirections'],aligned_msblocks_behaveblock['taildirections'], aligned_msblocks_behaveblock['arch_angles'] = direction(aligned_msblocks_behaveblock['Head_x'].tolist(),aligned_msblocks_behaveblock['Head_y'].tolist(),aligned_msblocks_behaveblock['Body_x'].tolist(),aligned_msblocks_behaveblock['Body_y'].tolist(),aligned_msblocks_behaveblock['Tail_x'].tolist(),aligned_msblocks_behaveblock['Tail_y'].tolist())
             aligned_msblocks_behaveblocks.append(aligned_msblocks_behaveblock)    
             print(f"Caculated speeds")
@@ -192,7 +183,7 @@ class MiniLWResult(MR):
             print(os.path.basename(video),end=': ')
             masks,coords = Video(video).draw_rois(aim="in_context",count=1)
             contextcoords.append((masks,coords))
-        self._mouse_info[self.exp_name]["in_context_contextcoords"]=contextcoords
+        self.expinfo["in_context_contextcoords"]=contextcoords
 
         for aligned_msblocks_behaveblock, contextcoord in zip(aligned_msblocks_behaveblocks,contextcoords):
             masks = contextcoord[0][0]
@@ -214,7 +205,7 @@ class MiniLWResult(MR):
             print(os.path.basename(video),end=': ')
             masks,coords = Video(video).draw_rois(aim="in_track",count=1)
             contextcoords.append((masks,coords))
-        self._mouse_info[self.exp_name]["in_track_contextcoords"]=contextcoords
+        self.expinfo["in_track_contextcoords"]=contextcoords
 
         for aligned_msblocks_behaveblock, contextcoord in zip(aligned_msblocks_behaveblocks,contextcoords):
             masks = contextcoord[0][0]
@@ -238,13 +229,13 @@ class MiniLWResult(MR):
         if "msblocks" not in result.keys():
             self.sigraw2msblocks(result["ms_ts"],result["sigraw"],result["acceptedPool"]-1)
         if "behaveblocks" not in result.keys():
-            self.dlctrack2behaveblocks(self._mouse_info[self.exp_name]["behave_trackfiles"],self._mouse_info[self.exp_name]["behave_timestamps"],self._mouse_info[self.exp_name]["behave_blocknames"])
+            self.dlctrack2behaveblocks(self.expinfo["behave_trackfiles"],self.expinfo["behave_timestamps"],self.expinfo["behave_blocknames"])
         if "aligned_msblocks_behaveblocks" not in result.keys():
-            self.aligned_msblocks_behaveblocks(self._mouse_info[self.exp_name]["ms_starts"],result["msblocks"],result["behaveblocks"])
+            self.aligned_msblocks_behaveblocks(self.expinfo["ms_starts"],result["msblocks"],result["behaveblocks"])
         if "in_context" not in result["aligned_msblocks_behaveblocks"].keys():
-            self.select_in_context(self._mouse_info[self.exp_name]["behave_videos"],result["aligned_msblocks_behaveblocks"])
+            self.select_in_context(self.expinfo["behave_videos"],result["aligned_msblocks_behaveblocks"])
         if "in_track" not in result["aligned_msblocks_behaveblocks"].keys():
-            self.select_in_track(self._mouse_info[self.exp_name]["behave_videos"],result["aligned_msblocks_behaveblocks"])
+            self.select_in_track(self.expinfo["behave_videos"],result["aligned_msblocks_behaveblocks"])
 
 if __name__ == "__main__":
     pass
