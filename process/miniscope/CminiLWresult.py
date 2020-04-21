@@ -6,8 +6,8 @@ import matplotlib.pyplot as pyplot
 from mylab.Cvideo import Video
 from mylab.Cmouseinfo import MouseInfo
 class MiniLWResult(MR):
-    def __init__(self,mouse_info_path,result_dir,behave_dir):
-        super().__init__(mouse_info_path,result_dir)
+    def __init__(self,mouse_info_path,cnmf_result_dir,behave_dir):
+        super().__init__(mouse_info_path,cnmf_result_dir)
         self.exp_name = "lick_water"
         if not self.exp_name in self._info.keys():
             self._info[self.exp_name]={}
@@ -16,10 +16,10 @@ class MiniLWResult(MR):
         self.behave_dir = behave_dir
         self._info[self.exp_name]["behave_dir"] = self.behave_dir
         # here are all the possible format of result generesulted by CNMF
-        self.ms_ts_Path=glob.glob(os.path.join(self.result_dir),'ms_ts.pkl')[0]        
-        self.mspkl_Path=glob.glob(os.path.join(self.result_dir),'ms.pkl')[0]
-        self.msmat_Path=glob.glob(os.path.join(self.result_dir),'ms.mat')[0]
-        self.hdf5_Path=glob.glob(os.path.join(self.result_dir),'*/hdf5')[0]
+        self.ms_ts_Path=glob.glob(os.path.join(self.cnmf_result_dir),'ms_ts.pkl')[0]        
+        self.mspkl_Path=glob.glob(os.path.join(self.cnmf_result_dir),'ms.pkl')[0]
+        self.msmat_Path=glob.glob(os.path.join(self.cnmf_result_dir),'ms.mat')[0]
+        self.hdf5_Path=glob.glob(os.path.join(self.cnmf_result_dir),'*/hdf5')[0]
 
         self.neccessary_info = ["video_scale","context_orders","context_angles","ms_starts","behave_trackfiles","behave_timestamps","behave_logfiles","behave_videos"]
         if not self.__check_behave_info(self.neccessary_info):
@@ -119,7 +119,7 @@ class MiniLWResult(MR):
             print('trace and ms_ts[',start,end,']constructed as DataFrame')
             msblocks.append(block)
         print("sigraw have been constructed as a list of DataFrame as ms_ts. ")
-        result["msblocks"] =  msblocks
+        self.ana_result["msblocks"] =  msblocks
         
     def dlctrack2behaveblocks(self,behave_trackfiles,behave_timestamps,behave_blocknames):
         behaveblocks=[]
@@ -139,7 +139,7 @@ class MiniLWResult(MR):
             print(f"behave data of {blockname} has been constructed as DataFrame")
             i= i+1
         print("All the behave info has been constructed as a list of DataFrame. ")
-        result["behaveblocks"] =  behaveblocks
+        self.ana_result["behaveblocks"] =  behaveblocks
 
     def _speed(cls,X,Y,T,s):
         speeds=[0]
@@ -175,7 +175,7 @@ class MiniLWResult(MR):
             aligned_msblocks_behaveblock['headdirections'],aligned_msblocks_behaveblock['taildirections'], aligned_msblocks_behaveblock['arch_angles'] = direction(aligned_msblocks_behaveblock['Head_x'].tolist(),aligned_msblocks_behaveblock['Head_y'].tolist(),aligned_msblocks_behaveblock['Body_x'].tolist(),aligned_msblocks_behaveblock['Body_y'].tolist(),aligned_msblocks_behaveblock['Tail_x'].tolist(),aligned_msblocks_behaveblock['Tail_y'].tolist())
             aligned_msblocks_behaveblocks.append(aligned_msblocks_behaveblock)    
             print(f"Caculated speeds")
-        result["aligned_msblocks_behaveblocks"] =  aligned_msblocks_behaveblocks
+        self.ana_result["aligned_msblocks_behaveblocks"] =  aligned_msblocks_behaveblocks
 
     def select_in_context(self,behave_videos,align_msblocks_behaveblocks):
         contextcoords=[]
@@ -195,7 +195,8 @@ class MiniLWResult(MR):
                     in_context.append(1)
             aligned_msblocks_behaveblock['in_context'] = in_context
         print("add condition 'in_context'")
-
+    def extract_trials_in_context(self):
+        pass
     def TrackinZoneView(self,contextcoords,align_msblocks_behaveblocks,blocknames):
         pass
 
@@ -220,22 +221,22 @@ class MiniLWResult(MR):
 
 
     def run(self):
-        result = self.load_result()
+        
         try:
-            result["ms_ts"] = self.load_msts(result["dff"])
+            self.ana_result["ms_ts"] = self.load_msts(self.ana_result["dff"])
         except:
             print("ms_ts and frames are not equalong ")
             sys.exit()
         if "msblocks" not in result.keys():
-            self.sigraw2msblocks(result["ms_ts"],result["sigraw"],result["acceptedPool"]-1)
+            self.sigraw2msblocks(self.ana_result["ms_ts"],self.ana_result["sigraw"],self.ana_result["acceptedPool"]-1)
         if "behaveblocks" not in result.keys():
             self.dlctrack2behaveblocks(self.expinfo["behave_trackfiles"],self.expinfo["behave_timestamps"],self.expinfo["behave_blocknames"])
         if "aligned_msblocks_behaveblocks" not in result.keys():
-            self.aligned_msblocks_behaveblocks(self.expinfo["ms_starts"],result["msblocks"],result["behaveblocks"])
-        if "in_context" not in result["aligned_msblocks_behaveblocks"].keys():
-            self.select_in_context(self.expinfo["behave_videos"],result["aligned_msblocks_behaveblocks"])
-        if "in_track" not in result["aligned_msblocks_behaveblocks"].keys():
-            self.select_in_track(self.expinfo["behave_videos"],result["aligned_msblocks_behaveblocks"])
+            self.aligned_msblocks_behaveblocks(self.expinfo["ms_starts"],self.ana_result["msblocks"],self.ana_result["behaveblocks"])
+        if "in_context" not in self.ana_result["aligned_msblocks_behaveblocks"].keys():
+            self.select_in_context(self.expinfo["behave_videos"],self.ana_result["aligned_msblocks_behaveblocks"])
+        if "in_track" not in self.ana_result["aligned_msblocks_behaveblocks"].keys():
+            self.select_in_track(self.expinfo["behave_videos"],self.ana_result["aligned_msblocks_behaveblocks"])
 
 if __name__ == "__main__":
     pass

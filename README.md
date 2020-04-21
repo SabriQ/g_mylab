@@ -1,52 +1,41 @@
-# Github_Repo
-
-## Mylab
+# Mylab
 
 ## Cvideo
+	### Video
+		#### __init__
+		#### play
+		#### scale
+		#### _angle
+		#### speed
+		#### play_with_track
+		#### generate_ts_txt
+		#### _extract_coord()
+		#### draw_rois
+		#### check_frames
 
-## Cparams
+## Cmouseinfo
+	### MouseInfo
+		#### __init__
+		#### @property keys
+		#### _load_mouseinfo
+		#### _save_mouseinfo
 
 ## info 
+	#### current_timepont
+	#### send_email
+	#### send_wechat
 
-#### play_camera
+## sys_camera
+	#### get_cameraName
+	#### get_cameraParam
+	#### video_online_play
+	#### video_recording
 
-#### record_camera
+## Cdecs
+	#### timeit
+	#### wehcat
+	#### timeit_param
 
-## class video 
-
-#### check_by_fra
-
-#### mes
-
-#### crop
-
-#### generate_ts
-
-#### draw_rois
-
-#### draw_roi
-
-## class behave_video(video)
-
-#### freezing analysis
-
-#### epm
-
-#### openfield
-
-## class miniscope_video(video)
-
-#### concatenate
-
-#### make_ts
-
-#### check_ts_video_frame
-
-
-
-
-
-## 
 
 
 
