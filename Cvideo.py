@@ -19,7 +19,7 @@ class Video():
         self.abs_prefix = os.path.splitext(self.video_path)[-2]
         self.xy = os.path.dirname(self.video_path)+'\\'+'xy.txt'
         self.videots_path = self.abs_prefix + '_ts.txt'
-        self.video_track_path = glob.glob(self.abs_prefix+".h5")[0]
+        self.video_track_path = glob.glob(self.abs_prefix+".h5")
     def play(self):
         """
         instructions:
