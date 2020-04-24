@@ -211,5 +211,5 @@ class CDC(Exp):
                     print("\r","All Done!")
 
 if __name__ =="__main__":
-    cdc = CDC("/dev/ttyUSB2")
+    cdc = CDC("/dev/ttyUSB1")
     cdc(sys.argv[1])

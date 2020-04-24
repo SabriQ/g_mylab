@@ -145,6 +145,11 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
+          //just for train
+//          if (left_choice > 2* right_choice || left_choice >= right_choice+15 && Trial_num >= 10){
+//            Signal(51);//pump_rr 给水
+//            }
+            
           Choice_class = 0;}
       }
        else if (ir[5]==1){
@@ -155,6 +160,11 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
+          //just for train
+//          if (right_choice > 2* left_choice ||right_choice >= left_choice +15 && Trial_num >= 10){
+//            Signal(50);//pump_rl 给水
+//            }
+            
           Choice_class = 0; }   
        }
        else {
@@ -195,18 +205,40 @@ void Signal(int s){
   */
   switch (s)
   {
-    case 48://ll_pump
-      water_deliver(pump_ll,7);
+    case 48://ll_pump,nosepoke
+      if (Trial_num<10){
+      water_deliver(pump_ll,8);
+      }else{
+        water_deliver(pump_ll,8);
+      }
+
+//      if (choice_class==1){
+//      water_deliver(pump_ll,6);
+//      }else{
+//      water_deliver(pump_ll,3);
+//      }
+
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
-    case 50://rl_pump
-      water_deliver(pump_rl,7);
+      
+    case 50://rl_pump 
+        water_deliver(pump_rl,6);
+      //如果bias 太严重,增加unprefer这一边的水量一倍
+      if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
+        water_deliver(pump_rl,6); 
+      }
+      
       break;
+      
     case 51://rr_pump
-      water_deliver(pump_rr,6);
+      water_deliver(pump_rr,6);      
+      if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
+        water_deliver(pump_rr,6); 
+      }
       break;
+      
     case 52://to context0
       //from context1 to context0
         send2slave1_motor=0;
