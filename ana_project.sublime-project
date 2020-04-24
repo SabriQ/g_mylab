@@ -3,6 +3,9 @@
 	[
 		{
 			"path": "process\\miniscope"
+		},
+		{
+			"path": "."
 		}
 	]
 }

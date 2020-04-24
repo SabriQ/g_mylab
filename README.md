@@ -14,9 +14,15 @@
 		#### check_frames
 
 ## Cmouseinfo
+
 	### MouseInfo
 		#### __init__
 		#### @property keys
+		#### @property save
+		#### @property lick_water
+		#### add_exp
+		#### add_key
+		#### update_key
 		#### _load_mouseinfo
 		#### _save_mouseinfo
 

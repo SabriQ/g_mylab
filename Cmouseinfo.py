@@ -20,19 +20,44 @@ class MouseInfo():
     def save(self):
         return self._save_mouseinfo()
     
-
-    def __getitem__(self,key):
-        if key in self.keys:
-            return self._mouse_info[key]
+    @property
+    def lick_water(self):
+        if not "lick_water" in self.keys:
+            print ("'lick_water' inexistent")
         else:
-            return "no %s"%(key)
-
-    def __setitem__(self,key,value):
-        if not key in self.keys: 
-            self._mouse_info[key] = value
-            print("%s is added"%key)
+            print (self._mouse_info["lick_water"].keys())
+    
+    def add_exp(self,exp):
+        if exp in self.keys:
+            print("already have %s"%exp)
         else:
-            print("reset or update is not allowed.")
+            self._mouse_info[exp]={}
+
+    def add_key(self,key,value,exp=None,update=False):
+        if exp == None:
+            if exp in self.keys:
+                if update:
+                    self._mouse_info[key]=value
+                    print("update %s"%key)
+                else:
+                    print("please use 'update_key' or set 'update = True'")
+            else:   
+                self._mouse_info[key]=value
+                print("add %s"%key)
+        else:
+            if exp in self.keys():
+                self._mouse_info[exp][key]=value
+                print("add %s"%key)
+            else:
+                self.add_exp(exp)
+                self.add_key(key,value,exp=exp)
+
+    def update_key(self,key,value,exp=None):
+        if exp == None:
+            self._mouse_info[key]=value
+        else:
+            self._mouse_info[exp][key]=value
+        print("update %s"%key)
     
     def __del__(self):
         pass
