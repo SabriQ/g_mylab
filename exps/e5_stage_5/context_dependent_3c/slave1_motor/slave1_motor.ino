@@ -77,9 +77,11 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//leaving motor
       if (c_ctx==0){
-        do{Read_ctx();pulse_stepper(pul,20);}while(ctx[2]==0 ); 
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0 ); 
       }else if(c_ctx==1){
-        do{Read_ctx();pulse_stepper(pul,20);}while(ctx[2]==0); 
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0); 
+      }else{
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0);               
       }
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
@@ -88,6 +90,7 @@ void rec(){
       break;
 
     default:
+      Read_ctx();
       break;}}
 
 void Read_ctx(){

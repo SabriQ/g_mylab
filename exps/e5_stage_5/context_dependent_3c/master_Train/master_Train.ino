@@ -83,7 +83,8 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
- Signal(52);cur_enter_context=0;
+     Serial.println(">>>>>>");
+ Signal(52);cur_enter_context=0; //slave也要通电，否则会被阻塞
   for (i=0;i<trial_length;i++){
     if (i==0){
       Signal(48);//默认第一个trial的开始nose poke给水
@@ -245,7 +246,6 @@ void Signal(int s){
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
         water_deliver(pump_rl,6); 
       }
-      
       break;
       
     case 51://rr_pump
@@ -260,6 +260,7 @@ void Signal(int s){
         send2slave1_motor=0;
         write2slave(1,send2slave1_motor);
       break;
+      
     case 53://to context1 5
       //from context0 to context1
         send2slave1_motor=1;
@@ -268,13 +269,13 @@ void Signal(int s){
     case 54://to context2 6
         send2slave1_motor=2;
         write2slave(1,send2slave1_motor);
+        break;
     default:
       break;}
     }
   
 
 void Read_ir(){
-
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
   if(on_signal >= 0.90){ 
@@ -287,8 +288,8 @@ void Read_ir(){
       float ir_rr_value = Read_analog(ir_rr,5); 
       if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
       if (ir_lr_value< 500 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
-      if (ir_enter_value< 500 && ir_enter_value>0.5) {ir[2] = 1;}else{ir[2] = 0;}
-      if (ir_exit_value< 500 && ir_exit_value>0.5) {ir[3] = 1;}else{ir[3] = 0;}
+      if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
+      if (ir_exit_value< 200) {ir[3] = 1;}else{ir[3] = 0;}
       if (ir_rl_value< 500 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
       if (ir_rr_value< 400 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
 //      Serial.print(ir_ll_value);Serial.print(" ");
