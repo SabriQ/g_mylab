@@ -5,10 +5,16 @@ from mylab.exps.Cexps import *
 from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
-class CDC(Exp):
-    def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
+class CDC(Exp):# context dependent choice
+    def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track",mode="2c_40cm"):
         super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
+        self.mode = mode
+        modes = ["2c_40cm","2c_100cm"]
+        modes = ["adaptation_40cm","adaptation_100cm","train","test"]
+        if not self.mode in modes:
+            print("please choose mode from %s"% modes)
+            sys.exit()
         #plt.axes(rect, projection=None, polar=False, **kwargs)
         #rect [left, bottom, width, height]
         plt.ion()
@@ -29,10 +35,10 @@ class CDC(Exp):
         self.mouse_id =str(mouse_id)
 
         current_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-        log_name = "CDC-"+self.mouse_id+'-'+current_time+'_log.csv'
+        log_name = "CDC-"+self.mode+"-"+self.mouse_id+'-'+current_time+'_log.csv'
 
         self.log_path = os.path.join(self.data_dir,log_name)
-        fig_name = "CDC-"+self.mouse_id+'-'+current_time+'.png'
+        fig_name = "CDC-"+self.mode+"-"+self.mouse_id+'-'+current_time+'.png'
         self.log_path = os.path.join(self.data_dir,log_name)
         self.fig_path = os.path.join(self.data_dir,fig_name)
 
@@ -41,7 +47,7 @@ class CDC(Exp):
         with open(self.log_path, 'w',newline="",encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["mouse_id",mouse_id])
-            writer.writerow(["stage","Context-Dependent-Choice"])
+            writer.writerow(["stage","Context-Dependent-Choice",self.mode])
             writer.writerow(["exp_time",current_time])
 
         self.run()

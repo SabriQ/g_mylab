@@ -19,12 +19,28 @@ int ir_rr =A7;
 int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
+//half 0 half1
 int trial[60] = {0,1,0,1,0,1,1,0,1,0,
                 1,0,1,1,0,1,0,0,1,0,
                 0,1,1,0,0,1,1,1,0,0,
                 1,0,0,1,1,0,1,0,1,0,
                 0,1,1,0,0,1,0,1,0,1,
                 0,1,0,1,0,1,1,0,1,0};
+//35 0; 25 1
+//int trial[60] = {0,1,0,1,0,1,0,0,1,0,
+//                1,0,1,0,0,1,0,0,1,0,
+//                0,1,1,0,0,1,0,1,0,0,
+//                1,0,0,1,1,0,1,0,1,0,
+//                0,1,1,0,0,0,0,1,0,1,
+//                0,1,0,0,0,1,1,0,1,0};
+//25 0; 35 1
+//int trial[60] = {1,1,0,1,0,1,1,0,1,0,
+//                1,0,1,1,0,1,1,0,1,0,
+//                0,1,1,0,0,1,1,1,0,1,
+//                1,0,0,1,1,0,1,0,1,1,
+//                0,1,1,0,1,1,0,1,0,1,
+//                0,1,1,1,0,1,1,0,1,0};
+
 int trial_length = 60;
 
 int i =0;
@@ -67,7 +83,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
- Signal(52);cur_enter_context=0;
+  Signal(52);cur_enter_context=0; //slave也要通电，否则会被阻塞
   for (i=0;i<trial_length;i++){
     if (i==0){
       Signal(48);//默认第一个trial的开始nose poke给水
@@ -85,12 +101,12 @@ void loop() {
     Serial.print(Choice_class);Serial.print(" ");
     Serial.print(left_choice);Serial.print(" ");
     Serial.print(right_choice);Serial.print(" ");   
-    // if (Choice_class==1){
-    //   i = i;}
-    // else if(Choice_class==0){
-    //   i = i-1;}
-    // else{
-    //   i=0;}
+    if (Choice_class==1){
+      i = i;}
+    else if(Choice_class==0){
+      i = i;}
+    else{
+      i=0;}
     Serial.print(nose_poke_time);Serial.print(" ");
     Serial.print(enter_time);Serial.print(" ");
     Serial.print(exit_time);Serial.print(" ");
@@ -98,20 +114,10 @@ void loop() {
     Serial.print(r_enter_time);Serial.print(" ");
     Serial.print(r_exit_time);Serial.print(" ");
   }
-
      process(6);
 }
 ///////////////////////////////////////////////
-/*
-void process(int process)
-  experiments could be devided into several process:
-    process 0: waiting for nosepoke
-    process 1: waiting for choice 
-void Signal(int py_Signal)
-void Read_ir()
-void water_deliver(int pump, int milliseconds)
-void write2slave(int slave,byte send2slave1_motor)
-*/
+
 void process(int p){
   switch (p)
   {
@@ -121,7 +127,7 @@ void process(int p){
       nose_poke_time = millis();//记录时间
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-      if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
+      // if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
       break;
     case 1://waiting for enter
       do{Read_ir();}while(on_signal >  0.50 && ir[2]==0);//while循环，直到小鼠enter context
@@ -145,6 +151,12 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
+          Signal(51);//pump_rr给水
+          //just for train
+//          if (left_choice > 2* right_choice || left_choice >= right_choice+15 && Trial_num >= 10){
+//            Signal(51);//pump_rr 给水
+//            }
+            
           Choice_class = 0;}
       }
        else if (ir[5]==1){
@@ -155,6 +167,12 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
+          Signal(50);//pump_rl给水
+          //just for train
+//          if (right_choice > 2* left_choice ||right_choice >= left_choice +15 && Trial_num >= 10){
+//            Signal(50);//pump_rl 给水
+//            }
+            
           Choice_class = 0; }   
        }
        else {
@@ -177,6 +195,7 @@ void process(int p){
       break;
     case 6://all done
       Serial.println("Stat7: All_done");
+      break;
         //打印choice的时间点，判断选择类型，决定是否给水
     default:
       break;
@@ -194,38 +213,60 @@ void Signal(int s){
   */
   switch (s)
   {
-    case 48://ll_pump
-      water_deliver(pump_ll,10);
+    case 48://ll_pump,nosepoke
+      if (Trial_num<10){
+      water_deliver(pump_ll,8);
+      }else{
+        water_deliver(pump_ll,8);
+      }
+
+//      if (choice_class==1){
+//      water_deliver(pump_ll,6);
+//      }else{
+//      water_deliver(pump_ll,3);
+//      }
+
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
-    case 50://rl_pump
-      water_deliver(pump_rl,7);
+      
+    case 50://rl_pump 
+        water_deliver(pump_rl,6);
+      //如果bias 太严重,增加unprefer这一边的水量一倍
+      if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
+        water_deliver(pump_rl,6); 
+      }
       break;
-    case 51://rl_pump
-      water_deliver(pump_rr,5);
+      
+    case 51://rr_pump
+      water_deliver(pump_rr,6);      
+      if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
+        water_deliver(pump_rr,6); 
+      }
       break;
-    case 52://to context0
+      
+    case 52://to context0 4
       //from context1 to context0
         send2slave1_motor=0;
         write2slave(1,send2slave1_motor);
       break;
-    case 53://to context1
+      
+    case 53://to context1 5
       //from context0 to context1
         send2slave1_motor=1;
         write2slave(1,send2slave1_motor);
       break;    
-    case 54://to context2
+    case 54://to context2 6
         send2slave1_motor=2;
         write2slave(1,send2slave1_motor);
+        break;
     default:
       break;}
     }
   
 
 void Read_ir(){
-
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
   if(on_signal >= 0.90){ 
@@ -238,8 +279,8 @@ void Read_ir(){
       float ir_rr_value = Read_analog(ir_rr,5); 
       if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
       if (ir_lr_value< 500 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
-      if (ir_enter_value< 500 && ir_enter_value>0.5) {ir[2] = 1;}else{ir[2] = 0;}
-      if (ir_exit_value< 500 && ir_exit_value>0.5) {ir[3] = 1;}else{ir[3] = 0;}
+      if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
+      if (ir_exit_value< 200) {ir[3] = 1;}else{ir[3] = 0;}
       if (ir_rl_value< 500 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
       if (ir_rr_value< 400 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
 //      Serial.print(ir_ll_value);Serial.print(" ");

@@ -5,19 +5,19 @@ from mylab.exps.Cexps import *
 from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
-class Lick_water(Exp):
+class LearnLickWater(Exp):
     def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track"):
         super().__init__(port,data_dir)
 
         plt.ion()
         self.fig = plt.figure()
-        plt.title("Lick_water_ITI-Trial_Num")
+        plt.title("LearnLickWater_ITI-Trial_Num")
     def __call__(self,mouse_id):
         self.mouse_id =str(mouse_id)
 
         current_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
-        log_name = "Lick_water-"+self.mouse_id+'-'+current_time+'_log.csv'
-        fig_name = "Lick_water_ITI-Trial_Num-"+self.mouse_id+'-'+current_time+'.png'
+        log_name = "LearnLickWater-"+self.mouse_id+'-'+current_time+'_log.csv'
+        fig_name = "LearnLickWater_ITI-Trial_Num-"+self.mouse_id+'-'+current_time+'.png'
         self.log_path = os.path.join(self.data_dir,log_name)
         self.fig_path = os.path.join(self.data_dir,fig_name)
 
@@ -26,7 +26,7 @@ class Lick_water(Exp):
         with open(self.log_path, 'w',newline="",encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["mouse_id",mouse_id])
-            writer.writerow(["stage","Lick_water"])
+            writer.writerow(["stage","LearnLickWater"])
             writer.writerow(["exp_time",current_time])
 
         self.run()
@@ -43,7 +43,7 @@ class Lick_water(Exp):
         w_history
         """
         plt.cla()
-        plt.title(self.mouse_id+" Lick_water_ITI-Trial_Num")
+        plt.title(self.mouse_id+" LearnLickWater_ITI-Trial_Num")
         plt.xlabel("Trial_Num")
         plt.ylabel("ITI(s)")
         x_major_locator=MultipleLocator(4)
@@ -159,6 +159,6 @@ class Lick_water(Exp):
                 if "Stat7:" in info:
                     print("\r","All Done!")
 if __name__ =="__main__":
-    lw = Lick_water("/dev/ttyUSB0")
+    lw = LearnLickWater("/dev/ttyUSB0")
     lw(sys.argv[1])
     # 画图测试
