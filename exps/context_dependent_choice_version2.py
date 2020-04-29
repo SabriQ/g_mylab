@@ -8,7 +8,7 @@ from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
 class CDC(Exp):# context dependent choice
-    def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track",mode="2c_40cm",video_record=False):
+    def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track",mode="2c_40cm",video_record=True):
         super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
         self.video_record = video_record
@@ -61,7 +61,7 @@ class CDC(Exp):# context dependent choice
             p = video_recording(self.video_path)
             self.run()
             p.communicate("q")
-            
+            print("video is saved") 
             
 #        self.test()
     def graph_by_trial(self,Trial_Num,Accuracy,Choice_class,P_nose_poke,P_r_exit):
@@ -110,33 +110,12 @@ class CDC(Exp):# context dependent choice
 
             self.fig.canvas.draw()
             plt.pause(0.5)
-        else:
-            ITI = np.array(P_r_exit)-np.array(P_nose_poke)
 
-            if len(Trial_Num)>=60:
-                xright=len(Trial_Num)
-            else:
-                xright=60
-            if max(ITI)>=20:
-                yup = max(ITI)
-            else:
-                yup=20
-
-            colors = ["green" if i =="1" else "red" for i in Choice_class]
-
-            self.ax1.set_ylim(1,yup)
-            self.ax1.plot(Trial_Num,ITI,color='black',linestyle='-')
-            self.ax1.scatter(Trial_Num,ITI,s=6,c=colors)
-
-            self.ax2.set_ylim(0,100)
-            self.ax2.plot(Trial_Num,Accuracy,'black')
-            self.ax2.scatter(Trial_Num,Accuracy,s=6,c=colors)
-            
+    def save_graph(self):
             plt.savefig(self.fig_path)
             plt.ioff()
             plt.close()
             print("result fig is saved!")
-            sys.exit()
 
 
 
@@ -213,18 +192,17 @@ class CDC(Exp):# context dependent choice
                                     ,row[4].center(15)
                                     ,row[5].center(14))
                         show_info = "Ready "
+
+                        with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
+                            writer = csv.writer(csvfile)
+                            writer.writerow(row)
+
+                        Accuracy.append(sum([int(i) for i in Choice_class])/len(Choice_class)*100)
+                        self.graph_by_trial(Trial_Num,Accuracy,Choice_class,P_nose_poke,P_r_exit)
                     else:
-                        row=[]
                         print("\r","Terminated")
-
-                    with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
-                        writer = csv.writer(csvfile)
-                        writer.writerow(row)
-
-                    Accuracy.append(sum([int(i) for i in Choice_class])/len(Choice_class)*100)
-
-                    self.graph_by_trial(Trial_Num,Accuracy,Choice_class,P_nose_poke,P_r_exit)
-
+                        self.save_graph()
+                        break
                 if "Stat7:" in info:
                     print("\r","All Done!")
 
