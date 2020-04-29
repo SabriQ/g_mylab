@@ -83,8 +83,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-     Serial.println(">>>>>>");
- Signal(52);cur_enter_context=0; //slave也要通电，否则会被阻塞
+  Signal(52);cur_enter_context=0; //slave也要通电，否则会被阻塞
   for (i=0;i<trial_length;i++){
     if (i==0){
       Signal(48);//默认第一个trial的开始nose poke给水
@@ -115,20 +114,10 @@ void loop() {
     Serial.print(r_enter_time);Serial.print(" ");
     Serial.print(r_exit_time);Serial.print(" ");
   }
-
      process(6);
 }
 ///////////////////////////////////////////////
-/*
-void process(int process)
-  experiments could be devided into several process:
-    process 0: waiting for nosepoke
-    process 1: waiting for choice 
-void Signal(int py_Signal)
-void Read_ir()
-void water_deliver(int pump, int milliseconds)
-void write2slave(int slave,byte send2slave1_motor)
-*/
+
 void process(int p){
   switch (p)
   {
