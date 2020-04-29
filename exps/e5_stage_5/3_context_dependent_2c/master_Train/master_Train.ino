@@ -50,8 +50,10 @@ int right_choice = 0;
 int Choice_class = 0;
 int cur_enter_context = 0;
 int cur_exit_context = 0;
+int exp_start = 0;//用来指示实验的开始时刻，开关合上之前为0，合上之后变为1,仅用来作为 实验开始时初始化的条件
+//,such as, initialization of context, start of miniscope,
 
-
+unsigned long exp_start_time;
 unsigned long nose_poke_time;
 unsigned long enter_time;
 unsigned long exit_time;
@@ -83,11 +85,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
- Signal(52);cur_enter_context=0;
   for (i=0;i<trial_length;i++){
-    if (i==0){
-      Signal(48);//默认第一个trial的开始nose poke给水
-    }
     process(0);
     process(1);
     process(2);
@@ -277,6 +275,13 @@ void Read_ir(){
 
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
+  if (exp_start ==0 && on_signal>=0.90){
+  Signal(48);//默认第一个trial的开始nose poke给水
+  exp_start_time=millis();
+  Serial.print("Stat0: exp_start ");
+  Serial.println(exp_start_time);
+  exp_start=1;
+  }
   if(on_signal >= 0.90){ 
       if (Serial.available()){int py_Signal = Serial.read();Signal(py_Signal);}
       float ir_ll_value = Read_analog(ir_ll,5);
@@ -309,6 +314,8 @@ void Read_ir(){
     Trial_num = 0;  
     left_choice = 0;
     right_choice = 0;
+    exp_start = 0;
+    Signal(52);cur_enter_context=0;
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {

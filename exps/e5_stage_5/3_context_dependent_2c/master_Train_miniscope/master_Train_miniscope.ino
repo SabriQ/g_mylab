@@ -55,7 +55,7 @@ int cur_exit_context = 0;
 int exp_start = 0;//用来指示实验的开始时刻，开关合上之前为0，合上之后变为1,仅用来作为 实验开始时初始化的条件
 //,such as, initialization of context, start of miniscope,
 
-unsigned long minscope_start_time;
+unsigned long exp_start_time;
 unsigned long nose_poke_time;
 unsigned long enter_time;
 unsigned long exit_time;
@@ -143,18 +143,21 @@ void process(int p){
       Trial_num =Trial_num+1;//Trial_num 加一      
       if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
       break;
+
     case 1://waiting for enter
       do{Read_ir();}while(on_signal >  0.50 && ir[2]==0);//while循环，直到小鼠enter context
       enter_time = millis();//记录时间
       miniscope_event_on();
       Serial.println("Stat2: enter");//打印stat 
       break;
+
     case 2://waiting for exit
       do{Read_ir();}while(on_signal >  0.50 && ir[3]==0);//while循环知道小鼠exit context
       exit_time = millis();//记录时间
       miniscope_event_on();
       Serial.println("Stat3: exit");//打印stat
       break;
+
     case 3://waiting for choice
       do{Read_ir();}while(on_signal>0.5 && ir[4]==0 && ir[5]==0); //while 循环，直到小鼠exit context
       choice_time = millis(); //记录时间
@@ -216,7 +219,7 @@ void process(int p){
     case 6://all done
       Serial.println("Stat7: All_done");
       break;
-        //打印choice的时间点，判断选择类型，决定是否给水
+
     default:
       break;
   }}  
@@ -289,13 +292,13 @@ void Read_ir(){
 
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
-    if (exp_start ==0 && on_signal>=0.90){
-      Signal(48);//默认第一个trial的开始nose poke给水
-      minscope_start_time=millis();
-      miniscope_trigger_on();
-      Serial.print("Stat0: miniscope_start ");
-      Serial.println(minscope_start_time);
-      exp_start=1;
+  if (exp_start ==0 && on_signal>=0.90){
+    Signal(48);//默认第一个trial的开始nose poke给水
+    exp_start_time=millis();
+    miniscope_trigger_on();
+    Serial.print("Stat0: exp_and_miniscope_start ");
+    Serial.println(exp_start_time);
+    exp_start=1;
     }
   if(on_signal >= 0.90){ 
       if (Serial.available()){int py_Signal = Serial.read();Signal(py_Signal);}
