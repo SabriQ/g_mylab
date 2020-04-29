@@ -133,9 +133,6 @@ class CDC(Exp):# context dependent choice
         '''
         with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["Trial_Num","Enter_ctx","Exit_ctx","Choice_class","Left_choice","Right_choice",
-                "A_nose_poke","A_enter","A_exit","A_choice","A_r_enter","A_r_exit"
-                ,"P_nose_poke","P_enter","P_exit","P_choice","P_r_enter","P_r_exit"])
         
         start_time = time.time()
         Trial_Num=[];Enter_ctx=[];Exit_ctx=[];Choice_class=[];Left_choice=[];Right_choice=[];
@@ -153,6 +150,15 @@ class CDC(Exp):# context dependent choice
             print(f"\r{show_info}".ljust(55),f"{round(time_elapse,1)}s".ljust(8),end="")
             if len(info)>1:
                 show_info = ' '.join([i for i in info])
+                if "Stat0:" in info:
+                    P_miniscope_start = time_elapse
+                    A_miniscope_start = info[2]
+                    with open(self.log_path,"a",newline="\n",encoding='utf-8') as csvfile:
+                        writer = csv.writer(csvfile)
+                        writer.writerow(["miniscope_start_time(Arduino_time,python_time)",A_miniscope_start,P_miniscope_start])
+                        writer.writerow(["Trial_Num","Enter_ctx","Exit_ctx","Choice_class","Left_choice","Right_choice",
+                        "A_nose_poke","A_enter","A_exit","A_choice","A_r_enter","A_r_exit"
+                        ,"P_nose_poke","P_enter","P_exit","P_choice","P_r_enter","P_r_exit"])
                 if "Stat1:" in info:
                     P_nose_poke.append(time_elapse)
                 if "Stat2:" in info:
