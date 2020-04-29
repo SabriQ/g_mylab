@@ -215,9 +215,9 @@ void Signal(int s){
   {
     case 48://ll_pump,nosepoke
       if (Trial_num<10){
-      water_deliver(pump_ll,8);
+      water_deliver(pump_ll,10);
       }else{
-        water_deliver(pump_ll,8);
+        water_deliver(pump_ll,10);
       }
 
 //      if (choice_class==1){
@@ -232,17 +232,17 @@ void Signal(int s){
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,6);
+        water_deliver(pump_rl,10);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
-        water_deliver(pump_rl,6); 
+        water_deliver(pump_rl,10); 
       }
       break;
       
     case 51://rr_pump
-      water_deliver(pump_rr,6);      
+      water_deliver(pump_rr,10);      
       if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
-        water_deliver(pump_rr,6); 
+        water_deliver(pump_rr,10); 
       }
       break;
       

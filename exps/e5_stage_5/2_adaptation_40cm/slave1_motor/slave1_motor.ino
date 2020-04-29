@@ -81,7 +81,7 @@ void rec(){
       }else if(c_ctx==1){
         do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0); 
       }else{
-        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[0]==0);               
+        do{Read_ctx();pulse_stepper(pul,40);}while(ctx[2]==0);               
       }
       Serial.println(" Done");
       digitalWrite(ena,HIGH);

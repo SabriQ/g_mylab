@@ -6,7 +6,7 @@ from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
 class LickWater(Exp):
-    def __init__(self,port,data_dir=r"/home/qiushou/Documents/data/linear_track",mode="adaptation_40cm"):
+    def __init__(self,port,data_dir=r"E:\linear_track",mode="adaptation_40cm"):
         super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
         self.mode = mode
@@ -21,7 +21,7 @@ class LickWater(Exp):
         plt.ion()
         self.fig = plt.figure(figsize=[6,9])
 
-        self.fig.canvas.manager.window.move(0,0) 
+##        self.fig.canvas.manager.window.move(0,0) 
 
         self.ax1 = plt.axes([0.15,0.55,0.75,0.4]) # ax_ITI
         self.ax1.set_title("ITI-Trial_Num")
@@ -219,5 +219,5 @@ class LickWater(Exp):
                     print("\r","All Done!")
 
 if __name__ =="__main__":
-    cdc = LickWater("/dev/ttyUSB1")
+    cdc = LickWater("COM22")
     cdc(sys.argv[1])
