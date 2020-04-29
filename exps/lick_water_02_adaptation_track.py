@@ -40,7 +40,7 @@ class LickWater(Exp):
         log_name = "LickWater-"+self.mode+"-"+self.mouse_id+'-'+current_time+'_log.csv'
 
         self.log_path = os.path.join(self.data_dir,log_name)
-        fig_name = "LickWater-"+self.mouse_id+'-'+current_time+'.png'
+        fig_name = "LickWater-"+self.mode+"-"+self.mouse_id+'-'+current_time+'.png'
         self.log_path = os.path.join(self.data_dir,log_name)
         self.fig_path = os.path.join(self.data_dir,fig_name)
 
