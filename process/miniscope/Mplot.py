@@ -48,15 +48,16 @@ def TrackView(x,y,figsize=(40,5),title="one of the block"):
     plt.xticks([])
     plt.yticks([])
     plt.show()
-def TrackinZoneView(ZoneCoordinates,aligned_behaveblocks,blocknames,window_title="Track_in_context",figsize=(20,5)):
+
+def TrackinZoneView(ZoneCoordinates,align_msblocks_behaveblocks,blocknames,window_title="Track_in_context",figsize=(20,5)):
     #coordinates = result['contextcoords']
     #output contextcoords (contextcoord in each block)
     contextcoords=ZoneCoordinates
     plt.figure(window_title,figsize=figsize)
-    for i in range(len(aligned_behaveblocks)):           
+    for i in range(len(align_msblocks_behaveblocks)):           
         plt.subplot(2,6,i+1)
-        x=aligned_behaveblocks[i]['Body_x'] 
-        y=aligned_behaveblocks[i]['Body_y'] 
+        x=align_msblocks_behaveblocks[i]['Body_x'] 
+        y=align_msblocks_behaveblocks[i]['Body_y'] 
         plt.imshow(contextcoords[i][0][0])
         plt.scatter(x,y,c='r')
     #    plt.plot(0,480,'r.',)
@@ -92,7 +93,12 @@ def TrackINTrialsView(aligned_behaveblock,contextcoord,title):
     plt.yticks([])
     plt.title(title)
     plt.show()
-    
+
+def in_context_Extract_trials():
+    df = rlc2(aligned_msblocks_behaveblock['in_context'])
+    trials_in_block=[]
+    x_max = np.array(in_context_contextcoord)[:,0]
+    x_min = np.array(in_context_contextcoord)[:,0]
 def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="in_context",title="title",example_neuron=1):
     df = rlc2(aligned_behaveblock[column])
     trials_in_block=[]
@@ -174,7 +180,7 @@ def Extract_trials2(aligned_behaveblock,contextcoord,in_context_msblock,neuron_N
                 trial_traces_block.append(in_context_msblock.loc[in_context_msblock["ms_ts"].isin(aligned_behaveblock["ms_ts"][row['idx_min']:row['idx_max']])])
                 trial_num = [i]                
                 trial_Nums_block.append(pd.Series(trial_num*(row['idx_max']-row['idx_min'])))
-                LoRs = []                
+                LoRs = [] # left or right 
                 for angle in aligned_behaveblock["Bodyspeed_angles"][row['idx_min']:row['idx_max']]:
                     if angle>100 and angle<260:
                         LoRs.append('left')
