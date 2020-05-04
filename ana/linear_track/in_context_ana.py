@@ -86,6 +86,13 @@ for i in resultpkl["in_context_CaEventblocks"]:
 in_context_mean_fr_CaEventblocks = pd.DataFrame(in_context_mean_fr_CaEventblocks,index=behave_info["behave_blocknames"],columns=resultpkl["in_context_CaEventblocks"][0].columns.drop("ms_ts"))
 
 
+#%% extrac trils
+contextcoords=[]
+for video in behave_videos:
+    if os.path.exists(video):
+        # print(os.path.basename(video),end=': ')
+        masks,coords = Video(video).draw_rois(aim="in_context",count=1)
+        contextcoords.append((masks,coords))
 #%% for each trial
 # average firing rate
 ###

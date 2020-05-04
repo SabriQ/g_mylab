@@ -50,6 +50,8 @@ int right_choice = 0;
 int Choice_class = 0;
 int cur_enter_context = 0;
 int cur_exit_context = 0;
+int exp_start = 0;//用来指示实验的开始时刻，开关合上之前为0，合上之后变为1,仅用来作为 实验开始时初始化的条件
+//,such as, initialization of context, start of miniscope,
 
 
 unsigned long nose_poke_time;
@@ -58,7 +60,7 @@ unsigned long exit_time;
 unsigned long choice_time;
 unsigned long r_enter_time;
 unsigned long r_exit_time;
-
+unsigned long exp_start_time;
 void setup() {
   // put your setup code here, to run once:
 pinMode(ON,INPUT);
@@ -83,11 +85,8 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(52);cur_enter_context=0; //slave也要通电，否则会被阻塞
+
   for (i=0;i<trial_length;i++){
-    if (i==0){
-      Signal(48);//默认第一个trial的开始nose poke给水
-    }
     process(0);
     process(1);
     process(2);
@@ -129,16 +128,19 @@ void process(int p){
       Trial_num =Trial_num+1;//Trial_num 加一      
       // if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
       break;
+
     case 1://waiting for enter
       do{Read_ir();}while(on_signal >  0.50 && ir[2]==0);//while循环，直到小鼠enter context
       enter_time = millis();//记录时间
       Serial.println("Stat2: enter");//打印stat 
       break;
+
     case 2://waiting for exit
       do{Read_ir();}while(on_signal >  0.50 && ir[3]==0);//while循环知道小鼠exit context
       exit_time = millis();//记录时间
       Serial.println("Stat3: exit");//打印stat
       break;
+
     case 3://waiting for choice
       do{Read_ir();}while(on_signal>0.5 && ir[4]==0 && ir[5]==0); //while 循环，直到小鼠exit context
       choice_time = millis(); //记录时间
@@ -183,20 +185,23 @@ void process(int p){
        // Signal(54);
        cur_exit_context=cur_enter_context;
       break;
+
     case 4://waiting for r_enter
       do{Read_ir();}while(on_signal >  0.50 &&  ir[3]==0);
       r_enter_time = millis();
       Serial.println("Stat5: r_enter");
       break;      
+
     case 5://waiting for r_exit
       do{Read_ir();}while(on_signal >  0.50 &&  ir[2]==0);
       r_exit_time = millis();
       Serial.println("Stat6: r_exit");
       break;
+
     case 6://all done
       Serial.println("Stat7: All_done");
       break;
-        //打印choice的时间点，判断选择类型，决定是否给水
+      
     default:
       break;
   }}  
@@ -269,6 +274,13 @@ void Signal(int s){
 void Read_ir(){
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
+    if (exp_start ==0 && on_signal>=0.90){
+      Signal(48);//默认第一个trial的开始nose poke给水
+      exp_start_time=millis();
+      Serial.print("Stat0: exp_start ");
+      Serial.println(exp_start_time);
+      exp_start=1;
+    }
   if(on_signal >= 0.90){ 
       if (Serial.available()){int py_Signal = Serial.read();Signal(py_Signal);}
       float ir_ll_value = Read_analog(ir_ll,5);
@@ -301,6 +313,8 @@ void Read_ir(){
     Trial_num = 0;  
     left_choice = 0;
     right_choice = 0;
+    exp_start = 0;
+    Signal(52);cur_enter_context=0;//每次结束的时候归档至 context 0
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {

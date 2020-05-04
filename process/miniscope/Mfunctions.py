@@ -9,17 +9,19 @@ import datetime
 import math
 from mylab.Cvideo import Video
 import seaborn as sns
-def save_result(result,result_path):
+
+def save_pkl(result,result_path):
     with open(result_path,'wb') as f:
         pickle.dump(result,f)
-    print("result is saved.")
-def load_result(result_path):
+    print("result is saved at %s"% result_path)
+
+def load_pkl(result_path):
     with open(result_path,'rb') as f:
         result = pickle.load(f)
     print("result is loaded")
     return result
 
-def savemat(result_path,result):
+def __savemat(result_path,result):
     spio.savemat(r"C:\Users\Sabri\Desktop\191172_in_context.mat",
      {'in_context_columns':np.array(result["in_context_msblocks"][0].columns),
        'in_context_msblocks':np.array([i.values for i in result["in_context_msblocks"]]),
@@ -27,7 +29,7 @@ def savemat(result_path,result):
       'in_context_behavetrial_columns':np.array(result["in_context_behavetrialblocks"][0][0].columns),
       'in_context_behavetrialblocks':np.array([np.array([j.values for j in i]) for i in result["in_context_behavetrialblocks"]])})
     
-def loadmat(filename):
+def load_mat(filename):
     '''
     this function should be called instead of direct spio.loadmat
     as it cures the problem of not properly recovering python dictionaries
@@ -60,50 +62,40 @@ def _todict(matobj):
             dict[strg] = elem
     return dict
 
-
-def sigraw2msblocks(ms_ts,sigraw,acceptedPool):
-    '''
-    according to ms_ts, we divided sigraw, a [(531,79031),(cell_number,frames)] numpy.ndarray into msblocks, a list of dataframe
-    '''
-    start = 0
-    end=0
-    len_ms_ts=[]
-    msblocks=[]
-    for i, ts in enumerate(ms_ts,1):
-        len_ms_ts.append(len(ts))        
-        start = end
-        end = end+len(ts)        
-        block=pd.DataFrame(sigraw[start:end,:],columns=acceptedPool)
-        block['ms_ts']=ts
-        print('trace and ms_ts[',start,end,']constructed as DataFrame')
-        msblocks.append(block)
-    print("sigraw have been constructed as a list of DataFrame as ms_ts. ")
-    return msblocks
-        
+def load_hdf5_cnmf(hdf5_Path):
+    try:
+        from caiman.source_extraction.cnmf.cnmf import load_CNMF
+    except:
+        print("please activate env caiman")
+        sys.exit()
+    print("loading hdf5 file...")
+    cnm = load_CNMF(hdf5_Path)
+    print("%s is successfully loaded."% hdf5_Path)
+    return cnm
 
 
 
-level = 0
-def view_variable_structure(variable):       
-    global level   
-    level=level+1        
-    if isinstance(variable,dict):
-        for key in variable.keys():
-            print(2*(level-1)*" ","--",key)
-            view_variable_structure(variable[key])
-            level = level -1
-    if isinstance(variable,list):
-        if isinstance(variable[0],int) or isinstance(variable[0],str) or isinstance(variable[0],tuple):
-            print(2*(level-1)*" ","--",len(variable),'lists of int/str/tuples')
-        else: 
-            print(2*(level-1)*" ","--",len(variable),'lists','for each list there are')
-            view_variable_structure(variable[0])
-            level = level-1
+# level = 0
+# def view_variable_structure(variable):       
+#     global level   
+#     level=level+1        
+#     if isinstance(variable,dict):
+#         for key in variable.keys():
+#             print(2*(level-1)*" ","--",key)
+#             view_variable_structure(variable[key])
+#             level = level -1
+#     if isinstance(variable,list):
+#         if isinstance(variable[0],int) or isinstance(variable[0],str) or isinstance(variable[0],tuple):
+#             print(2*(level-1)*" ","--",len(variable),'lists of int/str/tuples')
+#         else: 
+#             print(2*(level-1)*" ","--",len(variable),'lists','for each list there are')
+#             view_variable_structure(variable[0])
+#             level = level-1
 
-    if isinstance(variable,pd.core.frame.DataFrame):
-        print(2*(level-1)*" ",level*" ","--",len(variable.columns),"columns |",variable.columns[0],'...',variable.columns[-1],"|")
-    else:
-        pass
+#     if isinstance(variable,pd.core.frame.DataFrame):
+#         print(2*(level-1)*" ",level*" ","--",len(variable.columns),"columns |",variable.columns[0],'...',variable.columns[-1],"|")
+#     else:
+#         pass
     
 
 
@@ -165,6 +157,7 @@ def generate_ms_ts(tsFileList,save_path,temporal_downsampling=3):
         with open(save_path,'rb') as f:
             ms_ts = pickle.load(f)                             
     print(f'concatenated timestamp of miniscope_video is located at {save_path}')
+
 def add_ms_ts2mat(ms_ts_path,mat_path):
     with open(ms_ts_path,"rb") as f:
         ms_ts = pickle.load(f)
@@ -173,6 +166,7 @@ def add_ms_ts2mat(ms_ts_path,mat_path):
     spio.savemat(mat_path,{"ms":ms_mat["ms"]})
     del ms_mat
     del ms_ts
+
 def find_close_fast(arr, e):    
     start_time = datetime.datetime.now()            
     low = 0    
@@ -190,15 +184,16 @@ def find_close_fast(arr, e):
     if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
         idx += 1            
     use_time = datetime.datetime.now() - start_time    
-    return idx
+    return idx #0作为起始
+
 def find_close_fast2(arr,e):
     np.add(arr,e*(-1))
     min_value = min(np.abs(np.add(arr,e*-1)))
     locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
     return locations[0][0]
 #    return arr[idx],idx, use_time.seconds * 1000 + use_time.microseconds / 1000
-def _angle(dx1,dy1,dx2,dy2):
-#def _angle(v1,v2)    #v1 = [0,1,1,1] v2 = [x1,y1,x2,y2]
+def angle(dx1,dy1,dx2,dy2):
+#def angle(v1,v2)    #v1 = [0,1,1,1] v2 = [x1,y1,x2,y2]
 #    dx1 = v1[2]-v1[0]
 #    dy1 = v1[3]-v1[1]
 #    dx2 = v2[2]-v2[0]
@@ -215,7 +210,8 @@ def _angle(dx1,dy1,dx2,dy2):
     return abs(angle1-angle2)
 # dx1 = 1,dy1 = 0,this is sure ,because we always want to know between the varial vector with vector[0,1,1,1]
 
-def scale(video_path,distance):    
+def scale(video_path,distance):
+    print("the line you draw are as long as %s cm"%distance)
     _,coords_in_pixel = Video(video_path).draw_rois(aim='scale')
     print(coords_in_pixel[0][1],coords_in_pixel[0][0])
     distance_in_pixel = np.sqrt(np.sum(np.square(np.array(coords_in_pixel[0][1])-np.array(coords_in_pixel[0][0]))))
@@ -223,13 +219,14 @@ def scale(video_path,distance):
     s = distance_in_cm/distance_in_pixel
     print(f"{s} cm/pixel")
     return s
+
 def speed(X,Y,T,s):
     speeds=[0]
     speed_angles=[0]
     for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
         distance = np.sqrt(delta_x**2+delta_y**2)
         speeds.append(distance*s/delta_t)
-        speed_angles.append(_angle(1,0,delta_x,delta_y))
+        speed_angles.append(angle(1,0,delta_x,delta_y))
     return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
 def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
@@ -239,11 +236,11 @@ def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
     for x1,y1,x2,y2,x3,y3 in zip(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
         hb_delta_x = x1-x2 # hb means head to body
         hb_delta_y = y1-y2
-        headdirection = _angle(1,0,hb_delta_x,hb_delta_y)
+        headdirection = angle(1,0,hb_delta_x,hb_delta_y)
         headdirections.append(headdirection)
         tb_delta_x = x3-x2
         tb_delta_y = y3-y2
-        taildirection = _angle(1,0,tb_delta_x,tb_delta_y)
+        taildirection = angle(1,0,tb_delta_x,tb_delta_y)
         taildirections.append(taildirection)
         arch_angle = abs(headdirection - taildirection)
         if arch_angle>180:
