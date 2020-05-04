@@ -280,7 +280,7 @@ void Read_ir(){
       if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
       if (ir_lr_value< 500 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
       if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
-      if (ir_exit_value< 200) {ir[3] = 1;}else{ir[3] = 0;}
+      if (ir_exit_value< 100) {ir[3] = 1;}else{ir[3] = 0;}
       if (ir_rl_value< 500 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
       if (ir_rr_value< 400 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
 //      Serial.print(ir_ll_value);Serial.print(" ");
