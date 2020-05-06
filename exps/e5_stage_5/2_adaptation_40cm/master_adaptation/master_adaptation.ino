@@ -8,6 +8,8 @@ int pump_ll = 2;
 int pump_lr = 3;
 int pump_rl = 4;
 int pump_rr = 5;
+int pump_led = 6;
+
 
 int ir_ll = A0;
 int ir_lr = A1;
@@ -69,6 +71,7 @@ pinMode(pump_ll,OUTPUT);digitalWrite(pump_ll,LOW);
 pinMode(pump_lr,OUTPUT);digitalWrite(pump_lr,LOW);
 pinMode(pump_rl,OUTPUT);digitalWrite(pump_rl,LOW);
 pinMode(pump_rr,OUTPUT);digitalWrite(pump_rr,LOW);
+pinMode(pump_led,OUTPUT);digitalWrite(pump_led,HIGH);
 
 pinMode(ir_ll,INPUT);digitalWrite(ir_ll,LOW);
 pinMode(ir_lr,INPUT);digitalWrite(ir_ll,LOW);
@@ -289,12 +292,25 @@ void Read_ir(){
       float ir_exit_value = Read_analog(ir_exit,5);
       float ir_rl_value = Read_analog(ir_rl,5);
       float ir_rr_value = Read_analog(ir_rr,5); 
-      if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
-      if (ir_lr_value< 500 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
+      if (ir_ll_value< 800 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
+      if (ir_lr_value< 800 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
       if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
       if (ir_exit_value< 100) {ir[3] = 1;}else{ir[3] = 0;}
-      if (ir_rl_value< 500 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
-      if (ir_rr_value< 400 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+      if (ir_rl_value< 800 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
+      if (ir_rr_value< 800 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+      if (ir[0]+ir[1]+ir[4]+ir[5]==1){
+        digitalWrite(pump_led,LOW);
+      }else if(ir[0]+ir[1]+ir[4]+ir[5]==0){
+        digitalWrite(pump_led,HIGH);
+      }else if(ir[0]+ir[1]+ir[2]+ir[3]+ir[4]+ir[5]>1){
+        digitalWrite(pump_led,LOW);
+        delay(500);
+        digitalWrite(pump_led,HIGH);
+        delay(500);
+      }else{
+        digitalWrite(pump_led,HIGH);
+      }
+      
 //      Serial.print(ir_ll_value);Serial.print(" ");
 //      Serial.print(ir_lr_value);Serial.print(" ");
 //      Serial.print(ir_enter_value);Serial.print(" ");
@@ -314,6 +330,7 @@ void Read_ir(){
     left_choice = 0;
     right_choice = 0;
     exp_start = 0;
+    digitalWrite(pump_led,LOW);
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {
