@@ -112,6 +112,9 @@ class MiniLWResult(MR):
         '''
         according to ms_ts, we divided sigraw, a [(531,79031),(cell_number,frames)] numpy.ndarray into msblocks, a list of dataframe
         '''
+        if sigraw.shape[1]==2: #专门为CaTraces 设置，其与sigraw的格式不同，需要np.array和np.transpose
+            sigraw = np.transpose(np.array([i.tolist() for i in sigraw[:,0]]))
+        print(sigraw.shape)
         sigraw = sigraw[:,acceptedPool-1]
         start = 0
         end=0
@@ -163,28 +166,28 @@ class MiniLWResult(MR):
             #这是通过对比ms_ts(原始)的最大值，和视频的结束时间的出来的，如果不-0.1,差值的平均在113ms左右
             behaveblocks[i]['correct_ts']=behaveblocks[i]['be_ts']-delta_t
         print("be_ts has been corrected as correct_ts")
-        aligned_msblocks_behaveblocks=[]
+        aligned2ms_behaveblocks=[]
         i = 1
         for msblock,behaveblock in zip(msblocks,behaveblocks):
-            aligned_msblocks_behaveblock = pd.DataFrame()
+            aligned2ms_behaveblock = pd.DataFrame()
             #以miniscope时间轴"ms_ts"作为reference
-            aligned_msblocks_behaveblock['ms_ts'] = msblock['ms_ts']     
+            aligned2ms_behaveblock['ms_ts'] = msblock['ms_ts']     
             print(f"{i}/{len(msblocks)} block is aligning behave DataFrame according to ms_ts...",end=' ')
             #找到 行为学矫正时间"correct_ts"和miniscope时间"ms_ts"最相近的行为帧的索引 变为"be_frame"
-            aligned_msblocks_behaveblock['be_frame']=[find_close_fast(arr=(behaveblock['correct_ts']*1000),e=k) for k in msblock['ms_ts']]
+            aligned2ms_behaveblock['be_frame']=[find_close_fast(arr=(behaveblock['correct_ts']*1000),e=k) for k in msblock['ms_ts']]
             print('-->aligned.',end=' ')
-            # aligned_msblocks_behaveblock = aligned_msblocks_behaveblock.join(behaveblock.iloc[aligned_msblocks_behaveblock['be_frame'].tolist(),].reset_index())
-            #aligned_msblocks_behaveblock的"be_frame"作为behaveblock的行索引
-            aligned_msblocks_behaveblock = aligned_msblocks_behaveblock.join(behaveblock,on="be_frame")
+            # aligned2ms_behaveblock = aligned2ms_behaveblock.join(behaveblock.iloc[aligned2ms_behaveblock['be_frame'].tolist(),].reset_index())
+            #aligned2ms_behaveblock的"be_frame"作为behaveblock的行索引
+            aligned2ms_behaveblock = aligned2ms_behaveblock.join(behaveblock,on="be_frame")
 
-            aligned_msblocks_behaveblock['Headspeeds'],aligned_msblocks_behaveblock['Headspeed_angles'] = speed(aligned_msblocks_behaveblock['Head_x'],aligned_msblocks_behaveblock['Head_y'],aligned_msblocks_behaveblock['be_ts'],0.16)
-            aligned_msblocks_behaveblock['Bodyspeeds'],aligned_msblocks_behaveblock['Bodyspeed_angles'] = speed(aligned_msblocks_behaveblock['Body_x'],aligned_msblocks_behaveblock['Body_y'],aligned_msblocks_behaveblock['be_ts'],0.16)
-            aligned_msblocks_behaveblock['Tailspeeds'],aligned_msblocks_behaveblock['Tailspeed_angles'] = speed(aligned_msblocks_behaveblock['Tail_x'],aligned_msblocks_behaveblock['Tail_y'],aligned_msblocks_behaveblock['be_ts'],0.16)
-            aligned_msblocks_behaveblock['headdirections'],aligned_msblocks_behaveblock['taildirections'], aligned_msblocks_behaveblock['arch_angles'] = direction(aligned_msblocks_behaveblock['Head_x'].tolist(),aligned_msblocks_behaveblock['Head_y'].tolist(),aligned_msblocks_behaveblock['Body_x'].tolist(),aligned_msblocks_behaveblock['Body_y'].tolist(),aligned_msblocks_behaveblock['Tail_x'].tolist(),aligned_msblocks_behaveblock['Tail_y'].tolist())
-            aligned_msblocks_behaveblocks.append(aligned_msblocks_behaveblock)    
+            aligned2ms_behaveblock['Headspeeds'],aligned2ms_behaveblock['Headspeed_angles'] = speed(aligned2ms_behaveblock['Head_x'],aligned2ms_behaveblock['Head_y'],aligned2ms_behaveblock['be_ts'],0.16)
+            aligned2ms_behaveblock['Bodyspeeds'],aligned2ms_behaveblock['Bodyspeed_angles'] = speed(aligned2ms_behaveblock['Body_x'],aligned2ms_behaveblock['Body_y'],aligned2ms_behaveblock['be_ts'],0.16)
+            aligned2ms_behaveblock['Tailspeeds'],aligned2ms_behaveblock['Tailspeed_angles'] = speed(aligned2ms_behaveblock['Tail_x'],aligned2ms_behaveblock['Tail_y'],aligned2ms_behaveblock['be_ts'],0.16)
+            aligned2ms_behaveblock['headdirections'],aligned2ms_behaveblock['taildirections'], aligned2ms_behaveblock['arch_angles'] = direction(aligned2ms_behaveblock['Head_x'].tolist(),aligned2ms_behaveblock['Head_y'].tolist(),aligned2ms_behaveblock['Body_x'].tolist(),aligned2ms_behaveblock['Body_y'].tolist(),aligned2ms_behaveblock['Tail_x'].tolist(),aligned2ms_behaveblock['Tail_y'].tolist())
+            aligned2ms_behaveblocks.append(aligned2ms_behaveblock)    
             print(f"Caculated speeds")
             i=i+1
-        self.ana_result["aligned_msblocks_behaveblocks"] =  aligned_msblocks_behaveblocks
+        self.ana_result["aligned2ms_behaveblocks"] =  aligned2ms_behaveblocks
 
     def run(self):
         self.load_msts(self.cnmf_result['ms']["dff"])
@@ -195,18 +198,20 @@ class MiniLWResult(MR):
         #     sys.exit()
 
         if "msblocks" not in self.keys:
-            self.sigraw2msblocks(self.ana_result["ms_ts"],self.cnmf_result['ms']["sigraw"],self.cnmf_result["acceptedPool"]-1)
+            # self.sigraw2msblocks(self.ana_result["ms_ts"],self.cnmf_result['ms']["sigraw"],self.cnmf_result["acceptedPool"]-1)
+            self.sigraw2msblocks(self.ana_result["ms_ts"],self.cnmf_result['CaTraces'],self.cnmf_result["acceptedPool"]-1)
 
         if "behaveblocks" not in self.keys:
             self.dlctrack2behaveblocks(self.mouse_info.info[self.exp_name]["behave_trackfiles"],self.mouse_info.info[self.exp_name]["behave_timestamps"],self.mouse_info.info[self.exp_name]["behave_blocknames"])
 
-        if "aligned_msblocks_behaveblocks" not in self.keys:
+        if "aligned2ms_behaveblocks" not in self.keys:
             self.align_behaveblocks2msblocks(self.mouse_info.info[self.exp_name]["ms_starts"],self.ana_result["msblocks"],self.ana_result["behaveblocks"])
 
 
 
 if __name__ == "__main__":
-    lw = MiniLWResult(mouse_info_path=r"Z:\QiuShou\mouse_info\191173_info.txt"
+    lw_result = MiniLWResult(mouse_info_path=r"Z:\QiuShou\mouse_info\191173_info.txt"
         ,cnmf_result_dir = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191173\20191110_160946_20191028-1102all"
         ,behave_dir= r"X:\miniscope\2019*\191173")
-    lw.run()
+    lw_result.run()
+    lw_result.save

@@ -225,7 +225,13 @@ def speed(X,Y,T,s):
     speed_angles=[0]
     for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
         distance = np.sqrt(delta_x**2+delta_y**2)
-        speeds.append(distance*s/delta_t)
+
+        # speeds.append(distance*s/delta_t)
+
+        if not delta_t==0:
+            speeds.append(distance*s/delta_t)
+        else:
+            speeds.append(0)
         speed_angles.append(angle(1,0,delta_x,delta_y))
     return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
@@ -288,7 +294,7 @@ def rlc2(X):
     df = {"name":name,"length":length,"idx_min":idx_min,"idx_max":idx_max}
     return pd.DataFrame(df)         
 
-        
+
 if __name__ == "__main__":
     print("done")
     #%%

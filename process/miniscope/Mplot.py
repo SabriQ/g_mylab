@@ -7,7 +7,7 @@ from mylab.process.miniscope.Mfunctions import *
 import os
 import seaborn as sns
 import gc
-#%%
+
 def TraceView(RawTraces,title="TraceView"):
     plt.figure(figsize=(10,0.5))
     plt.title(title)
@@ -74,7 +74,6 @@ def TrackINTrialsView(aligned_behaveblock,contextcoord,title):
     colors = []
     x = aligned_behaveblock["Body_x"]
     y=[]
-    #%%
     for index,row in aligned_behaveblock.iterrows():
         
         if int(row['in_context']) == 0:
@@ -95,10 +94,7 @@ def TrackINTrialsView(aligned_behaveblock,contextcoord,title):
     plt.show()
 
 def in_context_Extract_trials():
-    df = rlc2(aligned_msblocks_behaveblock['in_context'])
-    trials_in_block=[]
-    x_max = np.array(in_context_contextcoord)[:,0]
-    x_min = np.array(in_context_contextcoord)[:,0]
+    pass
 def Extract_trials(aligned_behaveblock,contextcoord,in_context_msblock,column="in_context",title="title",example_neuron=1):
     df = rlc2(aligned_behaveblock[column])
     trials_in_block=[]

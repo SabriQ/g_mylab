@@ -17,7 +17,7 @@ class MiniAna():
 
     @property
     def save(self):
-        return save_pkl(self.ana_result_path)
+        return save_pkl(self.ana_result,self.ana_result_path)
 
     def update(self,key,value):
         if key in self.keys:

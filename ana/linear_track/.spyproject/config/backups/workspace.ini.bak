@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['in_context_ana.py', 'analyze2_20200423.m']
+recent_files = ['analyze2_20200423.m', '..\\..\\process\\miniscope\\CminiLWresult.py', 'CminiLWana.py', '..\\..\\process\\miniscope\\Cminiresult.py']
 

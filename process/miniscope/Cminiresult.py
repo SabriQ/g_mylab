@@ -23,7 +23,7 @@ class MiniResult():
         self.mouse_info = MouseInfo(self.mouse_info_path)
         
         self.mspkl_Path=glob.glob(os.path.join(self.cnmf_result_dir,'ms.pkl'))
-        self.msmat_Path=glob.glob(os.path.join(self.cnmf_result_dir,'ms.mat'))
+        self.msmat_Path=glob.glob(os.path.join(self.cnmf_result_dir,'*post_processed*.mat'))
         self.hdf5_Path=glob.glob(os.path.join(self.cnmf_result_dir,'*/hdf5'))
 
         self.load_cnmf_result()
@@ -90,6 +90,22 @@ class MiniResult():
             print("please regenerate ms_ts")
             print("ms_ts: %s;frames: %s"%(dff.shape[0],sum([len(i) for i in ms_ts])))
 
+
+    def Fig_Deconvoluted_neuronal_activity(self):
+        """
+        Neurons are ranked by peak to noises ratio (PNR)
+        Heatmap white to black
+        Neuron_id-Time(minitues)
+        """
+        pass
+        
+    def Fig_fraction_of_sessions_active(self):
+        """
+        两幅图
+        1 Neurons_activate(%)-session
+        2 Neurons-fraction_of_session_active(0-1)
+        """
+        pass
 if __name__ == "__main__":
     mr = MiniResult(mouse_info_path=r"Z:\QiuShou\mouse_info\191173_info.txt",cnmf_result_dir = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191173\20191110_160946_20191028-1102all")
     print(mr.keys)
