@@ -92,15 +92,22 @@ class MiniLWResult(MR):
         j1 = [i for i in ["context_orders","context_angles","ms_starts"] if i not in self.mouse_info.info[self.exp_name].keys() ]
         if j1:
             print("%s is not defined"% j1)
+            sys.exit()
         else:
             print("%s is okay"% ["context_orders","context_angles","ms_starts"])
+            
 
         # check for ["behave_trackfiles","behave_timestamps","behave_logfiles","behave_videos"] 
         j2 = [i for i in ["behave_trackfiles","behave_timestamps","behave_logfiles","behave_videos"] if not i in self.mouse_info.info[self.exp_name].keys()]        
         if j2:
             self.__add_behave_info()
+            j3 = [i for i in ["behave_trackfiles","behave_timestamps","behave_logfiles","behave_videos"] if not i in self.mouse_info.info[self.exp_name].keys()]  
+            if j3:
+                print("behave info is not complete")
+                sys.exit()
         else:
             print("%s is okay"% ["behave_trackfiles","behave_timestamps","behave_logfiles","behave_videos"])
+            
 
         #check for ["video_scale"]
         if not "video_scale" in self.mouse_info.info[self.exp_name].keys():
@@ -115,7 +122,7 @@ class MiniLWResult(MR):
         if sigraw.shape[1]==2: #专门为CaTraces 设置，其与sigraw的格式不同，需要np.array和np.transpose
             sigraw = np.transpose(np.array([i.tolist() for i in sigraw[:,0]]))
         print(sigraw.shape)
-        sigraw = sigraw[:,acceptedPool-1]
+        sigraw = sigraw[:,acceptedPool]
         start = 0
         end=0
         len_ms_ts=[]
@@ -190,7 +197,10 @@ class MiniLWResult(MR):
         self.ana_result["aligned2ms_behaveblocks"] =  aligned2ms_behaveblocks
 
     def run(self):
-        self.load_msts(self.cnmf_result['ms']["dff"])
+        try:
+            self.load_msts(l_dff = self.cnmf_result['CaTraces'][0][0].shape[0])
+        except:
+            print("extraction of length of Traces is wrong")
         # try:
         #     self.load_msts(self.cnmf_result['ms']["dff"])
         # except:
@@ -210,8 +220,8 @@ class MiniLWResult(MR):
 
 
 if __name__ == "__main__":
-    lw_result = MiniLWResult(mouse_info_path=r"Z:\QiuShou\mouse_info\191173_info.txt"
-        ,cnmf_result_dir = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191173\20191110_160946_20191028-1102all"
-        ,behave_dir= r"X:\miniscope\2019*\191173")
+    lw_result = MiniLWResult(mouse_info_path=r"Z:\QiuShou\mouse_info\191086_info.txt"
+        ,cnmf_result_dir = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191086\20191016_102454_all"
+        ,behave_dir= r"X:\miniscope\2019*\191086")
     lw_result.run()
-    lw_result.save
+    # lw_result.save

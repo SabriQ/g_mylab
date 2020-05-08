@@ -6,8 +6,8 @@ Created on Sun Mar  1 16:55:49 2020
 """
 
 #%%
-from mylab.miniscope.Mfunctions import *
-from mylab.miniscope.Mplot import *
+from mylab.process.miniscope.Mfunctions import *
+from mylab.process.miniscope.Mplot import *
 from mylab.Cvideo import Video
 import os,sys
 import glob
@@ -17,6 +17,7 @@ import pandas as pd
 import pickle
 import re
 import scipy
+from mylab.Cmouseinfo import MouseInfo
 #%% info
 mouse_id = "191173"
 ms_mat_path = r"G:\data\miniscope\Results_191173\20191110_160946_20191028-1102all\191173_post_processed.mat"
@@ -52,7 +53,11 @@ behave_videos = [i for i in glob.glob(behave_videodir) if '2019111' not in i]
 behave_videos.sort(key=sort_key)
 result = {}
 
-
+mouseinfo = MouseInfo(mouse_info_path=r"Z:\QiuShou\mouse_info\191173_info.txt")
+mouseinfo.add_key("context_orders", context_orders, exp="lick_water")
+mouseinfo.add_key("context_angles", context_angles, exp="lick_water")
+mouseinfo.add_key("ms_starts", ms_starts, exp="lick_water")
+mouseinfo.save
 #%% load ms.mat come from CAIMAN
 print("loading ms_mat ...") 
 ms_load = loadmat(ms_mat_path)

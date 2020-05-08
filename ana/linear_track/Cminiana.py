@@ -35,7 +35,10 @@ class MiniAna():
     
     
     def si(self):
-        """spatial information """
+        """spatial information 
+
+
+        """
         pass
 
     def csi(self):

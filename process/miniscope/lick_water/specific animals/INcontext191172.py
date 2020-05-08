@@ -17,6 +17,7 @@ import pandas as pd
 import pickle
 import re
 import scipy
+from mylab.Cmouseinfo import MouseInfo
 #%% info
 mouse_id = "191172"
 ms_mat_path = r"Z:\XuChun\Lab Projects\01_Intra Hippocampus\Miniscope_Linear_Track\Results_191172\20191110_160835_20191028-1102all\191172_post_processed3.mat"
@@ -52,6 +53,11 @@ behave_videos = [i for i in glob.glob(behave_videodir) if '2019111' not in i]
 behave_videos.sort(key=sort_key)
 result = {}
 
+mouseinfo = MouseInfo(mouse_info_path=r"Z:\QiuShou\mouse_info\191172_info.txt")
+mouseinfo.add_key("context_orders", context_orders, exp="lick_water")
+mouseinfo.add_key("context_angles", context_angles, exp="lick_water")
+mouseinfo.add_key("ms_starts", ms_starts, exp="lick_water")
+mouseinfo.save
 #%% load ms.mat come from CAIMAN
 print("loading ms_mat ...") 
 ms_load = loadmat(ms_mat_path)
