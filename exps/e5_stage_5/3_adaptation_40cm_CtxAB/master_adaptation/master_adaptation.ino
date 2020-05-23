@@ -3,6 +3,9 @@ byte send2slave1_motor=0;
 
 int ON = 13;
 
+int miniscope_trigger = 8;
+int miniscope_event = 7; 
+
 
 int pump_ll = 2;
 int pump_lr = 3;
@@ -66,6 +69,8 @@ unsigned long exp_start_time;
 void setup() {
   // put your setup code here, to run once:
 pinMode(ON,INPUT);
+pinMode(miniscope_trigger,OUTPUT);digitalWrite(miniscope_trigger,LOW);
+pinMode(miniscope_event,OUTPUT);digitalWrite(miniscope_event,LOW);
 
 pinMode(pump_ll,OUTPUT);digitalWrite(pump_ll,LOW);
 pinMode(pump_lr,OUTPUT);digitalWrite(pump_lr,LOW);
@@ -88,7 +93,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(52);cur_enter_context=0;//每次开始的时候归档至 context 0
+  Signal(53);cur_enter_context=0;//每次开始的时候归档至 context 0
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);
@@ -127,26 +132,31 @@ void process(int p){
       do{Read_ir();}while(ir[0]==0);//while循环，直到小鼠完成nosepoke
       Signal(48);//pump_ll给水
       nose_poke_time = millis();//记录时间
+      miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-      // if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
+       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(54);cur_enter_context=1;}; //切换context   
+//       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(52);cur_enter_context=1;}; //切换context  180°调转   
       break;
 
     case 1://waiting for enter
       do{Read_ir();}while(on_signal >  0.50 && ir[2]==0);//while循环，直到小鼠enter context
       enter_time = millis();//记录时间
+      miniscope_event_on();
       Serial.println("Stat2: enter");//打印stat 
       break;
 
     case 2://waiting for exit
       do{Read_ir();}while(on_signal >  0.50 && ir[3]==0);//while循环知道小鼠exit context
       exit_time = millis();//记录时间
+      miniscope_event_on();
       Serial.println("Stat3: exit");//打印stat
       break;
 
     case 3://waiting for choice
       do{Read_ir();}while(on_signal>0.5 && ir[4]==0 && ir[5]==0); //while 循环，直到小鼠exit context
       choice_time = millis(); //记录时间
+      miniscope_event_on();
       Serial.print("Stat4: choice");//打印stat 
       if (ir[4]==1){
         Serial.print("_l");
@@ -192,12 +202,14 @@ void process(int p){
     case 4://waiting for r_enter
       do{Read_ir();}while(on_signal >  0.50 &&  ir[3]==0);
       r_enter_time = millis();
+      miniscope_event_on();
       Serial.println("Stat5: r_enter");
       break;      
 
     case 5://waiting for r_exit
       do{Read_ir();}while(on_signal >  0.50 &&  ir[2]==0);
       r_exit_time = millis();
+      miniscope_event_on();
       Serial.println("Stat6: r_exit");
       break;
 
@@ -223,7 +235,7 @@ void Signal(int s){
   {
     case 48://ll_pump,nosepoke
       if (Trial_num<10){
-      water_deliver(pump_ll,8);
+      water_deliver(pump_ll,6);
       }else{
         water_deliver(pump_ll,8);
       }
@@ -243,7 +255,7 @@ void Signal(int s){
         water_deliver(pump_rl,8);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
-        water_deliver(pump_rl,8); 
+        water_deliver(pump_rl,6); 
       }
       break;
       
@@ -280,7 +292,8 @@ void Read_ir(){
     if (exp_start ==0 && on_signal>=0.90){
       Signal(48);//默认第一个trial的开始nose poke给水
       exp_start_time=millis();
-      Serial.print("Stat0: exp_start ");
+      digitalWrite(miniscope_trigger,HIGH);
+      Serial.print("Stat0: exp_and_miniscope_start ");
       Serial.println(exp_start_time);
       exp_start=1;
     }
@@ -331,6 +344,7 @@ void Read_ir(){
     right_choice = 0;
     exp_start = 0;
     digitalWrite(pump_led,LOW);
+    digitalWrite(miniscope_trigger,LOW);
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {
@@ -364,3 +378,9 @@ void write2slave(int slave,byte send2slave1_motor){
 //  Serial.print(" to slave");
 //  Serial.println(slave);
   Wire.endTransmission();}
+
+void miniscope_event_on(){
+  digitalWrite(miniscope_event,HIGH);
+  delay(50);
+  digitalWrite(miniscope_event,LOW);
+}
