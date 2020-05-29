@@ -6,7 +6,7 @@ from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
 class LickWater(Exp):
-    def __init__(self,port,data_dir=r"E:\linear_track",mode="adaptation_40cm",video_record=True):
+    def __init__(self,port,data_dir=r"E:\linear_track",mode="train",video_record=True):
         super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
         self.video_record = video_record
