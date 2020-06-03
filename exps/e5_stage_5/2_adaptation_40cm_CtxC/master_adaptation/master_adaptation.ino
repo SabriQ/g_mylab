@@ -156,7 +156,7 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
-          Signal(51);//pump_rr给水
+          Signal(50);//pump_rr给水
 
           Choice_class = 0;}
       }
