@@ -15,6 +15,9 @@ int ctx[3];
 int c_ctx;
 int remote_stop=0;
 
+int de_init = 300;
+int de_stop = 20;
+int de = de_init;
 
 void setup() {
   // put your setup code here, to run once:
@@ -47,6 +50,7 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);//leaving motor
       do{Read_ctx();pulse_stepper(pul);}while(ctx[0]==0); 
+      de = de_init;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=0;
@@ -64,7 +68,7 @@ void rec(){
         digitalWrite(dir,LOW);//leaving motor        
         }else{;}
       do{Read_ctx();pulse_stepper(pul);}while(ctx[1]==0);
-
+      de = de_init;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=1;
@@ -77,6 +81,7 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//leaving motor
       do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0); 
+      de = de_init;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=2;
@@ -125,10 +130,13 @@ void pulse_stepper2(int port_out)
 
 void pulse_stepper(int port_out)
 {
+  if (de>de_stop){
+    de = de-1;
+  }
   digitalWrite(port_out, HIGH);
-  delayMicroseconds(6);
+  delayMicroseconds(de);
   digitalWrite(port_out, LOW);
-  delayMicroseconds(6);
+  delayMicroseconds(de);
 }
 
 float Read_digital(int digital, int times) {
