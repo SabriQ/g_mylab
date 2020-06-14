@@ -3,11 +3,16 @@ byte send2slave1_motor=0;
 
 int ON = 13;
 
+int miniscope_trigger = 8;
+int miniscope_event = 7; 
+
 
 int pump_ll = 2;
 int pump_lr = 3;
 int pump_rl = 4;
 int pump_rr = 5;
+int pump_led = 6;
+
 
 int ir_ll = A0;
 int ir_lr = A1;
@@ -64,11 +69,14 @@ unsigned long exp_start_time;
 void setup() {
   // put your setup code here, to run once:
 pinMode(ON,INPUT);
+pinMode(miniscope_trigger,OUTPUT);digitalWrite(miniscope_trigger,LOW);
+pinMode(miniscope_event,OUTPUT);digitalWrite(miniscope_event,LOW);
 
 pinMode(pump_ll,OUTPUT);digitalWrite(pump_ll,LOW);
 pinMode(pump_lr,OUTPUT);digitalWrite(pump_lr,LOW);
 pinMode(pump_rl,OUTPUT);digitalWrite(pump_rl,LOW);
 pinMode(pump_rr,OUTPUT);digitalWrite(pump_rr,LOW);
+pinMode(pump_led,OUTPUT);digitalWrite(pump_led,HIGH);
 
 pinMode(ir_ll,INPUT);digitalWrite(ir_ll,LOW);
 pinMode(ir_lr,INPUT);digitalWrite(ir_ll,LOW);
@@ -85,7 +93,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-
+  Signal(53);cur_enter_context=0;//每次开始的时候归档至 context 0
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);
@@ -124,26 +132,31 @@ void process(int p){
       do{Read_ir();}while(ir[0]==0);//while循环，直到小鼠完成nosepoke
       Signal(48);//pump_ll给水
       nose_poke_time = millis();//记录时间
+      miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-      // if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
+       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(54);cur_enter_context=1;}; //切换context   
+//       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(52);cur_enter_context=1;}; //切换context  180°调转   
       break;
 
     case 1://waiting for enter
       do{Read_ir();}while(on_signal >  0.50 && ir[2]==0);//while循环，直到小鼠enter context
       enter_time = millis();//记录时间
+      miniscope_event_on();
       Serial.println("Stat2: enter");//打印stat 
       break;
 
     case 2://waiting for exit
       do{Read_ir();}while(on_signal >  0.50 && ir[3]==0);//while循环知道小鼠exit context
       exit_time = millis();//记录时间
+      miniscope_event_on();
       Serial.println("Stat3: exit");//打印stat
       break;
 
     case 3://waiting for choice
       do{Read_ir();}while(on_signal>0.5 && ir[4]==0 && ir[5]==0); //while 循环，直到小鼠exit context
       choice_time = millis(); //记录时间
+      miniscope_event_on();
       Serial.print("Stat4: choice");//打印stat 
       if (ir[4]==1){
         Serial.print("_l");
@@ -153,7 +166,7 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
-          Signal(51);//pump_rr给水
+          Signal(50);//pump_rr给水
           //just for train
 //          if (left_choice > 2* right_choice || left_choice >= right_choice+15 && Trial_num >= 10){
 //            Signal(51);//pump_rr 给水
@@ -169,7 +182,7 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
-          Signal(50);//pump_rl给水
+          Signal(51);//pump_rl给水
           //just for train
 //          if (right_choice > 2* left_choice ||right_choice >= left_choice +15 && Trial_num >= 10){
 //            Signal(50);//pump_rl 给水
@@ -189,12 +202,14 @@ void process(int p){
     case 4://waiting for r_enter
       do{Read_ir();}while(on_signal >  0.50 &&  ir[3]==0);
       r_enter_time = millis();
+      miniscope_event_on();
       Serial.println("Stat5: r_enter");
       break;      
 
     case 5://waiting for r_exit
       do{Read_ir();}while(on_signal >  0.50 &&  ir[2]==0);
       r_exit_time = millis();
+      miniscope_event_on();
       Serial.println("Stat6: r_exit");
       break;
 
@@ -220,9 +235,9 @@ void Signal(int s){
   {
     case 48://ll_pump,nosepoke
       if (Trial_num<10){
-      water_deliver(pump_ll,10);
+      water_deliver(pump_ll,6);
       }else{
-        water_deliver(pump_ll,10);
+        water_deliver(pump_ll,8);
       }
 
 //      if (choice_class==1){
@@ -237,17 +252,17 @@ void Signal(int s){
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,10);
+        water_deliver(pump_rl,8);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
-        water_deliver(pump_rl,10); 
+        water_deliver(pump_rl,6); 
       }
       break;
       
     case 51://rr_pump
-      water_deliver(pump_rr,10);      
+      water_deliver(pump_rr,8);      
       if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
-        water_deliver(pump_rr,10); 
+        water_deliver(pump_rr,8); 
       }
       break;
       
@@ -277,7 +292,8 @@ void Read_ir(){
     if (exp_start ==0 && on_signal>=0.90){
       Signal(48);//默认第一个trial的开始nose poke给水
       exp_start_time=millis();
-      Serial.print("Stat0: exp_start ");
+      digitalWrite(miniscope_trigger,HIGH);
+      Serial.print("Stat0: exp_and_miniscope_start ");
       Serial.println(exp_start_time);
       exp_start=1;
     }
@@ -289,12 +305,25 @@ void Read_ir(){
       float ir_exit_value = Read_analog(ir_exit,5);
       float ir_rl_value = Read_analog(ir_rl,5);
       float ir_rr_value = Read_analog(ir_rr,5); 
-      if (ir_ll_value< 500 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
-      if (ir_lr_value< 500 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
+      if (ir_ll_value< 800 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
+      if (ir_lr_value< 800 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
       if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
       if (ir_exit_value< 100) {ir[3] = 1;}else{ir[3] = 0;}
-      if (ir_rl_value< 500 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
-      if (ir_rr_value< 400 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+      if (ir_rl_value< 800 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
+      if (ir_rr_value< 800 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+      if (ir[0]+ir[1]+ir[4]+ir[5]==1){
+        digitalWrite(pump_led,LOW);
+      }else if(ir[0]+ir[1]+ir[4]+ir[5]==0){
+        digitalWrite(pump_led,HIGH);
+      }else if(ir[0]+ir[1]+ir[2]+ir[3]+ir[4]+ir[5]>1){
+        digitalWrite(pump_led,LOW);
+        delay(500);
+        digitalWrite(pump_led,HIGH);
+        delay(500);
+      }else{
+        digitalWrite(pump_led,HIGH);
+      }
+      
 //      Serial.print(ir_ll_value);Serial.print(" ");
 //      Serial.print(ir_lr_value);Serial.print(" ");
 //      Serial.print(ir_enter_value);Serial.print(" ");
@@ -314,7 +343,8 @@ void Read_ir(){
     left_choice = 0;
     right_choice = 0;
     exp_start = 0;
-    Signal(52);cur_enter_context=0;//每次结束的时候归档至 context 0
+    digitalWrite(pump_led,LOW);
+    digitalWrite(miniscope_trigger,LOW);
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {
@@ -348,3 +378,9 @@ void write2slave(int slave,byte send2slave1_motor){
 //  Serial.print(" to slave");
 //  Serial.println(slave);
   Wire.endTransmission();}
+
+void miniscope_event_on(){
+  digitalWrite(miniscope_event,HIGH);
+  delay(50);
+  digitalWrite(miniscope_event,LOW);
+}
