@@ -73,10 +73,10 @@ class MiniLWResult(MR):
         print(behave_videos)
         print("add info behave_videos")
 
-        behave_sessionnames = [os.path.basename(i).split('_ts.txt')[0] for i in behave_timestamps]
-        self.mouse_info.add_key(key="behave_sessionnames",value=behave_sessionnames,exp=self.exp_name)
-        print(behave_sessionnames)
-        print("add info behave_sessionnames")
+        behave_blocknames = [os.path.basename(i).split('_ts.txt')[0] for i in behave_timestamps]
+        self.mouse_info.add_key(key="behave_blocknames",value=behave_blocknames,exp=self.exp_name)
+        print(behave_blocknames)
+        print("add info behave_blocknames")
         self.mouse_info.save
 
 
@@ -115,9 +115,9 @@ class MiniLWResult(MR):
         else:
             print("%s is okay"% ["video_scale"])
 
-    def sigraw2mssessions(self,ms_ts,sigraw,acceptedPool):
+    def sigraw2msblocks(self,ms_ts,sigraw,acceptedPool):
         '''
-        according to ms_ts, we divided sigraw, a [(531,79031),(cell_number,frames)] numpy.ndarray into mssessions, a list of dataframe
+        according to ms_ts, we divided sigraw, a [(531,79031),(cell_number,frames)] numpy.ndarray into msblocks, a list of dataframe
         '''
         if sigraw.shape[1]==2: #专门为CaTraces 设置，其与sigraw的格式不同，需要np.array和np.transpose
             sigraw = np.transpose(np.array([i.tolist() for i in sigraw[:,0]]))
@@ -126,80 +126,75 @@ class MiniLWResult(MR):
         start = 0
         end=0
         len_ms_ts=[]
-        mssessions=[]
+        msblocks=[]
         for i, ts in enumerate(ms_ts,1):
             len_ms_ts.append(len(ts))        
             start = end
             end = end+len(ts)        
-            session=pd.DataFrame(sigraw[start:end,:],columns=acceptedPool)
-            session['ms_ts']=ts
+            block=pd.DataFrame(sigraw[start:end,:],columns=acceptedPool)
+            block['ms_ts']=ts
             print('trace and ms_ts[',start,end,']constructed as DataFrame')
-            mssessions.append(session)
+            msblocks.append(block)
         print("sigraw have been constructed as a list of DataFrame as ms_ts. ")
-        self.ana_result["mssessions"] =  mssessions
+        self.ana_result["msblocks"] =  msblocks
         
-    def dlctrack2behavesessions(self,behave_trackfiles,behave_timestamps,behave_sessionnames,block_nums):
+    def dlctrack2behaveblocks(self,behave_trackfiles,behave_timestamps,behave_blocknames):
         
-        behavesessions=[]
+        behaveblocks=[]
         i=1 
-        for behave_trackfile,behave_timestamp,behave_sessionname,block_num in zip(behave_trackfiles,behave_timestamps,behave_sessionnames,block_nums):    
-            print(f'{i}/{len(behave_trackfiles)} sessions:')
+        for behave_trackfile,behave_timestamp,behave_blockname in zip(behave_trackfiles,behave_timestamps,behave_blocknames):    
+            print(f'{i}/{len(behave_trackfiles)} blocks:')
             #读取behave_trackfile
-            if behave_sessionname in behave_trackfile:
+            if behave_blockname in behave_trackfile:
                 track = pd.read_hdf(behave_trackfile) #这一步比其他步骤耗时
-                behavesession=pd.DataFrame(track[track.columns[0:9]].values,
+                behaveblock=pd.DataFrame(track[track.columns[0:9]].values,
                  columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
             #读取behave_timestamp
-                
-            if behave_sessionname in behave_timestamp:
+            if behave_blockname in behave_timestamp:
                 ts = pd.read_table(behave_timestamp,sep='\n',header=None)
-                # if txt is encoded with utf-16
-                #ts = pd.read_table(behave_timestamp,sep='\n',header=None,encoding='utf-16-le')
-                behavesession['be_ts']=ts[0]
+                behaveblock['be_ts']=ts[0]
 
-            behavesession["block_num"]=block_num
-
-            behavesessions.append(behavesession)
-            print("generate 'behavesessions'")
-            print(f"behave data of {behave_sessionname} has been constructed as DataFrame")
+            behaveblocks.append(behaveblock)
+            print("generate 'behaveblocks'")
+            print(f"behave data of {behave_blockname} has been constructed as DataFrame")
             i= i+1
         print("All the behave info has been constructed as a list of DataFrame. ")
 
-        self.ana_result["behavesessions"] =  behavesessions
+        self.ana_result["behaveblocks"] =  behaveblocks
 
 
-    def align_behavesessions2mssessions(self,ms_starts,mssessions,behavesessions,alpha=0.1):
+    def align_behaveblocks2msblocks(self,ms_starts,msblocks,behaveblocks,alpha=0.1):
         '''
         alpha means the time miniscope need to start,we need to minus it
         '''
         for i,start in enumerate(ms_starts,0):
-            delta_t = behavesessions[i]['be_ts'][start-1]-alpha 
+            delta_t = behaveblocks[i]['be_ts'][start-1]-alpha 
             #这个-0.1s即100ms指的大概是 miniscope启动大概需要100ms的时间，即miniscope的0时刻大约比led_on要晚大约100ms,
             #这是通过对比ms_ts(原始)的最大值，和视频的结束时间的出来的，如果不-0.1,差值的平均在113ms左右
-            behavesessions[i]['correct_ts']=behavesessions[i]['be_ts']-delta_t
+            behaveblocks[i]['correct_ts']=behaveblocks[i]['be_ts']-delta_t
         print("be_ts has been corrected as correct_ts")
-        aligned2ms_behavesessions=[]
+        aligned2ms_behaveblocks=[]
         i = 1
-        for mssession,behavesession in zip(mssessions,behavesessions):
-            aligned2ms_behavesession = pd.DataFrame()
+        for msblock,behaveblock in zip(msblocks,behaveblocks):
+            aligned2ms_behaveblock = pd.DataFrame()
             #以miniscope时间轴"ms_ts"作为reference
-            aligned2ms_behavesession['ms_ts'] = mssession['ms_ts']     
-            print(f"{i}/{len(mssessions)} session is aligning behave DataFrame according to ms_ts...",end=' ')
+            aligned2ms_behaveblock['ms_ts'] = msblock['ms_ts']     
+            print(f"{i}/{len(msblocks)} block is aligning behave DataFrame according to ms_ts...",end=' ')
             #找到 行为学矫正时间"correct_ts"和miniscope时间"ms_ts"最相近的行为帧的索引 变为"be_frame"
-            aligned2ms_behavesession['be_frame']=[find_close_fast(arr=(behavesession['correct_ts']*1000),e=k) for k in mssession['ms_ts']]
+            aligned2ms_behaveblock['be_frame']=[find_close_fast(arr=(behaveblock['correct_ts']*1000),e=k) for k in msblock['ms_ts']]
             print('-->aligned.',end=' ')
-            # aligned2ms_behavesession = aligned2ms_behavesession.join(behavesession.iloc[aligned2ms_behavesession['be_frame'].tolist(),].reset_index())
-            #aligned2ms_behavesession的"be_frame"作为behavesession的行索引
-            aligned2ms_behavesession = aligned2ms_behavesession.join(behavesession,on="be_frame")
+            # aligned2ms_behaveblock = aligned2ms_behaveblock.join(behaveblock.iloc[aligned2ms_behaveblock['be_frame'].tolist(),].reset_index())
+            #aligned2ms_behaveblock的"be_frame"作为behaveblock的行索引
+            aligned2ms_behaveblock = aligned2ms_behaveblock.join(behaveblock,on="be_frame")
 
-            aligned2ms_behavesession['Headspeeds'],aligned2ms_behavesession['Headspeed_angles'] = speed(aligned2ms_behavesession['Head_x'],aligned2ms_behavesession['Head_y'],aligned2ms_behavesession['be_ts'],0.16)
-            aligned2ms_behavesession['Bodyspeeds'],aligned2ms_behavesession['Bodyspeed_angles'] = speed(aligned2ms_behavesession['Body_x'],aligned2ms_behavesession['Body_y'],aligned2ms_behavesession['be_ts'],0.16)
-            aligned2ms_behavesession['Tailspeeds'],aligned2ms_behavesession['Tailspeed_angles'] = speed(aligned2ms_behavesession['Tail_x'],aligned2ms_behavesession['Tail_y'],aligned2ms_behavesession['be_ts'],0.16)
-            aligned2ms_behavesession['headdirections'],aligned2ms_behavesession['taildirections'], aligned2ms_behavesession['arch_angles'] = direction(aligned2ms_behavesession['Head_x'].tolist(),aligned2ms_behavesession['Head_y'].tolist(),aligned2ms_behavesession['Body_x'].tolist(),aligned2ms_behavesession['Body_y'].tolist(),aligned2ms_behavesession['Tail_x'].tolist(),aligned2ms_behavesession['Tail_y'].tolist())
-            aligned2ms_behavesessions.append(aligned2ms_behavesession)    
+            aligned2ms_behaveblock['Headspeeds'],aligned2ms_behaveblock['Headspeed_angles'] = speed(aligned2ms_behaveblock['Head_x'],aligned2ms_behaveblock['Head_y'],aligned2ms_behaveblock['be_ts'],0.16)
+            aligned2ms_behaveblock['Bodyspeeds'],aligned2ms_behaveblock['Bodyspeed_angles'] = speed(aligned2ms_behaveblock['Body_x'],aligned2ms_behaveblock['Body_y'],aligned2ms_behaveblock['be_ts'],0.16)
+            aligned2ms_behaveblock['Tailspeeds'],aligned2ms_behaveblock['Tailspeed_angles'] = speed(aligned2ms_behaveblock['Tail_x'],aligned2ms_behaveblock['Tail_y'],aligned2ms_behaveblock['be_ts'],0.16)
+            aligned2ms_behaveblock['headdirections'],aligned2ms_behaveblock['taildirections'], aligned2ms_behaveblock['arch_angles'] = direction(aligned2ms_behaveblock['Head_x'].tolist(),aligned2ms_behaveblock['Head_y'].tolist(),aligned2ms_behaveblock['Body_x'].tolist(),aligned2ms_behaveblock['Body_y'].tolist(),aligned2ms_behaveblock['Tail_x'].tolist(),aligned2ms_behaveblock['Tail_y'].tolist())
+            aligned2ms_behaveblocks.append(aligned2ms_behaveblock)    
             print(f"Caculated speeds")
             i=i+1
-        self.ana_result["aligned2ms_behavesessions"] =  aligned2ms_behavesessions
+        self.ana_result["aligned2ms_behaveblocks"] =  aligned2ms_behaveblocks
 
     def run(self):
         try:
@@ -212,15 +207,15 @@ class MiniLWResult(MR):
         #     print("ms_ts and frames are not equalong ")
         #     sys.exit()
 
-        if "mssessions" not in self.keys:
-            # self.sigraw2mssessions(self.ana_result["ms_ts"],self.cnmf_result['ms']["sigraw"],self.cnmf_result["acceptedPool"]-1)
-            self.sigraw2mssessions(self.ana_result["ms_ts"],self.cnmf_result['CaTraces'],self.cnmf_result["acceptedPool"]-1)
+        if "msblocks" not in self.keys:
+            # self.sigraw2msblocks(self.ana_result["ms_ts"],self.cnmf_result['ms']["sigraw"],self.cnmf_result["acceptedPool"]-1)
+            self.sigraw2msblocks(self.ana_result["ms_ts"],self.cnmf_result['CaTraces'],self.cnmf_result["acceptedPool"]-1)
 
-        if "behavesessions" not in self.keys:
-            self.dlctrack2behavesessions(self.mouse_info.info[self.exp_name]["behave_trackfiles"],self.mouse_info.info[self.exp_name]["behave_timestamps"],self.mouse_info.info[self.exp_name]["behave_sessionnames"],self.mouse_info.info[self.exp_name]["block_nums"])
+        if "behaveblocks" not in self.keys:
+            self.dlctrack2behaveblocks(self.mouse_info.info[self.exp_name]["behave_trackfiles"],self.mouse_info.info[self.exp_name]["behave_timestamps"],self.mouse_info.info[self.exp_name]["behave_blocknames"])
 
-        if "aligned2ms_behavesessions" not in self.keys:
-            self.align_behavesessions2mssessions(self.mouse_info.info[self.exp_name]["ms_starts"],self.ana_result["mssessions"],self.ana_result["behavesessions"])
+        if "aligned2ms_behaveblocks" not in self.keys:
+            self.align_behaveblocks2msblocks(self.mouse_info.info[self.exp_name]["ms_starts"],self.ana_result["msblocks"],self.ana_result["behaveblocks"])
 
 
 

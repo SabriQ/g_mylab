@@ -1,0 +1,1393 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"be",
+				"behave_video"
+			],
+			[
+				"ca",
+				"camera_index"
+			],
+			[
+				"add",
+				"add_recording_marker"
+			],
+			[
+				"con",
+				"contour_area_threshold"
+			],
+			[
+				"tra",
+				"track_frame"
+			],
+			[
+				"dra",
+				"drawContours"
+			],
+			[
+				"ge",
+				"generate_background"
+			],
+			[
+				"roi",
+				"roi_coords"
+			],
+			[
+				"d",
+				"draw_roi"
+			],
+			[
+				"re",
+				"release"
+			],
+			[
+				"is",
+				"is_save"
+			],
+			[
+				"fo",
+				"fourcc"
+			],
+			[
+				"Vi",
+				"VideoWriter_fourcc"
+			],
+			[
+				"se",
+				"selectROI"
+			],
+			[
+				"is_",
+				"is_tracking"
+			],
+			[
+				"dif",
+				"diff_frame"
+			],
+			[
+				"conto",
+				"contourArea"
+			],
+			[
+				"fram",
+				"frame_count"
+			],
+			[
+				"lic",
+				"lick_water"
+			],
+			[
+				"id",
+				"idx_ContextCells"
+			],
+			[
+				"idx",
+				"idx_ContextCells"
+			],
+			[
+				"bloc",
+				"block_num"
+			],
+			[
+				"idx_Ce",
+				"idx_Cells_no_firing"
+			],
+			[
+				"idx_C",
+				"idx_ContextCells"
+			],
+			[
+				"temp_ctx",
+				"temp_ctxA_tempblock"
+			],
+			[
+				"idx_",
+				"idx_ContextCells"
+			],
+			[
+				"change",
+				"change_floor"
+			],
+			[
+				"blo",
+				"block_num"
+			],
+			[
+				"temp_c",
+				"temp_ctxA_allblocks"
+			],
+			[
+				"block",
+				"block_num"
+			],
+			[
+				"cal",
+				"calculate_in_context_LoRAtrialnum_MeanFr_mssession_NormalizedByBlock"
+			],
+			[
+				"contex",
+				"context_angle"
+			],
+			[
+				"context",
+				"context_orders"
+			],
+			[
+				"mouse",
+				"mouse_info"
+			],
+			[
+				"in_context_L",
+				"in_context_LoRAtrialnum_MeanFr_mssessions"
+			],
+			[
+				"s",
+				"stderr"
+			],
+			[
+				"filt",
+				"filtering"
+			],
+			[
+				"conte",
+				"context_orders"
+			],
+			[
+				"Wil",
+				"Wilcoxon_test"
+			],
+			[
+				"ali",
+				"aligned2ms_behaveblock"
+			],
+			[
+				"_a",
+				"_add_in_context_trialnum2aligaligned2ms_behaveblocks"
+			],
+			[
+				"in_context",
+				"in_context_msblock"
+			],
+			[
+				"pla",
+				"placebin_num"
+			],
+			[
+				"place",
+				"placebin_number"
+			],
+			[
+				"Cx",
+				"Cx_min"
+			],
+			[
+				"MeanAng",
+				"MeanAngleFr_CtxA"
+			],
+			[
+				"in",
+				"in_context_MeanFr_msblocks"
+			],
+			[
+				"del",
+				"delta_t"
+			],
+			[
+				"an",
+				"angle"
+			],
+			[
+				"al",
+				"already"
+			],
+			[
+				"tem",
+				"temp_behavetrial"
+			],
+			[
+				"in_con",
+				"in_context_msblocks"
+			],
+			[
+				"in_context_msb",
+				"in_context_msblocks_trials"
+			],
+			[
+				"in_context_co",
+				"in_context_contextcoord"
+			],
+			[
+				"ms",
+				"mstrials"
+			],
+			[
+				"x_ma",
+				"x_max2"
+			],
+			[
+				"mouse_info",
+				"mouse_info_path"
+			],
+			[
+				"ke",
+				"key"
+			],
+			[
+				"co",
+				"contextcoords"
+			],
+			[
+				"in_context_be",
+				"in_context_behaveblocks"
+			],
+			[
+				"ana",
+				"ana_result"
+			],
+			[
+				"in_conte",
+				"in_context_behaveblock"
+			],
+			[
+				"in_c",
+				"in_context"
+			],
+			[
+				"msbl",
+				"msblocks"
+			],
+			[
+				"in_",
+				"in_context"
+			],
+			[
+				"resu",
+				"result_path"
+			],
+			[
+				"ex",
+				"exp_start_time"
+			],
+			[
+				"min",
+				"minscope_start_time"
+			],
+			[
+				"video",
+				"video_scale"
+			],
+			[
+				"exp",
+				"exp_name"
+			],
+			[
+				"vi",
+				"video_scale"
+			],
+			[
+				"behave",
+				"behave_dir"
+			],
+			[
+				"in_track",
+				"in_track"
+			],
+			[
+				"beha",
+				"behaveinfo_lists"
+			],
+			[
+				"behaveblc",
+				"behaveblocks"
+			],
+			[
+				"acc",
+				"acceptedPool"
+			],
+			[
+				"sigra",
+				"sigraw"
+			],
+			[
+				"ms_ts",
+				"ms_ts_pkl"
+			],
+			[
+				"behaveinfo",
+				"behaveinfo_lists"
+			],
+			[
+				"k",
+				"keys"
+			],
+			[
+				"_lo",
+				"_load_pkl"
+			],
+			[
+				"h",
+				"hdf5_Path"
+			],
+			[
+				"hdf",
+				"hdf5"
+			],
+			[
+				"save",
+				"save_mouseinfo"
+			],
+			[
+				"mou",
+				"mouse_info"
+			],
+			[
+				"M",
+				"MiniResult"
+			],
+			[
+				"res",
+				"result_pklpath"
+			],
+			[
+				"y",
+				"set_ylim"
+			],
+			[
+				"set",
+				"set_ylable"
+			],
+			[
+				"Trial",
+				"Trial_Num"
+			],
+			[
+				"ti",
+				"title"
+			],
+			[
+				"R",
+				"Right_choice"
+			],
+			[
+				"C",
+				"Choice_class"
+			],
+			[
+				"Ex",
+				"Exit_ctx"
+			],
+			[
+				"cu",
+				"cur_enter_context"
+			],
+			[
+				"sen",
+				"send2slave1_motor"
+			],
+			[
+				"pum",
+				"pump_lr"
+			],
+			[
+				"pul",
+				"pulse_stepper"
+			],
+			[
+				"digi",
+				"digitalWrite"
+			],
+			[
+				"wr",
+				"writerow"
+			],
+			[
+				"write",
+				"write_data"
+			],
+			[
+				"P",
+				"P_right"
+			],
+			[
+				"Tr",
+				"Trial_Num"
+			],
+			[
+				"data",
+				"data_dir"
+			],
+			[
+				"io",
+				"ioff"
+			],
+			[
+				"led",
+				"led_dependent_choice"
+			],
+			[
+				"log",
+				"log_path"
+			],
+			[
+				"E",
+				"Epm_opto"
+			],
+			[
+				"st",
+				"stop_record_camera"
+			],
+			[
+				"por",
+				"ports"
+			],
+			[
+				"u",
+				"URL_FUNC_DICT"
+			],
+			[
+				"sta",
+				"static_path"
+			],
+			[
+				"far",
+				"frame_name"
+			],
+			[
+				"farm",
+				"frame_app_name"
+			],
+			[
+				"ret",
+				"return"
+			],
+			[
+				"mini",
+				"mini_frame"
+			],
+			[
+				"fi",
+				"file_name"
+			],
+			[
+				"fd",
+				"fd_event_dict"
+			],
+			[
+				"revc",
+				"recv_data"
+			],
+			[
+				"recv",
+				"recv_data"
+			],
+			[
+				"ci",
+				"client_socket_list"
+			],
+			[
+				"req",
+				"request_lines"
+			],
+			[
+				"ht",
+				"html_content"
+			],
+			[
+				"pri",
+				"print_menue"
+			],
+			[
+				"exis",
+				"existed_coords"
+			],
+			[
+				"v",
+				"videolists"
+			],
+			[
+				"sca",
+				"scale_distance"
+			],
+			[
+				"inde",
+				"index-1"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "\nimport datetime\nimport numpy as np\nimport cv2\n \ndef add_timestr(img):\n    now = datetime.datetime.now()\n    time_str= now.strftime(\"%Y-%m-%d %H:%M:%S.%f\")\n    # time_str = datetime.datetime.now.ToString(\"yyyy-MM-dd hh:mm:ss.fff\")\n    color=(255,255,255)\n    if np.mean( img[700:780,900:950])>128:\n        color=(0,0,0)\n\n    cv2.putText(img, time_str, (100,50) ,cv2.FONT_HERSHEY_SIMPLEX ,0.8, color ,2)\n    return img\n\n\n\ndef diff_frame(background,frame):\n    if not background is None:\n        gray_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)\n        gray_frame = cv2.GaussianBlur(gray_frame,(21,21),0)\n        ##打开系统默认的摄像头获得的视频图像，并将第一帧设置为整个输入的背景\n        #对于每个从该点以后读取的帧都会计算其与背景之间的差异\n        diff = cv2.absdiff(background, gray_frame) #计算背景帧与当前帧的差值\n        diff = cv2.threshold(diff,25,255,cv2.THRESH_BINARY)[1]#25为阈值，255为超过阈值被赋予的值\n        #getStructuringElement是获取常用的结构元素的形状，MORPH_ELLIPSE是椭圆（包括圆形），后面定义的是大小\n        es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(9,4))\n        diff = cv2.dilate(diff,es,iterations = 2)#进行图片膨胀，iterations为膨胀次数为2，\n        #findContours函数计算一幅图像中目标的轮廓，diff.copy()为输入的二值单通道图像\n        # 轮廓CV_RETR_EXTERNAL表示只检测外轮廓\n        cnts,hierarchy = cv2.findContours(diff.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)\n        #只将轮廓面积最大的用矩形框画出来\n\n        if len(cnts):\n            areas = [cv2.contourArea(c) for c in cnts]\n            for i in range(len(areas)):\n                if areas[i]== max(areas) and  areas[i]>1500:\n                    #c是一个二值图，boundingRect是矩形边框函数，用一个最小的矩形，把找到的形状包起来；\n                    #x,y是矩形左上点的坐标；w,h是矩阵的宽和高\n                    (x,y,w,h) = cv2.boundingRect(cnts[i])\n                    #rectangle画出矩形，frame是原图，(x,y)是矩阵的左上点坐标，(x+w,y+h)是矩阵右下点坐标\n                    #(0,255,0)是画线对应的rgb颜色，2是画线的线宽\n                    frame = cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)\n                    return frame\n        else:\n            frame = None\n        return frame\ndef main():\n    is_recording=0\n    is_tracking=1\n    cap = cv2.VideoCapture(r\"C:\\Users\\Sabri\\Desktop\\192093-20190807-102117.mp4\")\n\n    if not cap.isOpened():\n        print(\"there is no camera available\")\n        sys.exit()\n\n\n    cap.set(3,640) #设置分辨率\n    cap.set(4,480)\n    ## some videowriter props\n    sz = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),\n            int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))\n\n    fps = 30\n    #fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')\n    #fourcc = cv2.VideoWriter_fourcc('m', 'p', 'e', 'g')\n\n    # fourcc = cv2.VideoWriter_fourcc(*'mpeg')\n    # fourcc = cv2.VideoWriter_fourcc(*'XVID')\n    fourcc = cv2.VideoWriter_fourcc(*'DIB ')\n    ## open and set props\n    out = cv2.VideoWriter()\n    out.open('output2.mp4',fourcc,fps,sz,True)\n\n    frame_count = 0\n    while(True):\n        frame_count=frame_count+1\n        ret,frame=cap.read()\n        if frame_count==50:\n            background=frame\n            background =  cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)###灰度化图像\n            background =  cv2.GaussianBlur(background,(21,21),0)###进行模糊处理\n        elif frame_count<30:\n            background=0\n        else:\n            background=background\n\n        if is_tracking:\n            rec = diff_frame(background,frame)\n            if not rec is None:\n                frame = rec\n                # x =rec[0]\n                # y =rec[1]\n                # w =rec[2]\n                # h =rec[3]\n                # frame = cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)\n        if is_recording:\n            out.write(frame)\n        else:\n            pass\n        add_timestr(frame)\n        cv2.imshow('frame',frame)\n\n        key = cv2.waitKey(5) & 0xff\n        if key == ord('q'):\n            break\n        elif key == ord('s'):\n            is_recording = 1 - is_recording\n        elif key == ord('t'):\n            is_tracking = 1 - is_tracking \n        else:\n            pass\n \n    out.release()\n    cap.release()\n    cv2.destroyAllWindows()\n\nif __name__ == \"__main__\":\n    main()\n",
+			"file": "/C/Users/Sabri/Desktop/program/video_recording2.py",
+			"file_size": 5314,
+			"file_write_time": 132347703557079224,
+			"settings":
+			{
+				"buffer_size": 3927,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/Users/Sabri/Desktop/program/video_recording3.py",
+			"settings":
+			{
+				"buffer_size": 8203,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/C/Users/Sabri/Desktop/program/video_recording5.py",
+			"settings":
+			{
+				"buffer_size": 2802,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "import cv2"
+			}
+		},
+		{
+			"file": "/C/Users/Sabri/Desktop/program/video_recording4.py",
+			"settings":
+			{
+				"buffer_size": 2053,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "import cv2"
+			}
+		},
+		{
+			"contents": "import cv2 \nimport numpy as np \nimport datetime\nimport os,sys\nfrom multiprocessing import Process\nfrom threading import Thread\nimport os\n\nclass behave_video():\n    \"\"\"\n    for behaviral video recording\n    \"\"\"\n    def __init__(self,camera_index,videosavepath):\n        self.camera_index = camera_index\n        self.videosavepath = videosavepath\n        self.cap = cv2.VideoCapture(self.camera_index)\n        if not self.cap.isOpened():\n            print(\"%s is not available\"%self.camera_index)\n            sys.exit()\n        self.cap.set(3,640)\n        self.cap.set(4,480)\n        self.sz = (int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)),\n            int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))\n\n        ## to track the object\n        self.is_track =0\n        self.is_update_roi=0\n        self.track_roi = None\n        self.es = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(9,4))\n        self.background = None\n        self.iterations = 1\n        self.gaussian_kernal_size = 3\n        self.contour_area_threshold = 500\n        self.diff_threshold_min = 30\n        self.diff_threshold_max = 254\n        ## to save the video\n        self.is_record = 0\n        self.fps = 30\n        self.fourcc = 0\n        # self.fourcc = cv2.VideoWriter_fourcc(*'mpeg')\n        #self.fourcc = cv2.VideoWriter_fourcc(*'mpeg')\n        # self.fourcc = cv2.VideoWriter_fourcc(*'XVID')\n        # self.fourcc = cv2.VideoWriter_fourcc(*'DIB ')\n        self.out = cv2.VideoWriter()\n        self.out.open(self.videosavepath,self.fourcc,self.fps,self.sz,True)\n        self.run()\n\n    @staticmethod\n    def decode_fourcc(cc):\n        \"\"\"\n        fourcc = self.cap.get(cv2.CAP_PROP_FOURCC)\n        \"\"\"\n        return \"\".join([chr((int(cc) >> 8 * i) & 0xFF) for i in range(4)])\n\n    @property\n    def track(self):\n        self.is_track = 1-self.is_track\n\n    @property\n    def record(self):\n        self.is_record = 1-self.is_record\n    \n    \n    def add_timestr(self,img):\n        now = datetime.datetime.now()\n        time_str= now.strftime(\"%Y-%m-%d %H:%M:%S.%f\")\n        cv2.putText(img, time_str, (400,15) ,cv2.FONT_HERSHEY_SIMPLEX ,0.4, (0,200,0) ,1)\n        return img\n\n    def add_recording_marker(self,img):\n        cv2.circle(img,(10,10),5,(0,0,255),-1)\n        cv2.putText(img, \"Recording\", (20,15) ,cv2.FONT_HERSHEY_SIMPLEX ,0.5, (0,0,255) ,1)\n        return img\n\n    def draw_roi(self,frame):\n        if self.is_update_roi or self.track_roi==None:\n            self.track_roi = cv2.selectROI(\"ROI selector\",frame,False,False)\n            cv2.destroyWindow(\"ROI selector\")\n        return self.track_roi\n\n    def generate_background(self,frame):\n        if self.track_roi is None or self.is_update_roi:\n            self.draw_roi(frame)\n        crop_frame = frame[self.track_roi[1]:(self.track_roi[1]+self.track_roi[3]),self.track_roi[0]:(self.track_roi[0]+self.track_roi[2])]\n        background = cv2.cvtColor(crop_frame,cv2.COLOR_BGR2GRAY)\n        self.background = cv2.GaussianBlur(background,(self.gaussian_kernal_size,self.gaussian_kernal_size),0)\n\n    def diff_frame(self,frame):\n        if self.background is None:\n            self.generate_background(frame)\n\n        crop_frame = frame[self.track_roi[1]:(self.track_roi[1]+self.track_roi[3]),self.track_roi[0]:(self.track_roi[0]+self.track_roi[2])]\n        gray_frame = cv2.cvtColor(crop_frame,cv2.COLOR_BGR2GRAY)\n        gray_frame = cv2.GaussianBlur(gray_frame,(self.gaussian_kernal_size,self.gaussian_kernal_size),0)\n\n        diff = cv2.absdiff(self.background,gray_frame)\n        diff = cv2.threshold(diff,50,255,cv2.THRESH_BINARY)[1]\n        diff = cv2.dilate(diff,self.es,iterations=self.iterations)\n        cnts,_ = cv2.findContours(diff,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)\n\n        l_cnts = len(cnts)\n        # if l_cnts:\n        #     cv2.drawContours(crop_frame,cnts,-1,-1)\n        # frame[self.track_roi[1]:(self.track_roi[1]+self.track_roi[3]),self.track_roi[0]:(self.track_roi[0]+self.track_roi[2])] = crop_frame\n        cv2.rectangle(frame,(self.track_roi[0],self.track_roi[1]),(self.track_roi[0]+self.track_roi[2],self.track_roi[1]+self.track_roi[3]),(0,255,0),2)\n\n\n        if l_cnts:\n            areas = [cv2.contourArea(c) for c in cnts]\n            for i in range(l_cnts):\n                if areas[i]== max(areas) and areas[i]>self.contour_area_threshold:\n                    cv2.drawContours(crop_frame,[cnts[i]],-1,-1)\n                    frame[self.track_roi[1]:(self.track_roi[1]+self.track_roi[3]),self.track_roi[0]:(self.track_roi[0]+self.track_roi[2])] = crop_frame\n\n                    # (x,y,w,h) = cv2.boundingRect(cnts[i])\n                    # cv2.rectangle(frame,(x+self.track_roi[0],y+self.track_roi[1]),(x+self.track_roi[0]+w,y+self.track_roi[1]+h),(0,255,0),2)\n        else:\n            frame = None\n\n\n        return frame\n\n    def run(self):\n        \n        while True:\n            ok,frame = self.cap.read()\n            frame = self.add_timestr(frame)\n            if self.is_record:\n                \n                self.add_recording_marker(frame)\n                self.out.write(frame)\n\n            if self.is_track:\n                track_frame = self.diff_frame(frame)\n                if not track_frame is None:\n                    frame = track_frame\n            \n            cv2.imshow('%s'%self.camera_index,frame)\n\n            key = cv2.waitKey(5) & 0xff\n            if key == ord('q'):\n                break\n            elif key == ord('s'):\n                self.is_record = 1 - self.is_record\n\n            elif key == ord('t'):\n                self.is_track = 1 - self.is_track\n                self.diff_frame(frame)\n\n            elif key == ord('d'):\n                self.is_update_roi=1\n                self.generate_background(frame)\n                self.is_update_roi=0\n\n            elif key == ord('h'):\n                self.iterations = self.iterations +1\n                print(\"iterations: %s\"%self.iterations)\n            elif key == ord('H'):\n                if self.iterations > 1:\n                    self.iterations = self.iterations - 1\n                else:\n                    self.iterations = self.iterations\n                print(\"iterations: %s\"%self.iterations)\n\n\n            elif key == ord('j'):\n                self.gaussian_kernal_size = self.gaussian_kernal_size+2\n                print(\"gaussian_kernal_size: %s\"%self.gaussian_kernal_size)\n            elif key == ord('J'):\n                if self.gaussian_kernal_size >3:\n                    self.gaussian_kernal_size = self.gaussian_kernal_size-2\n                else:\n                    self.gaussian_kernal_size = self.gaussian_kernal_size\n                print(\"gaussian_kernal_size: %s\"%self.gaussian_kernal_size)\n\n            elif key == ord('k'):\n                self.contour_area_threshold = self.contour_area_threshold + 5\n                print(\"contour_area_threshold: %s\"%self.contour_area_threshold)\n            elif key == ord('K'):\n                if self.contour_area_threshold > 10:\n                    self.contour_area_threshold = self.contour_area_threshold -5\n                else:\n                    self.contour_area_threshold = self.contour_area_threshold\n                print(\"contour_area_threshold: %s\"%self.contour_area_threshold)\n\n            else:\n                pass\n\n\n    def __del__(self):\n        self.out.release()\n        self.cap.release()\n        cv2.destroyAllWindows()\n        print(\"%s is resleased\"% self.camera_index)\n\nif __name__ == \"__main__\":\n    # vt0 = behave_video()\n    # vt1 = behave_video()\n    p0 = Process(target=behave_video,args=(0,r\"C:\\Users\\Sabri\\Desktop\\test0.avi\"))\n    # p1 = Process(target=behave_video,args=(1,r\"C:\\Users\\Sabri\\Desktop\\test1.avi\"))\n    p0.start()\n    # p1.start()\n    # p1.start()\n    # print(\"--1---\")\n    # p1.close()\n    # p2.close()\n    p0.join()\n    # p1.join()\n    print(\"main process done\")\n",
+			"file": "/C/Users/Sabri/Desktop/program/video_recording6.py",
+			"file_size": 7899,
+			"file_write_time": 132348599935000858,
+			"settings":
+			{
+				"buffer_size": 7847,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "import cv2"
+			}
+		},
+		{
+			"file": "/C/Users/Sabri/Desktop/program/video_recording8-多进程.py",
+			"settings":
+			{
+				"buffer_size": 1576,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "from multiprocessing import Queue, Process"
+			}
+		},
+		{
+			"file": "/C/Users/Sabri/Desktop/program/video_recording7.py",
+			"settings":
+			{
+				"buffer_size": 764,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "import cv2"
+			}
+		},
+		{
+			"file": "Cvideo2.py",
+			"settings":
+			{
+				"buffer_size": 37329,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "ana/linear_track/behaveLWana.py",
+			"settings":
+			{
+				"buffer_size": 3214,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "ana/linear_track/Cminiana.py",
+			"settings":
+			{
+				"buffer_size": 1444,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "ana/linear_track/CminiLWana.py",
+			"settings":
+			{
+				"buffer_size": 33207,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 130.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track"
+	],
+	"file_history":
+	[
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/CminiLWresult.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/Cminiresult.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/Cminiana.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/CminiLWana.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana_project.sublime-project",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/Mfunctions.py",
+		"/C/Users/Sabri/Desktop/program/video_recording.py",
+		"/C/Users/Sabri/Desktop/program/video_save2.py",
+		"/C/Users/Sabri/Desktop/program/video_recording2.py",
+		"/C/Users/Sabri/Desktop/program/video_recording3.py",
+		"/X/caiman_MotionCorrection_SourceExtraction.py",
+		"/C/Users/Sabri/Desktop/test/test.py",
+		"/C/Users/Sabri/Desktop/轮转生脚本/para_eachday.py",
+		"/C/Users/Sabri/Desktop/program/mylab_backup20191120/Cvideo.py",
+		"/C/Users/Sabri/Desktop/program/mylab_backup20191120/191172.py",
+		"/C/Users/Sabri/Desktop/program/d_caiman/miniscope_track.py",
+		"/C/Users/Sabri/Desktop/program/d_caiman/add_ms_ts.py",
+		"/C/Users/Sabri/Desktop/program/d_caiman/caiman_MotionCorrection_SourceExtraction.py",
+		"/C/Users/Sabri/Desktop/program/e3_stage_3/linear_track_funcs.py",
+		"/C/Users/Sabri/Desktop/program/e3_stage_3/stage1.py",
+		"/C/Users/Sabri/Desktop/program/e3_stage_3/stage3.py",
+		"/C/Users/Sabri/Desktop/program/e3_stage_3/exp.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/backup/linear_track03.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/backup/linear_track02.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/backup/linear_track.py",
+		"/C/Users/Sabri/Desktop/program/build_unit.py",
+		"/C/Users/Sabri/Desktop/program/e2_stage_2/stage_2.py",
+		"/C/Users/Sabri/Desktop/program/e1_stage_1/training_state.py",
+		"/C/Users/Sabri/Desktop/program/ReadNex5file/HowToReadAndWriteNexAndNex5FilesInPython/nexfile.py",
+		"/C/Users/Sabri/Desktop/program/others/HowToReadAndWriteNexAndNex5FilesInPython/nexfile.py",
+		"/C/Users/Sabri/Desktop/program/others/record-camera-and-screen-master/record-camera-and-screen-master/RecordConfig.py",
+		"/C/Users/Sabri/Desktop/program/others/record-camera-and-screen-master/record-camera-and-screen-master/RecordWindow.py",
+		"/C/Users/Sabri/Desktop/program/others/record-camera-and-screen-master/record-camera-and-screen-master/resource.py",
+		"/C/Users/Sabri/Desktop/program/others/record-camera-and-screen-master/record-camera-and-screen-master/RunCMD.py",
+		"/C/Users/Sabri/Desktop/program/others/record-camera-and-screen-master/record-camera-and-screen-master/list_devices_exarct.py",
+		"/C/Users/Sabri/Downloads/FFmpeg-master/FFmpeg-master/fftools/ffmpeg_qzm_pause.c",
+		"/C/Users/Sabri/Downloads/FFmpeg-master/FFmpeg-master/fftools/ffmpeg.c",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/Mfunctions.py",
+		"/C/Users/Sabri/Desktop/para_eachday.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/specific animals/INTrack191173.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/Mcontext_selectivity.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/analyze2_20200423.m",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/Mplot.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/MminiLWana.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/in_context_ana.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Cmouseinfo.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/__init__.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/Mfunctions.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/Mplot.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Cvideo.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/CminiLWresult.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/backup/save_result_c.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/Iblock_context_selectivity.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/2_adaptation_40cm/master_adaptation/master_adaptation.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/3_context_dependent_2c/master_Train_miniscope/master_Train_miniscope.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/3_context_dependent_2c/master_Train/master_Train.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/lick_water_02_adaptation_track.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/context_dependent_choice.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/lick_water_01_learning.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/context_dependent_choice_adaptation.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/context_dependent_choice_2c - 副本.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/context_dependet_choice_adaptation/master_adaptation/master_adaptation.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent_3c/master_adaptation/master_adaptation.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/Cexps.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent_3c/master_adaption/master_adaption.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/context_dependent_choice_3c_adaptation.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/backup/miniscope_mice.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/lick_water/backup/CcontextDiscrimination.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/miniLWana.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/linear_track.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/linear_track03.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/ana/linear_track/linear_track02.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/Readme.md",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/CFC/Ccfcvideo.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/test02.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/README.md",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Cdecs.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/sys_camera.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/info.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/Readme.md",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/CminiLTresult.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Ccsv.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Cmysql.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Cparams2.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/specific animals/INcontext191172.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/specific animals/INTrack191172.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/Cparams.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/MotionCorrectionSourceExtraction.py",
+		"/C/Users/Sabri/Desktop/program/d_caiman/caiman_all.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/Itrials_in_block_context_selectivity.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/给类添加动态属性等.md",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/lick_water.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent/master_Train/master_Train.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent/master_Test/master_Test.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent/slave1_motor/slave1_motor.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/test.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/led_dependent_choice.py",
+		"/C/Users/Sabri/Desktop/program/e4_stage_4/stage3/stage3_train_master/stage3_train_master.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e_linear_track/stage_3/signals_01/signals_01.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/e5_stage_5/lick_water/lick_water.ino",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/EPM.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/lick_water_graph.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/LT.py",
+		"/C/Users/Sabri/Desktop/program/e4_stage_4/exp.py",
+		"/C/Users/Sabri/Desktop/program/e4_stage_4/stage_4.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/EPM/Cepmvideo.py",
+		"/C/Users/Sabri/Desktop/program/c_epm_opto/epm_opto.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/test",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/__init__.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/CcontextDiscrimination.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/miniscope/reject-Canimal.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/spikes/Ccontext_discrimination.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/process/CFC/freezing_analysis.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/miniscope_01_ts_and_h5.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/miniscope_03_picke.py",
+		"/C/Users/Sabri/Anaconda3/envs/mylab/Lib/site-packages/mylab/exps/epm02.py",
+		"/C/Users/Sabri/Desktop/Cov/app.py",
+		"/C/Users/Sabri/AppData/Roaming/jupyter/runtime/nbserver-6308-open.html",
+		"/C/Users/Sabri/Desktop/socket/web_server.conf",
+		"/C/Users/Sabri/Desktop/socket/web_server.py",
+		"/C/Users/Sabri/Desktop/socket/dynamic/mini_frame.py",
+		"/C/Users/Sabri/Desktop/program/a_dlc/dlc-local-02-label_frame.py",
+		"/C/Users/Sabri/Desktop/program/a_dlc/dlc-local-01-create_new_project.py",
+		"/C/Users/Sabri/Desktop/socket/templates/center.html",
+		"/C/Users/Sabri/Desktop/socket/http服务器epoll.py",
+		"/C/Users/Sabri/Desktop/socket/Readme.md",
+		"/C/Users/Sabri/Desktop/socket/html/index.html",
+		"/C/Users/Sabri/Desktop/socket/socket基本使用.py"
+	],
+	"find":
+	{
+		"height": 40.8
+	},
+	"find_in_files":
+	{
+		"height": 104.8,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"frameLeftUp",
+			"camera",
+			"is_save",
+			"is_record",
+			"generate_background",
+			"print",
+			"resize",
+			"kernel",
+			"KCF",
+			"logging",
+			"WatchDog",
+			"MessageItem",
+			"getFrame",
+			"tracker",
+			"initWorking",
+			"selectROI",
+			"lw_ana.neuron_ids",
+			"idx_ContextCells_allblocks",
+			"idx_ContextBCells",
+			"idx_ContextACells",
+			"idx_ContextCells",
+			"temp_ctxB",
+			"temp_ctxA",
+			"self.mouse_info",
+			"block_num",
+			"session_num",
+			"_num",
+			"block",
+			"fileHeaderFormat",
+			"extern",
+			"check if",
+			"qz",
+			"load_cnmf_result",
+			"lw_ana",
+			"lw_ana.ana_result[\"in_context_MeanFr_msblocks\"]",
+			"generate_in_context_msblocks_A_behaveblocks",
+			"trial_num",
+			"palcebin_num",
+			"in_context_trialnum",
+			"in_context_MeanFr_msblocks_trials",
+			"extract",
+			"FR_",
+			"CSI_allangles",
+			"FR_allangles",
+			"FR_",
+			"blockname",
+			"aligned_msblocks_behaveblock",
+			"ms_blocks",
+			"in_context_contextcoords",
+			" in_context_contextcoord",
+			" contextcoord",
+			"self.mouse_info.lick_water[\"in_context_contextcoords\"]",
+			"contextcoords",
+			"in_context_mean_fr_msblocks_trials",
+			"in_context_Mean_fr_msblock_trials",
+			"in_context_mean_fr_msblock_trials",
+			"aligned_msblocks_behaveblocks",
+			"in_context_mean_fr_msblocks",
+			"self.info",
+			"align_msblocks_behaveblocks",
+			"aligned_msblocks_behaveblocks",
+			"align_msblocks_behaveblocks",
+			"behave_videos",
+			"blocknames",
+			"self.mouse_info.lick_water",
+			"self.mouse_info.info[self.exp_name]",
+			"self.mouse_info.add_key",
+			"self.mouse_info.info[self.exp_name]",
+			"self.mouse_info[self.exp_name]",
+			"exp_info",
+			"self.mouse_info ",
+			"self.mouse_info",
+			"mouse_info",
+			"_mouse_info",
+			"_mouse_info_path",
+			"mouse_info",
+			"    \n",
+			"in_context",
+			"aligned_behaveblock2msblockss",
+			"aligned_msblocks_behaveblock",
+			"__add_behave_info",
+			"self._info",
+			"generate_tsFileList",
+			"speed (",
+			"speed(",
+			"angle",
+			"find_close_fast",
+			"self._speed",
+			" angle",
+			" _angle",
+			"_angle",
+			"direction",
+			"__add_behave_info",
+			"exp_start_time",
+			"minscope_start_time",
+			"exp_start",
+			"miniscope",
+			"minscope_start_time",
+			"Lick_water",
+			"CDC",
+			"lick_water",
+			"adaptation",
+			"CDC-",
+			"Signal",
+			"Choice_class",
+			"choice_class",
+			"trial",
+			"%k",
+			"%s",
+			"0.16",
+			"aligned_msblock_behaveblocks",
+			"aligned_msblocks_behaveblock",
+			"ana_result",
+			"cnmf_result",
+			"result",
+			"self.result",
+			"result[",
+			"result",
+			"saveresult_mat",
+			"saveresult_pkl",
+			"self.cnmf_result",
+			"result",
+			"self.result",
+			"load_result",
+			"ana_result_path",
+			"result_dir",
+			"self._mouse_info[self.exp_name]",
+			"align_msblocks_behaveblocks"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording2.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3927,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1928,
+								1928
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 124.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording3.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8203,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4641,
+								4644
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1516.8,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording5.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2802,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1106,
+								1106
+							]
+						],
+						"settings":
+						{
+							"auto_name": "import cv2",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 180.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording4.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2053,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								455,
+								455
+							]
+						],
+						"settings":
+						{
+							"auto_name": "import cv2",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 10,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording6.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7847,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5061,
+								5066
+							]
+						],
+						"settings":
+						{
+							"auto_name": "import cv2",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1704.8,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording8-多进程.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1576,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1262,
+								1262
+							]
+						],
+						"settings":
+						{
+							"auto_name": "from multiprocessing import Queue, Process",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 146.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/C/Users/Sabri/Desktop/program/video_recording7.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 764,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								717,
+								717
+							]
+						],
+						"settings":
+						{
+							"auto_name": "import cv2",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "Cvideo2.py",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 37329,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1534,
+								1534
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 90.4,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 2,
+			"sheets":
+			[
+				{
+					"buffer": 8,
+					"file": "ana/linear_track/behaveLWana.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3214,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "ana/linear_track/Cminiana.py",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 1444,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 10,
+					"file": "ana/linear_track/CminiLWana.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 33207,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								650,
+								650
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 24.0
+	},
+	"input":
+	{
+		"height": 37.6
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			0.381886293521,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "miniLWana.sublime-project",
+	"replace":
+	{
+		"height": 44.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 233.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

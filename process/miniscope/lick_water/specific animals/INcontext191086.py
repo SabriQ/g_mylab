@@ -20,14 +20,16 @@ import scipy
 from mylab.Cmouseinfo import MouseInfo
 #%% info
 mouse_id = "191086"
-ms_mat_path = r"G:\data\miniscope\Results_191086\20191016_102454_all\ms.mat"
-ms_ts_pkl_path = os.path.join(os.path.dirname(ms_mat_path),'ms_ts.pkl')
-result_path = os.path.join(os.path.dirname(ms_mat_path),'191086_in_context.pkl')
+# ms_mat_path = r"G:\data\miniscope\Results_191086\20191016_102454_all\ms.mat"
+# ms_ts_pkl_path = os.path.join(os.path.dirname(ms_mat_path),'ms_ts.pkl')
+# result_path = os.path.join(os.path.dirname(ms_mat_path),'191086_in_context.pkl')
+mouseinfo = MouseInfo(mouse_info_path=r"Z:\QiuShou\mouse_info\191086_info.txt")
 
-context_orders=["A","B","B","A","A","B","A","B"]
-context_angles=["90","90","90","90","135","135","45","45"]
-behave_dir = os.path.join(r"W:\qiushou\miniscope\2019*" , mouse_id)
-ms_starts = [143,313,451,62,307,46,309,56]# the frame in behave_bideo which present the start of ms
+context_orders=mouseinfo.lick_water["context_orders"]
+context_angles=mouseinfo.lick_water["context_angles"]
+ms_starts=mouseinfo.lick_water["context_orders"]
+
+behave_dir = os.path.join(r"X:\miniscope\2019*" , mouse_id)
 #%%
 def sort_key(s):     
     if s:            

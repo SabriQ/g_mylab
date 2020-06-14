@@ -19,6 +19,10 @@ class MiniAna():
     def save(self):
         return save_pkl(self.ana_result,self.ana_result_path)
 
+    @property
+    def neuron_ids(self):
+        return self.ana_result["mssessions"][0].columns.drop("ms_ts")
+    
     def update(self,key,value):
         if key in self.keys:
             self.ana_result[key] = value

@@ -7,6 +7,7 @@ import pickle
 from mylab.Cmouseinfo import MouseInfo
 from mylab.process.miniscope.Mfunctions import *
 from mylab.process.miniscope.Mplot import *
+
 class MiniResult():
     """
     to generate file such as "191172_in_context.mat"

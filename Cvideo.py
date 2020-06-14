@@ -8,6 +8,7 @@ import platform,subprocess
 import time
 import glob
 import math
+import csv 
 
 class Video():
     """
@@ -20,6 +21,8 @@ class Video():
         self.xy = os.path.dirname(self.video_path)+'\\'+'xy.txt'
         self.videots_path = self.abs_prefix + '_ts.txt'
         self.video_track_path = glob.glob(self.abs_prefix+".h5")
+        self.led_xy = self.abs_prefix + '_led_xy.txt'
+        self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
     def play(self):
         """
         instructions:
@@ -47,6 +50,56 @@ class Video():
                 wait = wait + step
         cap.release()
         cv2.destroyAllWindows()
+
+    def crop_video(self,x,y,w,h):
+        '''
+        ffmpeg -i $1 -vf crop=$2:$3:$4:$5 -loglevel quiet $6
+
+        可以使用
+        ret,frame = cv2.VideoCapture(videopath)
+        cv2.selectRoi(frame)
+        来返回 x,y,w,h
+        '''
+
+        croped_video_name
+        command = [
+        "ffmpeg",
+        "-i",self.video_path,"-vf",
+        "crop=%d:%d:%d:%d" % (x,y,w,h),
+        "-loglevel","quiet",croped_video_name]
+
+    def _HMS2seconds(self,time_point):
+        sum = int(time_point.split(":")[0])*3600+int(time_point.split(":")[1])*60+int(time_point.split(":")[2])*1
+        return sum
+
+    def _seconds2HMS(self,seconds):
+        return time.strftime('%H:%M:%S',time.gmtime(seconds))
+
+    def cut_video_seconds(self,start,end):
+        '''
+        this is for video cut in seconds
+        ffmpeg -ss 00:00:00 -i video.mp4 -vcodec copy -acodec copy -t 00:00:31 output1.mp4
+        starts and ends are in format 00:00:00
+        '''
+        i=1
+        print(start,end)
+
+        duration = self._seconds2HMS(self._HMS2seconds(end)-self._HMS2seconds(start))
+        output_video_name = os.path.splitext(self.video_path)[0]+f"_cut_{i}"+os.path.splitext(self.video_path)[1]
+        command = [
+        "ffmpeg.exe",
+        "-ss",start,
+        "-i",self.video_path,
+        "-vcodec","copy",
+        "-acodec","copy",
+        "-t",duration,
+        output_video_name]
+        print(f"{i}/{len(starts)} {self.video_path} is being cut")
+        i = i+1
+        child = subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf-8')
+        out = child.communicate()[1]
+        #print(out)
+        child.wait()
 
     def scale(self,distance):    
         """
@@ -223,6 +276,7 @@ class Video():
                 coords.append(coord)
         f.close()
         return coords
+
     def draw_rois(self,aim="freezing",count = 1):
         '''
         count means how many arenas to draw, for each arena:
@@ -271,6 +325,7 @@ class Video():
                 print("please draw left rois of %s"%aim)
         else:
             print("please draw rois of %s"%aim)
+
         def draw_polygon(event,x,y,flags,param):
             nonlocal state, origin,coord,coord_current,mask,frame
             try:
@@ -354,6 +409,159 @@ class Video():
         
         return masks,coords
 
+    def _led_brightness(self):
+
+        if not os.path.exists(self.led_xy):
+            self.draw_led_location()
+        # read led locations
+        f = open(self.led_xy)
+        led_coords = f.read()
+        f.close
+        led_coords = eval(led_coords)
+
+        cap = cv2.VideoCapture(self.video_path)
+        total_frame = cap.get(7)
+        frame_No = 1
+        while True:
+            # key = cv2.waitKey(10) & 0xFF
+            ret,frame = cap.read()
+            if ret:
+                gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                
+                # if key == ord('q'):
+                #     break
+                led_pixel_values = []
+                for x,y in led_coords:
+                    cv2.rectangle(frame,(x-5,y-5),(x+5,y+5),(255,255,255),2)
+                    #注意cv2中的image 中的x，y是反的
+                    led_location = gray[(y-5):(y+5),(x-5):(x+5)]
+                    led_pixel_values.append(sum(sum(led_location)))
+                # print("\r %s/%s"%(frame_No,int(total_frame)))
+                frame_No = frame_No +1
+                yield led_pixel_values
+                # cv2.imshow("crop_frame",led_location)
+            else:
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+        
+
+    def led_pixel_value(self):
+        if not os.path.exists(self.videots_path):
+            self.generate_ts_txt()
+        # read timestamps
+        if os.path.exists(self.led_value_ts):
+            print("%s is already there"%self.led_value_ts)
+        else:
+            ts= pd.read_table(self.videots_path,sep='\n',header=None,encoding='utf-16-le')
+            ts = list(ts[0])
+            miniscope=[]
+            event=[]
+            lick=[]
+            for m,e,l in self._led_brightness():
+                miniscope.append(m)
+                event.append(e)
+                lick.append(l)
+
+            df= pd.DataFrame({'ts':ts,'miniscope':miniscope,'event':event,'lick':lick})
+            df.to_csv(self.led_value_ts,index = False,sep = ',')
+            print("%s is saved"%self.led_value_ts)
+
+
+    def draw_leds_location(self,count=3,frame_No=10000):
+        cap = cv2.VideoCapture(self.video_path)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+        ret,frame = cap.read()
+        # total_frame = cap.get(7)
+
+        led_coords = []
+        ix = []
+        iy = []
+
+        def draw_rectangle(event,x,y,flags,param):
+            nonlocal ix,iy
+            frame = param["img"]
+            rows,cols,channels= frame.shape
+            black_bg = np.zeros((rows,cols,channels),np.uint8)
+            if event == cv2.EVENT_LBUTTONDOWN: 
+                ix.append(x)
+                iy.append(y)
+
+            if event == cv2.EVENT_MOUSEMOVE:
+                for (x,y) in zip(ix,iy):
+                    cv2.rectangle(black_bg,(x-5,y-5),(x+5,y+5),(255,255,255),2)
+                show_frame = cv2.addWeighted(frame,1,black_bg,0.9,0)
+                cv2.imshow('draw_led_location',show_frame)
+
+            if event == cv2.EVENT_RBUTTONDOWN:
+                if len(ix)>0:
+                    ix.pop()
+                    iy.pop()
+                    print("delete latest point")
+                else:
+                    print("no points to delete")
+
+
+
+        if os.path.exists(self.led_xy):
+            print("you have drawn the location of leds")
+            f = open(self.led_xy)
+            led_coords = f.read()
+            f.close
+            return eval(led_coords)
+        else:
+            print("Mark the led location")
+            cv2.namedWindow('draw_led_location')
+            cv2.setMouseCallback('draw_led_location',draw_rectangle,{"img":frame})
+
+            while True:
+                key = cv2.waitKey(10) & 0xFF
+                
+                if key == ord('s'):
+                    #cv2.imwrite(self.mask_path,black_bg_inv)
+                    if len(ix)==count:
+                        cv2.destroyWindow('draw_led_location')
+                        led_coords = [[x,y] for x,y in zip(ix,iy)]
+                        f = open(self.led_xy,'w+')
+                        f.write(str(led_coords))
+                        f.close
+                        print('led location is saved in file')
+                        cap.release()
+                        cv2.destroyWindow('draw_led_location')
+                        return led_coords
+                    else:
+                        print("number of leds is not as many as expected")
+                elif key == ord('q'):
+                    cv2.destroyWindow('draw_led_location')
+                    print("give up drawing led location")
+                    return 0
+                elif key == ord('d'):
+                    if len(ix)>0:
+                        ix.pop()
+                        iy.pop()
+                    for (x,y) in zip(ix,iy):
+                        print(x,y)
+                # elif key == ord('f'):
+                #     frame_No=frame_No +100
+                #     if frame_No >= total_frame:
+                #         frame_No = total_frame
+                #         print(f"you have reached the final frame {total_frame}")
+                #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                #     ret,frame = cap.read()
+                # elif key == ord('b'):
+                #     frame_No=frame_No -10
+                #     if frame_No < 1:
+                #         frame_No = 1
+                #         print(f"you have reached the first frame")
+                #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                #     ret,frame = cap.read()
+                else:
+                    pass
+
+
+
+
     def check_frames(self,location = "rightup",*args):
         '''
         'a':后退一帧
@@ -374,7 +582,7 @@ class Video():
 #            cap.set(cv2.CAP_PROP_POS_FRAMES,x-1)
             
         cv2.namedWindow("check_frames")
-        total_frame = cap.get(7)
+        total_frame = int(cap.get(7))
         cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
         print(f"there are {int(total_frame)} frames in total")
         
@@ -441,8 +649,28 @@ class Video():
                     ret,frame = cap.read()
                     cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
                     cv2.imshow('check_frames',frame)
+                if key == ord('c'):
+                    frame_No=frame_No +10
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
                 if key == ord('s'):
                     frame_No=frame_No -100
+                    if frame_No <= 1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,f'frame_No:{frame_No} ',location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('z'):
+                    frame_No=frame_No -10
                     if frame_No <= 1:
                         frame_No = 1
                         print(f"you have reached the first frame")
@@ -469,6 +697,60 @@ class Video():
             print(marked_frames)
             return marked_frames
 
-if __name__ == "__main__":
-    Video(r"C:\Users\admin\Desktop\test\test\200309094857Cam-1.asf").play_with_track()
+class Videos():
+    """
+    """
+    def __init__(self,videolists,concat_txt=None,concat_video=None):
+        self.videolists = videolists
+        if len(videolists)==0:
+            print("there is no video in videolists")
+            sys.exit()
+        if not concat_txt is None:
+            self.concat_txt = concat_txt
+        else:
+            self.concat_txt = os.path.join(os.path.dirname(videolists[0]),"concat.txt")
+        if not concat_video is None:
+            self.concat_video = concat_video
+        else:
+            self.concat_video = os.path.join(os.path.dirname(videolists[0]),"concat_video"+os.path.splitext(videolists[0])[-1])
 
+    def _generate_concat_list_txt(self):
+
+        with open(self.concat_txt,'w') as f:
+            for video in self.videolists:
+                info ="file "+f"'{video}'\n"
+                print(info)
+                f.write(info)
+        print(f"{self.concat_txt} is generated")
+
+
+    def concat(self):
+        """
+        在不同的系统中，路径中的斜杠会很影响结果
+        """
+        if not os.path.exists(self.concat_txt):
+            self._generate_concat_list_txt()
+        if os.path.exists(self.concat_video):
+            print(f"{self.concat_video} is already there")
+            sys.exit()
+
+        command=["ffmpeg"
+                ,"-f","concat"
+                ,"-safe","0"
+                ,"-i",self.concat_txt
+                ,"-c","copy"
+                # ,"-vsync","vfr"
+                # ,"-pix_fmt","yuv420p"
+                ,self.concat_video]
+        child = subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf-8')
+        out = child.communicate()[1]
+        print(f"\r{out}",end=" ")
+        child.wait()
+        print("concatenation finished!")
+
+if __name__ == "__main__":
+    # Video(r"C:\Users\admin\Desktop\test\test\200309094857Cam-1.asf").play_with_track()
+
+    videolists = glob.glob(r"C:\Users\Sabri\Desktop\*.asf")
+    print(videolists)
+    Videos(videolists).concat()

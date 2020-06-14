@@ -44,6 +44,7 @@ class Video():
 ##        if os.path.splitext(self.video_path)[-1] == '.asf':
         self.videots_path = self.abs_prefix + '_ts.txt'
         self.videofreezing_path = self.abs_prefix + '_freezing.csv'
+        
     def crop_video():
         '''
         ffmpeg -i $1 -vf crop=$2:$3:$4:$5 -loglevel quiet $6
@@ -54,8 +55,9 @@ class Video():
         "ffmpeg",
         "-i",self.video_path,"-vf",
         "crop=%d:%d:%d:%d" % (x,y,w,h),
-        "-loglevel","quiet",croped_video_name
-        ]
+        "-loglevel","quiet",croped_video_name]
+
+
     def _HMS2seconds(self,time_point):
         sum = int(time_point.split(":")[0])*3600+int(time_point.split(":")[1])*60+int(time_point.split(":")[2])*1
         return sum

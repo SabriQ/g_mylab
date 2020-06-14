@@ -30,6 +30,12 @@ class MouseInfo():
             print ("'lick_water' inexistent")
         else:
             return self._info["lick_water"]
+    @property
+    def CDC(self):
+        if not "CDC" in self.keys:
+            print("CDC" inexistent)
+        else:
+            return self._info["CDC"]
     
     def add_exp(self,exp):
         if exp in self.keys:
@@ -67,12 +73,12 @@ class MouseInfo():
         pass
 
     def _load_mouseinfo(self):
-        with open(self.mouse_info_path,'r') as f:
+        with open(self.mouse_info_path,'r',encoding="utf-8") as f:
             js = f.read()
             self._info =  json.loads(js)
 
     def _save_mouseinfo(self):      
-        with open(self.mouse_info_path,'w') as f:
+        with open(self.mouse_info_path,'w',encoding="utf-8") as f:
             f.write(json.dumps(self._info,indent=4))
         print("save info: %s" %self.mouse_info_path)
 
