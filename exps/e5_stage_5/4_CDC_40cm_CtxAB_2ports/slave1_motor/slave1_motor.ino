@@ -13,10 +13,9 @@ byte num=-1;//default to turn off the led
 //variables
 int ctx[3];
 int c_ctx;
-int remote_stop=0;
 
 int de_init = 300;
-int de_stop = 20;
+int de_stop = 10;
 int de = de_init;
 
 void setup() {
@@ -42,8 +41,6 @@ void loop() {
 void rec(){
   switch (num)
   {
-
-      
     case 0:// go to context 0
      
       Serial.println("move to context 0");
@@ -79,7 +76,7 @@ void rec(){
       case 2://go to context 2
       Serial.println("move to context 2");
       digitalWrite(ena,LOW);
-      digitalWrite(dir,HIGH);//leaving motor
+      digitalWrite(dir,HIGH);//approaching motor
       do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0); 
       de = de_init;
       Serial.println(" Done");
@@ -131,7 +128,7 @@ void pulse_stepper2(int port_out)
 void pulse_stepper(int port_out)
 {
   if (de>de_stop){
-    de = de-1;
+    de = de-2;
   }
   digitalWrite(port_out, HIGH);
   delayMicroseconds(de);

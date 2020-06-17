@@ -234,7 +234,7 @@ void Signal(int s){
       if (Trial_num<10){
       water_deliver(pump_ll,6);
       }else{
-        water_deliver(pump_ll,8);
+        water_deliver(pump_ll,6);
       }
       break;
       
@@ -243,7 +243,7 @@ void Signal(int s){
       break;
       
     case 50://rl_pump   2
-        water_deliver(pump_rl,8);
+        water_deliver(pump_rl,6);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
         water_deliver(pump_rl,6); 
@@ -251,7 +251,7 @@ void Signal(int s){
       break;
       
     case 51://rr_pump  3
-      water_deliver(pump_rr,8);      
+      water_deliver(pump_rr,6);      
       if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
         water_deliver(pump_rr,8); 
       }
