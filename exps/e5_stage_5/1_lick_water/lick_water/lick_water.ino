@@ -148,20 +148,20 @@ void Read_ir(){
       float ir_exit_value = Read_analog(ir_exit,5);      
       float ir_right_value = Read_analog(ir_right,5); 
       
-      if (ir_left_value< 80 && ir_left_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
-      if (ir_enter_value< 80 ) {ir[1] = 1;}else{ir[1] = 0;} 
-      if (ir_exit_value< 80 ) {ir[2] = 1;}else{ir[2] = 0;} 
-      if (ir_right_value< 80 && ir_right_value>5) {ir[3] = 1;}else{ir[3] = 0;} 
-//
+      if (ir_left_value< 110 && ir_left_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
+      if (ir_enter_value< 60 ) {ir[1] = 1;}else{ir[1] = 0;} 
+      if (ir_exit_value< 60 ) {ir[2] = 1;}else{ir[2] = 0;} 
+      if (ir_right_value< 150 && ir_right_value>5) {ir[3] = 1;}else{ir[3] = 0;} 
+
 //      Serial.print(ir_left_value);Serial.print(" ");
 //      Serial.print(ir_enter_value);Serial.print(" ");
 //      Serial.print(ir_exit_value);Serial.print(" ");
 //      Serial.print(ir_right_value);Serial.println(" ");
 //    
-    //  Serial.print(ir[0]);Serial.print(" ");
-    //  Serial.print(ir[1]);Serial.print(" ");
-    //  Serial.print(ir[2]);Serial.print(" ");
-    //  Serial.println(ir[3]);Serial.print(" ");
+//      Serial.print(ir[0]);Serial.print(" ");
+//      Serial.print(ir[1]);Serial.print(" ");
+//      Serial.print(ir[2]);Serial.print(" ");
+//      Serial.println(ir[3]);Serial.print(" ");
 //      delay(200);
   }else{
     i = 0;
