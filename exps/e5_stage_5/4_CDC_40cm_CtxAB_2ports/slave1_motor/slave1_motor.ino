@@ -15,8 +15,8 @@ int ctx[3];
 int c_ctx;
 int remote_stop=0;
 
-int de_init = 300;
-int de_stop = 20;
+int de_init = 100;
+int de_stop = 1;
 int de = de_init;
 
 void setup() {
@@ -94,9 +94,9 @@ void rec(){
       break;}}
 
 void Read_ctx(){
-  if (Read_digital(c_0,10)>0.9){ctx[0]=1;}else{ctx[0]=0;}
-  if (Read_digital(c_1,10)>0.9){ctx[1]=1;}else{ctx[1]=0;}
-  if (Read_digital(c_2,10)>0.9){ctx[2]=1;}else{ctx[2]=0;}
+  if (Read_digital(c_0,5)>0.9){ctx[0]=1;}else{ctx[0]=0;}
+  if (Read_digital(c_1,5)>0.9){ctx[1]=1;}else{ctx[1]=0;}
+  if (Read_digital(c_2,5)>0.9){ctx[2]=1;}else{ctx[2]=0;}
 //  Serial.print(Read_digital(c_0,10));Serial.print(" ");
 //  Serial.print(Read_digital(c_1,10));Serial.print(" ");
 //  Serial.println(Read_digital(c_2,10));
