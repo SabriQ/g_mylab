@@ -135,8 +135,7 @@ void process(int p){
       miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(54);cur_enter_context=1;}; //切换context   
-//       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(52);cur_enter_context=1;}; //切换context  180°调转   
+       if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(54);cur_enter_context=1;}; //切换context   
       break;
 
     case 1://waiting for enter
@@ -161,7 +160,7 @@ void process(int p){
       if (ir[4]==1){
         Serial.print("_l");
         left_choice= left_choice + 1;   
-        if (trial[i]==0){
+        if (trial[i]==1){
           Signal(50);//pump_rl给水
           Serial.println(" correct");
           Choice_class = 1; }else{
@@ -175,7 +174,7 @@ void process(int p){
        else if (ir[5]==1){
         Serial.print("_r") ;
         right_choice=right_choice + 1;          
-        if (trial[i]==1){  
+        if (trial[i]==0){  
           Signal(51);//pump_rr给水
           Serial.println(" correct");
           Choice_class = 1; }else{
@@ -191,9 +190,8 @@ void process(int p){
           Serial.println(" terminated");
           Choice_class = 2;
        }
-
-       // Signal(54);
-       cur_exit_context=cur_enter_context;
+       Signal(53); //context location1 as the exit_context 
+       cur_exit_context=1;
       break;
 
     case 4://waiting for r_enter
@@ -234,7 +232,7 @@ void Signal(int s){
       if (Trial_num<10){
       water_deliver(pump_ll,6);
       }else{
-        water_deliver(pump_ll,8);
+        water_deliver(pump_ll,6);
       }
       break;
       
@@ -243,7 +241,7 @@ void Signal(int s){
       break;
       
     case 50://rl_pump   2
-        water_deliver(pump_rl,8);
+        water_deliver(pump_rl,6);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
         water_deliver(pump_rl,6); 
@@ -251,24 +249,24 @@ void Signal(int s){
       break;
       
     case 51://rr_pump  3
-      water_deliver(pump_rr,8);      
+      water_deliver(pump_rr,6);      
       if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
         water_deliver(pump_rr,8); 
       }
       break;
       
-    case 52://to context0 4
+    case 52://to context location0 4
       //from context1 to context0
         send2slave1_motor=0;
         write2slave(1,send2slave1_motor);
       break;
       
-    case 53://to context1 5
+    case 53://to context location1 1 5
       //from context0 to context1
         send2slave1_motor=1;
         write2slave(1,send2slave1_motor);
       break;    
-    case 54://to context2 6
+    case 54://to context location2 6
         send2slave1_motor=2;
         write2slave(1,send2slave1_motor);
         break;
