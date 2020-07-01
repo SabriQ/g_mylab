@@ -9,8 +9,6 @@ import time
 import glob
 import math
 import csv 
-import json
-from mylab.Functions import *
 
 class Video():
     """
@@ -23,8 +21,8 @@ class Video():
         self.xy = os.path.dirname(self.video_path)+'\\'+'xy.txt'
         self.videots_path = self.abs_prefix + '_ts.txt'
         self.video_track_path = glob.glob(self.abs_prefix+".h5")
-
-
+        self.led_xy = self.abs_prefix + '_led_xy.txt'
+        self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
     def play(self):
         """
         instructions:
@@ -32,7 +30,6 @@ class Video():
             'f' for fast farward
             'b' for fast backward
         Args:
-
         """
         cap = cv2.VideoCapture(self.video_path)
         wait= 30
@@ -56,7 +53,6 @@ class Video():
     def crop_video(self,x,y,w,h):
         '''
         ffmpeg -i $1 -vf crop=$2:$3:$4:$5 -loglevel quiet $6
-
         可以使用
         ret,frame = cv2.VideoCapture(videopath)
         cv2.selectRoi(frame)
@@ -124,12 +120,12 @@ class Video():
 
     @staticmethod
     def _angle(dx1,dy1,dx2,dy2):
-        """
-        dx1 = v1[2]-v1[0]
-        dy1 = v1[3]-v1[1]
-        dx2 = v2[2]-v2[0]
-        dy2 = v2[3]-v2[1]
-        """
+    #def _angle(v1,v2)    #v1 = [0,1,1,1] v2 = [x1,y1,x2,y2]
+    #    dx1 = v1[2]-v1[0]
+    #    dy1 = v1[3]-v1[1]
+    #    dx2 = v2[2]-v2[0]
+    #    dy2 = v2[3]-v2[1]
+
         angle1 = math.atan2(dy1, dx1) * 180/math.pi
         if angle1 <0:
             angle1 = 360+angle1
@@ -279,7 +275,7 @@ class Video():
         f.close()
         return coords
 
-    def draw_rois(self,aim,count = 1):
+    def draw_rois(self,aim="freezing",count = 1):
         '''
         count means how many arenas to draw, for each arena:
             double clicks of left mouse button to make sure
@@ -301,7 +297,9 @@ class Video():
         state = "go"
         if os.path.exists(self.xy):
             existed_coords = self._extract_coord(self.xy,aim)
+#            print("you have drawn before")
             for existed_coord in existed_coords:
+##                print(len(coords),count)
                 if len(existed_coord) >0:
                     existed_coord = np.array(existed_coord,np.int32)
                     coords.append(existed_coord)
@@ -318,6 +316,8 @@ class Video():
                 return masks[0:count],coords[0:count]
             if len(existed_coords) == count:
                 print("you have drawn rois of %s"%aim)
+#                print(f"the coords is: ")
+#                print(coords)
                 return masks,coords
             if len(existed_coords) < count:
                 print("please draw left rois of %s"%aim)
@@ -346,6 +346,7 @@ class Video():
                         cv2.line(black_bg,tuple(coord[0]),(x,y),(127,255,100),2)
                     if len(coord) >1:
                         pts = np.append(coord,[[x,y]],axis = 0)
+##                        print(pts)
                         cv2.fillPoly(black_bg,[pts],(127,255,100))
                     frame = cv2.addWeighted(param['img'],1,black_bg,0.3,0)
                     cv2.imshow("draw_roi",frame)
@@ -397,7 +398,7 @@ class Video():
                 f.close()
                 print('please draw another aread')
                 cv2.destroyAllWindows()
-                return self.draw_rois(aim,count = count)
+                return self.draw_rois(aim=aim,count = count)
             if key==27:
                 print("exit")
                 cap.release()
@@ -405,6 +406,159 @@ class Video():
                 sys.exit()
         
         return masks,coords
+
+    def _led_brightness(self):
+
+        if not os.path.exists(self.led_xy):
+            self.draw_led_location()
+        # read led locations
+        f = open(self.led_xy)
+        led_coords = f.read()
+        f.close
+        led_coords = eval(led_coords)
+
+        cap = cv2.VideoCapture(self.video_path)
+        total_frame = cap.get(7)
+        frame_No = 1
+        while True:
+            # key = cv2.waitKey(10) & 0xFF
+            ret,frame = cap.read()
+            if ret:
+                gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                
+                # if key == ord('q'):
+                #     break
+                led_pixel_values = []
+                for x,y in led_coords:
+                    cv2.rectangle(frame,(x-5,y-5),(x+5,y+5),(255,255,255),2)
+                    #注意cv2中的image 中的x，y是反的
+                    led_location = gray[(y-5):(y+5),(x-5):(x+5)]
+                    led_pixel_values.append(sum(sum(led_location)))
+                # print("\r %s/%s"%(frame_No,int(total_frame)))
+                frame_No = frame_No +1
+                yield led_pixel_values
+                # cv2.imshow("crop_frame",led_location)
+            else:
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+        
+
+    def led_pixel_value(self):
+        if not os.path.exists(self.videots_path):
+            self.generate_ts_txt()
+        # read timestamps
+        if os.path.exists(self.led_value_ts):
+            print("%s is already there"%self.led_value_ts)
+        else:
+            ts= pd.read_table(self.videots_path,sep='\n',header=None,encoding='utf-16-le')
+            ts = list(ts[0])
+            miniscope=[]
+            event=[]
+            lick=[]
+            for m,e,l in self._led_brightness():
+                miniscope.append(m)
+                event.append(e)
+                lick.append(l)
+
+            df= pd.DataFrame({'ts':ts,'miniscope':miniscope,'event':event,'lick':lick})
+            df.to_csv(self.led_value_ts,index = False,sep = ',')
+            print("%s is saved"%self.led_value_ts)
+
+
+    def draw_leds_location(self,count=3,frame_No=10000):
+        cap = cv2.VideoCapture(self.video_path)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+        ret,frame = cap.read()
+        # total_frame = cap.get(7)
+
+        led_coords = []
+        ix = []
+        iy = []
+
+        def draw_rectangle(event,x,y,flags,param):
+            nonlocal ix,iy
+            frame = param["img"]
+            rows,cols,channels= frame.shape
+            black_bg = np.zeros((rows,cols,channels),np.uint8)
+            if event == cv2.EVENT_LBUTTONDOWN: 
+                ix.append(x)
+                iy.append(y)
+
+            if event == cv2.EVENT_MOUSEMOVE:
+                for (x,y) in zip(ix,iy):
+                    cv2.rectangle(black_bg,(x-5,y-5),(x+5,y+5),(255,255,255),2)
+                show_frame = cv2.addWeighted(frame,1,black_bg,0.9,0)
+                cv2.imshow('draw_led_location',show_frame)
+
+            if event == cv2.EVENT_RBUTTONDOWN:
+                if len(ix)>0:
+                    ix.pop()
+                    iy.pop()
+                    print("delete latest point")
+                else:
+                    print("no points to delete")
+
+
+
+        if os.path.exists(self.led_xy):
+            print("you have drawn the location of leds")
+            f = open(self.led_xy)
+            led_coords = f.read()
+            f.close
+            return eval(led_coords)
+        else:
+            print("Mark the led location")
+            cv2.namedWindow('draw_led_location')
+            cv2.setMouseCallback('draw_led_location',draw_rectangle,{"img":frame})
+
+            while True:
+                key = cv2.waitKey(10) & 0xFF
+                
+                if key == ord('s'):
+                    #cv2.imwrite(self.mask_path,black_bg_inv)
+                    if len(ix)==count:
+                        cv2.destroyWindow('draw_led_location')
+                        led_coords = [[x,y] for x,y in zip(ix,iy)]
+                        f = open(self.led_xy,'w+')
+                        f.write(str(led_coords))
+                        f.close
+                        print('led location is saved in file')
+                        cap.release()
+                        cv2.destroyWindow('draw_led_location')
+                        return led_coords
+                    else:
+                        print("number of leds is not as many as expected")
+                elif key == ord('q'):
+                    cv2.destroyWindow('draw_led_location')
+                    print("give up drawing led location")
+                    return 0
+                elif key == ord('d'):
+                    if len(ix)>0:
+                        ix.pop()
+                        iy.pop()
+                    for (x,y) in zip(ix,iy):
+                        print(x,y)
+                # elif key == ord('f'):
+                #     frame_No=frame_No +100
+                #     if frame_No >= total_frame:
+                #         frame_No = total_frame
+                #         print(f"you have reached the final frame {total_frame}")
+                #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                #     ret,frame = cap.read()
+                # elif key == ord('b'):
+                #     frame_No=frame_No -10
+                #     if frame_No < 1:
+                #         frame_No = 1
+                #         print(f"you have reached the first frame")
+                #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+                #     ret,frame = cap.read()
+                else:
+                    pass
+
+
+
 
     def check_frames(self,location = "rightup",*args):
         '''
@@ -423,6 +577,7 @@ class Video():
         
         def nothing(x):  
             pass
+#            cap.set(cv2.CAP_PROP_POS_FRAMES,x-1)
             
         cv2.namedWindow("check_frames")
         total_frame = int(cap.get(7))
@@ -539,163 +694,6 @@ class Video():
         if len(marked_frames) !=0:
             print(marked_frames)
             return marked_frames
-
-class LT_Videos(Video):
-    def __init__(self,video_path):
-        super().__init__(video_path)
-        self.led_xy = self.abs_prefix + '_led_xy.txt'
-        self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
-        self.in_context.xy = self.abs_prefix + '_in_context_xy.txt'
-
-
-
-    def _led_brightness(self):
-
-        if not os.path.exists(self.led_xy):
-            self.draw_led_location()
-        # read led locations
-        f = open(self.led_xy)
-        led_coords = f.read()
-        f.close
-        led_coords = eval(led_coords)
-
-        cap = cv2.VideoCapture(self.video_path)
-        total_frame = cap.get(7)
-        frame_No = 1
-        while True:
-            # key = cv2.waitKey(10) & 0xFF
-            ret,frame = cap.read()
-            if ret:
-                gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-                
-                # if key == ord('q'):
-                #     break
-                led_pixel_values = []
-                for x,y in led_coords:
-                    cv2.rectangle(frame,(x-5,y-5),(x+5,y+5),(255,255,255),2)
-                    #注意cv2中的image 中的x，y是反的
-                    led_location = gray[(y-5):(y+5),(x-5):(x+5)]
-                    led_pixel_values.append(sum(sum(led_location)))
-                # print("\r %s/%s"%(frame_No,int(total_frame)))
-                frame_No = frame_No +1
-                yield led_pixel_values
-                # cv2.imshow("crop_frame",led_location)
-            else:
-                break
-
-        cap.release()
-        cv2.destroyAllWindows()
-    def led_pixel_value(self):
-        if not os.path.exists(self.videots_path):
-            self.generate_ts_txt()
-        # read timestamps
-        if os.path.exists(self.led_value_ts):
-            print("%s is already there"%self.led_value_ts)
-        else:
-            ts= pd.read_table(self.videots_path,sep='\n',header=None,encoding='utf-16-le')
-            ts = list(ts[0])
-            miniscope=[]
-            event=[]
-            lick=[]
-            for m,e,l in self._led_brightness():
-                miniscope.append(m)
-                event.append(e)
-                lick.append(l)
-
-            df= pd.DataFrame({'ts':ts,'miniscope':miniscope,'event':event,'lick':lick})
-            df.to_csv(self.led_value_ts,index = False,sep = ',')
-            print("%s is saved"%self.led_value_ts)
-    def draw_leds_location(self,count=3,frame_No=10000):
-        cap = cv2.VideoCapture(self.video_path)
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
-        ret,frame = cap.read()
-        # total_frame = cap.get(7)
-
-        led_coords = []
-        ix = []
-        iy = []
-
-        def draw_rectangle(event,x,y,flags,param):
-            nonlocal ix,iy
-            frame = param["img"]
-            rows,cols,channels= frame.shape
-            black_bg = np.zeros((rows,cols,channels),np.uint8)
-            if event == cv2.EVENT_LBUTTONDOWN: 
-                ix.append(x)
-                iy.append(y)
-
-            if event == cv2.EVENT_MOUSEMOVE:
-                for (x,y) in zip(ix,iy):
-                    cv2.rectangle(black_bg,(x-5,y-5),(x+5,y+5),(255,255,255),2)
-                show_frame = cv2.addWeighted(frame,1,black_bg,0.9,0)
-                cv2.imshow('draw_led_location',show_frame)
-
-            if event == cv2.EVENT_RBUTTONDOWN:
-                if len(ix)>0:
-                    ix.pop()
-                    iy.pop()
-                    print("delete latest point")
-                else:
-                    print("no points to delete")
-
-
-
-        if os.path.exists(self.led_xy):
-            print("you have drawn the location of leds")
-            f = open(self.led_xy)
-            led_coords = f.read()
-            f.close
-            return eval(led_coords)
-        else:
-            print("Mark the led location")
-            cv2.namedWindow('draw_led_location')
-            cv2.setMouseCallback('draw_led_location',draw_rectangle,{"img":frame})
-
-            while True:
-                key = cv2.waitKey(10) & 0xFF
-                
-                if key == ord('s'):
-                    #cv2.imwrite(self.mask_path,black_bg_inv)
-                    if len(ix)==count:
-                        cv2.destroyWindow('draw_led_location')
-                        led_coords = [[x,y] for x,y in zip(ix,iy)]
-                        f = open(self.led_xy,'w+')
-                        f.write(str(led_coords))
-                        f.close
-                        print('led location is saved in file')
-                        cap.release()
-                        cv2.destroyWindow('draw_led_location')
-                        return led_coords
-                    else:
-                        print("number of leds is not as many as expected")
-                elif key == ord('q'):
-                    cv2.destroyWindow('draw_led_location')
-                    print("give up drawing led location")
-                    return 0
-                elif key == ord('d'):
-                    if len(ix)>0:
-                        ix.pop()
-                        iy.pop()
-                    for (x,y) in zip(ix,iy):
-                        print(x,y)
-                # elif key == ord('f'):
-                #     frame_No=frame_No +100
-                #     if frame_No >= total_frame:
-                #         frame_No = total_frame
-                #         print(f"you have reached the final frame {total_frame}")
-                #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
-                #     ret,frame = cap.read()
-                # elif key == ord('b'):
-                #     frame_No=frame_No -10
-                #     if frame_No < 1:
-                #         frame_No = 1
-                #         print(f"you have reached the first frame")
-                #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
-                #     ret,frame = cap.read()
-                else:
-                    pass
-
-
 
 class Videos():
     """

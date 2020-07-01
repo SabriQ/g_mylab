@@ -33,7 +33,7 @@ class MouseInfo():
     @property
     def CDC(self):
         if not "CDC" in self.keys:
-            print("CDC" inexistent)
+            print("'CDC' inexistent")
         else:
             return self._info["CDC"]
     
