@@ -1,3 +1,4 @@
+//2_adaptation_40cm_CtxC
 #include <Wire.h>
 byte send2slave1_motor=0;
 
@@ -88,7 +89,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(52);cur_enter_context=0;//每次开始的时候归档至 context 0
+  Signal(53);cur_enter_context=0;//每次开始的时候归档至 context 0
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);
@@ -129,7 +130,6 @@ void process(int p){
       nose_poke_time = millis();//记录时间
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-      // if (trial[i]==0){Signal(52);cur_enter_context=0;}else{Signal(53);cur_enter_context=1;}; //切换context       
       break;
 
     case 1://waiting for enter
@@ -156,8 +156,7 @@ void process(int p){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");
-          Signal(50);//pump_rr给水
-
+//          Signal(51);//pump_rr给水
           Choice_class = 0;}
       }
        else if (ir[5]==1){
@@ -169,7 +168,6 @@ void process(int p){
           Choice_class = 1; }else{
           Serial.println(" wrong");
           Signal(50);//pump_rl给水
-            
           Choice_class = 0; }   
        }
        else {

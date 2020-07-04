@@ -12,7 +12,7 @@ def get_cameraName():
     out = child.communicate()[1].decode("utf-8")
 ##    print(out)
     pattern = re.compile('"(.*)"')    
-    return pattern.findall(out)[2]    ##改这里
+    return pattern.findall(out)[1]    ##改这里
 
 def get_cameraParam():
     cameraName = get_cameraName()

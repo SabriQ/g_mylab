@@ -111,6 +111,7 @@ void loop() {
     if (Choice_class==1){
       i = i;}
     else if(Choice_class==0){
+//      Serial.print("----");
       i = i;}
     else{
       i=0;}
@@ -294,7 +295,7 @@ void Read_ir(){
       float ir_exit_value = Read_analog(ir_exit,5);
       float ir_rl_value = Read_analog(ir_rl,5);
       float ir_rr_value = Read_analog(ir_rr,5); 
-      if (ir_ll_value< 800 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
+      if (ir_ll_value< 700 && ir_ll_value>5) {ir[0] = 1;}else{ir[0] = 0;} 
       if (ir_lr_value< 800 && ir_lr_value>5) {ir[1] = 1;}else{ir[1] = 0;} 
       if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
       if (ir_exit_value< 100) {ir[3] = 1;}else{ir[3] = 0;}
