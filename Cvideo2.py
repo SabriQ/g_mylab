@@ -49,11 +49,12 @@ class Video():
         ffmpeg -i $1 -vf crop=$2:$3:$4:$5 -loglevel quiet $6
 
         '''
+        x,y,w,h=cv2.selcetR
         croped_video_name
         command = [
         "ffmpeg",
         "-i",self.video_path,"-vf",
-        "crop=%d:%d:%d:%d" % (x,y,w,h),
+        "crop=%d:%d:%d:%d" % (w,h,x,y,),
         "-loglevel","quiet",croped_video_name
         ]
     def _HMS2seconds(self,time_point):
