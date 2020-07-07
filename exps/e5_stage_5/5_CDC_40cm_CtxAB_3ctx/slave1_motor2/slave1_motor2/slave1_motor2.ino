@@ -14,10 +14,11 @@ byte num=-1;//default to turn off the led
 int ctx[3];
 int c_ctx;
 
-int de_init = 300;
-int de_stop = 30;
+int de_init = 200;
+int de_stop;
+int de_stops[3] = {20,25,30};
 int de = de_init;
-
+int motor_count_num = 0;
 void setup() {
   // put your setup code here, to run once:
 pinMode(ena,OUTPUT);digitalWrite(ena,HIGH);
@@ -47,14 +48,25 @@ void loop() {
   }
 }
 
+void motor_count(){
+  motor_count_num = motor_count_num +1;
+  if (motor_count_num%3==0){
+    de_stop = de_stops[0];
+  }else if (motor_count_num%3==1){
+    de_stop = de_stops[1];
+  }else{
+    de_stop = de_stops[2];
+  }
+}
+
 void rec(){
   switch (num)
   {
     case 0:// go to context 0
-     
       Serial.println("move to context 0");
       digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);//leaving motor
+      motor_count();
       do{Read_ctx();pulse_stepper(pul);}while(ctx[0]==0); 
       de = de_init;
       Serial.println(" Done");
@@ -73,6 +85,7 @@ void rec(){
       if (c_ctx==2){  
         digitalWrite(dir,LOW);//leaving motor        
         }else{;}
+       motor_count();
       do{Read_ctx();pulse_stepper(pul);}while(ctx[1]==0);
       de = de_init;
       Serial.println(" Done");
@@ -86,6 +99,7 @@ void rec(){
       Serial.println("move to context 2");
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//approaching motor
+      motor_count();
       do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0); 
       de = de_init;
       Serial.println(" Done");

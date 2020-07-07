@@ -14,9 +14,33 @@ byte num=-1;//default to turn off the led
 int ctx[3];
 int c_ctx;
 
-int de_init = 300;
-int de_stop = 30;
-int de = de_init;
+int m_count_start = 0;
+int m_change_speed = 0;
+int de_i;
+int de_init[60]={334,447,430,313,314,327,495,494,422,379,
+                399,471,307,437,330,327,490,316,433,397,
+                341,313,493,413,455,325,363,498,301,318,
+                370,394,450,463,484,345,304,366,435,387,
+                443,326,465,395,425,392,446,326,415,489,
+                481,382,467,401,370,325,437,489,384,439};
+
+
+int de_sto;
+int de_stop[60] = {21,26,16,23,24,17,15,17,19,26,
+              18,22,15,19,29,26,27,25,18,23,
+              25,15,22,26,23,22,29,17,19,28,
+              18,26,17,29,26,28,19,24,22,20,
+              23,24,16,22,23,25,29,21,21,21,
+              16,29,25,17,26,20,27,15,28,21};
+int de_ste;
+int de_step[60]={1,2,2,1,2,1,1,1,1,2,
+                  2,2,1,1,1,2,1,1,2,1,
+                  1,1,2,2,1,2,1,1,1,2,
+                  2,2,1,1,2,2,1,2,2,2,
+                  1,2,2,2,1,1,1,1,1,1,
+                  2,1,1,1,2,2,1,1,2,1};
+
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -36,15 +60,6 @@ void loop() {
 //  if (Serial.available()){num = Serial.read();}
 //  Serial.println(num);
   rec();
-  if (ctx[0]==1){
-    c_ctx=0;
-  }
-  if (ctx[1]==1){
-    c_ctx=1;
-  }
-  if (ctx[2]==1){
-    c_ctx=2;
-  }
 }
 
 void rec(){
@@ -56,7 +71,7 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);//leaving motor
       do{Read_ctx();pulse_stepper(pul);}while(ctx[0]==0); 
-      de = de_init;
+      m_change_speed = 1;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=0;
@@ -74,7 +89,7 @@ void rec(){
         digitalWrite(dir,LOW);//leaving motor        
         }else{;}
       do{Read_ctx();pulse_stepper(pul);}while(ctx[1]==0);
-      de = de_init;
+      m_change_speed = 1;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=1;
@@ -87,7 +102,7 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//approaching motor
       do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0); 
-      de = de_init;
+      m_change_speed = 1;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
       c_ctx=2;
@@ -97,18 +112,18 @@ void rec(){
 
     default:
       Read_ctx();
-//      if (ctx[0]==1){
-//        c_ctx=0;
-//      }
-//      if (ctx[1]==1){
-//        c_ctx=1;
-//      }
-//      if (ctx[2]==1){
-//        c_ctx=2;
-//      }
-//      if (ctx[0]==0 && ctx[0]==0 && ctx[0]==0){
-//        do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0);
-//      }
+      if (ctx[0]==1){
+        c_ctx=0;
+      }
+      if (ctx[1]==1){
+        c_ctx=1;
+      }
+      if (ctx[2]==1){
+        c_ctx=2;
+      }
+      if (ctx[0]==0 && ctx[0]==0 && ctx[0]==0){
+        do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0);
+      }
       break;}}
 
 void Read_ctx(){
@@ -132,31 +147,28 @@ void receiveinfo() {
     Serial.println(num);
     }}
 
-void pulse_stepper2(int port_out)
-{
-  digitalWrite(port_out, HIGH);
-  int one_pulse_time = 500000/400/40;
-  
-  delayMicroseconds(one_pulse_time );
-  //细分是2,表示一圈要400个pulse;半周期是500000us/400;如果要1s2圈，那么半周期就是500000us/400/2
-  //delayMicroseconds(483);
-  digitalWrite(port_out, LOW);
-  delayMicroseconds(one_pulse_time );
-  //delayMicroseconds(483);
-}
-
 
 void pulse_stepper(int port_out)
 {
-  if (de>de_stop){
-    de = de-1;
+  if (m_change_speed = 1){
+    int de_i = de_init[m_count_start];
+    int de_sto = de_stop[m_count_start];
+    int de_ste = de_step[m_count_start];
+    m_change_speed = 0;
+    m_count_start = m_count_start +1;
+    if (m_count_start == 60){
+      m_count_start = 0;
+    }
+    m_change_speed=0;
+  }
+    if (de_i>de_sto){
+    de_i = de_i-de_ste;
   }
   digitalWrite(port_out, HIGH);
-  delayMicroseconds(de);
+  delayMicroseconds(de_i);
   digitalWrite(port_out, LOW);
-  delayMicroseconds(de);
+  delayMicroseconds(de_i);
 }
-
 float Read_digital(int digital, int times) {
   float sum = 0;
   for (int i = 0; i < times; i++) {
