@@ -36,7 +36,22 @@ def Normalize_df(temp,axis=0):
     """
     return (temp-temp.min(axis=axis))/(temp.max(axis=axis)-temp.min(axis=axis))
 
-def Standarization(datalist):
+def Standarization(df):
+    temp_mean = np.mean(np.reshape(df.values,(1,-1))[0])
+    temp_std = np.std(np.reshape(df.values,(1,-1))[0],ddof=1)
+    Standarized_df = (df-temp_mean)/temp_std
+    print("mean and std", temp_mean,temp_std)
+    return Standarized_df,temp_mean,temp_std
+
+def Normalization(df):
+    residual = np.max(np.reshape(df.values,(1,-1))[0])-np.min(np.reshape(df.values,(1,-1))[0])
+#     residual = df.max().max()-df.min().min()
+    minimum = np.min(np.reshape(df.values,(1,-1))[0])
+    normalized_df = (df-minimum)/residual
+    print("residual and minimum", residual,minimum)
+    return normalized_df,residual,minimum
+
+def Standarization_list(datalist):
     """
     标准化
     （x-mean)/std
