@@ -1,4 +1,4 @@
-
+// 增加了60个伪随机的de_stops序列。用于随机产生三类不同的电机声音以混淆电机噪声带来的影响 @20200709 by qiushou
 #include <Wire.h>
 
 int ena=2;
@@ -16,7 +16,12 @@ int c_ctx;
 
 int de_init = 200;
 int de_stop;
-int de_stops[3] = {20,25,30};
+int de_stops[60] = {
+  25, 20, 30, 25, 25, 20, 25, 30, 30, 25, 25, 25, 
+  30, 30, 20, 30, 30, 25, 20, 30, 20, 25, 25, 20, 
+  20, 30, 30, 20, 30, 25, 30, 30, 30, 25, 25, 30, 
+  25, 25, 20, 25, 20, 20, 30, 20, 25, 30, 20, 20, 
+  30, 25, 25, 30, 25, 25, 30, 25, 25, 30, 25, 20};
 int de = de_init;
 int motor_count_num = 0;
 void setup() {
@@ -48,17 +53,13 @@ void loop() {
   }
 }
 
-void motor_count(){
-  motor_count_num = motor_count_num +1;
-  if (motor_count_num%3==0){
-    de_stop = de_stops[0];
-  }else if (motor_count_num%3==1){
-    de_stop = de_stops[1];
-  }else{
-    de_stop = de_stops[2];
-  }
-}
 
+void motor_count(){
+  de_stop = de_stops[motor_count_num];
+  if (motor_count_num<60){    
+    motor_count_num = motor_count_num +1;
+  }else{ motor_count_num = 0; }
+}
 void rec(){
   switch (num)
   {
@@ -109,6 +110,10 @@ void rec(){
       num=-1;
       break;
 
+      case 3: //set motor_count_num=0;
+      motor_count_num = 0; 
+      break;
+      
     default:
       Read_ctx();
 //      if (ctx[0]==1){
