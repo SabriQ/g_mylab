@@ -116,7 +116,7 @@ def save_video(camera_index,fourcc,fps,sz):
         else:
             pass
 
-def main():
+def main_miniscope():
     mini_fourcc = cv2.VideoWriter_fourcc(*'mpeg')
     camera_mini = threading.Thread(target=play_video,args=(1,))
     camera_mini_save = threading.Thread(target=save_video,args=(1,mini_fourcc,30,(640,480),))
@@ -136,6 +136,15 @@ def main():
     # camera_behave_save.join()
 
     print("main process Done")
+def main_CFC():
+    behave_fourcc = cv2.VideoWriter_fourcc(*'mpeg')
+    camera_behave = threading.Thread(target=play_video,args=(0,))
+    camera_behave_save = threading.Thread(target=save_video,args=(0,behave_fourcc,20,(640,480),))
+    CFC = threading.Thread(target=cfc,args=(,))
+    
+    camera_behave.start()
+    camera_behave_save.start()
+    CFC.start() #实现循环
 
 if __name__ == "__main__":
     main()
