@@ -139,8 +139,9 @@ class Video():
             angle2 = 360+angle2
         # print(angle2)
         return abs(angle1-angle2)
+
     @classmethod
-    def speed(cls,X,Y,T,s):
+    def speed(cls,X,Y,T,s,sigma=3):
         speeds=[0]
         speed_angles=[0]
         for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
