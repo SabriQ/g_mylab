@@ -1,37 +1,60 @@
 #!/usr/bin/env python
+try:
+    get_ipython().magic(u'load_ext autoreload')
+    get_ipython().magic(u'autoreload 2')
+    get_ipython().magic(u'matplotlib qt')
+except:
+    pass
+import matplotlib as mpl
+mpl.use('Agg')
 import logging
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-mpl.use("Agg")
 import numpy as np
 
-try:
-    if __IPYTHON__:
-        # this is used for debugging purposes only. allows to reload classes when changed
-        get_ipython().magic('load_ext autoreload')
-        get_ipython().magic('autoreload 2')
-except NameError:
-    pass
+logging.basicConfig(format=
+                          "%(relativeCreated)12d [%(filename)s:%(funcName)20s():%(lineno)s] [%(process)d] %(message)s",
+                    # filename="/tmp/caiman.log",
+                    level=logging.DEBUG)
 
-import pickle
-import time
-import pandas as pd
 import caiman as cm
 from caiman.source_extraction import cnmf
-from caiman.utils.utils import download_demo
-from caiman.utils.visualization import inspect_correlation_pnr
+from caiman.utils.visualization import inspect_correlation_pnr, nb_inspect_correlation_pnr
 from caiman.motion_correction import MotionCorrect
 from caiman.source_extraction.cnmf import params as params
-import glob,os,sys
-#%%
-# Set up the logger; change this if you like.
-# You can log to a file using the filename parameter, or make the output more or less
-# verbose by setting level to logging.DEBUG, logging.INFO, logging.WARNING, or logging.ERROR
+from caiman.utils.visualization import plot_contours, nb_view_patches, nb_plot_contour
+import cv2
 
-logging.basicConfig(format=
-                    "%(relativeCreated)12d [%(filename)s:%(funcName)20s():%(lineno)s]"\
-                    "[%(process)d] %(message)s",
-                    level=logging.WARNING)
+try:
+    cv2.setNumThreads(0)
+except:
+    pass
+import bokeh.plotting as bpl
+import holoviews as hv
+bpl.output_notebook()
+
+
+import sys,os
+import pickle
+import pandas as pd
+import glob
+
+from scipy.io import savemat
+def Concatenate_ms_ts(fnames=['data_endscope.tif'],newpath=None):
+    ms_ts=[]
+    ms_ts_path = os.path.join(newpath,"ms_ts.pkl")
+    ms_ts_mat_name = os.path.join(newpath,'ms_ts.mat')
+    for fname in fnames:
+        single_ms_ts = os.path.join(os.path.basename(fname),"ms_ts.pkl")
+        with open(single_ms_ts,'rb') as f:
+            ts = pickle.load(f)
+        ms_ts.append(ts)
+    with open(ms_ts_name,'wb') as output:
+        pickle.dump(ms_ts,output,pickle.HIGHEST_PROTOCOL)
+    savemat(ms_ts_mat_name,{'ms_ts':ms_ts})
+
+
+
+
 
 def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = None,motion_correction = True,source_extraction = True,save_mat=True
     ,n_processes=None,tsub=1,fr=30,gSig=(3,3),gSiz(13,13)):
@@ -43,6 +66,8 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
     tsub = 1, faily close to just taking the average every {tsub} frames
     if running in ipython, accident termination will not stop the parallel server. it needs to restart ipython.
     """
+
+
     try:
         cm.stop_server()
     except:

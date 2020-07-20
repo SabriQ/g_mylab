@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from mylab.process.miniscope.Mfunctions import *
+from mylab.process.miniscope.lick_water.Mfunctions import *
 import os
 import seaborn as sns
 import gc

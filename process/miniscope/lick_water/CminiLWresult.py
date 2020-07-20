@@ -1,4 +1,5 @@
-from mylab.process.miniscope.Cminiresult import MiniResult as MR
+
+from mylab.process.miniscope.lick_water.Cminiresult import MiniResult as MR
 from mylab.process.miniscope.Mfunctions import *
 from mylab.process.miniscope.Mplot import *
 import pickle
@@ -156,7 +157,7 @@ class MiniLWResult(MR):
                 # if txt is encoded with utf-16
                 #ts = pd.read_table(behave_timestamp,sep='\n',header=None,encoding='utf-16-le')
                 behavesession['be_ts']=ts[0]
-
+                #增加block_num
             behavesession["block_num"]=block_num
 
             behavesessions.append(behavesession)

@@ -537,6 +537,7 @@ class Video():
                     cv2.destroyAllWindows()
                     sys.exit()                    
         print("finish checking")
+        
         if len(marked_frames) !=0:
             print(marked_frames)
             return marked_frames
