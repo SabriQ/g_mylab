@@ -181,7 +181,7 @@ def crop_downsample_concatenate(animal_id
                     else:
                         datatemp['sysClock'][0]=value
 
-                    ts = datatemp['sysClock'].values
+                ts = datatemp['sysClock'].values
             elif "txt" in tsFile: # 如果是脚本录制
                 ts = read_timestamp(tsFile)
                 print(ts)
@@ -208,6 +208,7 @@ def crop_downsample_concatenate(animal_id
         
         with open(ms_ts_name,'wb') as output:
             pickle.dump(ms_ts,output,pickle.HIGHEST_PROTOCOL)
+            
         savemat(ms_ts_mat_name,{'ms_ts':ms_ts})
     else:
         with open(ms_ts_name, "rb") as f:
