@@ -25,12 +25,25 @@ int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
 //22: 0 22:1 6: 2
-int trial[60] = {2,1,0,0,1,1,0,1,0,1,
-                1,0,1,2,1,0,0,0,1,0,
-                1,2,1,0,1,0,0,1,0,0,
-                1,0,0,1,2,1,0,0,1,0,
-                0,0,1,1,0,1,0,1,2,1,
-                0,1,2,1,0,1,0,1,0,1};
+//int trial[60] = {2,1,0,0,1,1,0,1,0,1,
+//                1,0,1,2,1,0,0,0,1,0,
+//                1,2,1,0,1,0,0,1,0,0,
+//                1,0,0,1,2,1,0,0,1,0,
+//                0,0,1,1,0,1,0,1,2,1,
+//                0,1,2,1,0,1,0,1,0,1};
+//30:0 30:1
+int trial[60] = {0,1,0,0,1,1,0,1,0,1,
+                1,0,1,0,1,0,0,1,1,0,
+                1,1,1,0,1,0,0,1,0,0,
+                1,0,0,1,1,1,0,0,1,0,
+                0,0,1,1,0,1,0,1,0,1,
+                0,1,1,0,0,1,0,1,0,1};
+//int trial[60] = {1,1,0,1,0,1,0,0,0,1,
+//                1,0,1,0,1,0,0,1,1,0,
+//                1,0,1,0,1,1,0,1,0,0,
+//                1,0,1,1,1,0,0,0,1,0,
+//                1,0,1,0,0,1,0,1,0,1,
+//                0,0,1,1,0,1,0,1,0,1};
 //20: 0 20:1 20: 2    
             
 //int trial[60] ={2,1,2,1,0,1,0,1,2,0,
@@ -94,6 +107,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
+  Signal(55);//初始化电机随机速度序列
   Signal(53);cur_enter_context=1;//每次开始的时候归档至 context 1
   for (i=0;i<trial_length;i++){
     process(0);
@@ -239,7 +253,7 @@ void Signal(int s){
       if (Trial_num<10){
       water_deliver(pump_ll,6);
       }else{
-        water_deliver(pump_ll,8);
+        water_deliver(pump_ll,6);
       }
 
 //      if (choice_class==1){
@@ -254,7 +268,7 @@ void Signal(int s){
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,8);
+        water_deliver(pump_rl,6);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
         water_deliver(pump_rl,6); 
@@ -281,6 +295,10 @@ void Signal(int s){
       break;    
     case 54://to context2 6
         send2slave1_motor=2;
+        write2slave(1,send2slave1_motor);
+        break;
+    case 55://初始化电机速度序列
+        send2slave1_motor=3;
         write2slave(1,send2slave1_motor);
         break;
     default:
