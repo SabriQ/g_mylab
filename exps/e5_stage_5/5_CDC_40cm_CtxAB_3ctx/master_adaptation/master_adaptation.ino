@@ -1,4 +1,4 @@
-//增加 sensend2slave1_motor = 4,以匹配初始化slave_motor中的电机噪声随机序列
+//增加 sensend2slave1_motor = 3,以匹配初始化slave_motor中的电机噪声随机序列
 #include <Wire.h>
 byte send2slave1_motor=0;
 
