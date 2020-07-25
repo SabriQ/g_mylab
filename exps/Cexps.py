@@ -12,18 +12,25 @@ import threading
 import numpy as np
 import datetime
 import pandas as pd
+import winsound
 
 
 class Exp():
     frames_info =[]
     is_record = 0
     is_stop = 0
+
+    is_shock = 0
+    is_tone_1 = 0
+    is_bluelaser = 0
+    is_yellowlaser = 0
     def __init__(self,port,data_dir):
         self.port = port
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
             print("%s is created"%self.data_dir)
+
         if not self.port == None:
             try:
               self.ser = serial.Serial(self.port,baudrate=9600,timeout=0.1)   
@@ -36,6 +43,55 @@ class Exp():
         else:
             print("only camera is available")
 
+#%% ===================events==============
+    def shock(self,duration=2):
+        while not Exp.is_stop:
+            if Exp.is_shock:
+                print("shock starts at %s"%self.current_time()[1])
+                self.ser.write("1".encode()) # shock on
+                time.sleep(duration)
+                self.ser.write("2".encode()) # shock off
+                print("shock ends at %s"%self.current_time()[1])
+                Exp.is_shock = 0
+
+    def tone1(self,frequency=1000,duration=500,latency=500):
+        while not Exp.is_stop:
+            if Exp.is_tone_1:
+                print("tone starts at %s"%self.current_time()[1])
+                winsound.Beep(frequency,duration)
+                print("shock ends at %s"%self.current_time()[1])
+                time.sleep(latency/1000)
+                Exp.is_tone_1=0
+
+    def bluelaser(self,duration=180):
+        while not Exp.is_stop:
+            if Exp.is_bluelaser:
+                print("bluelaser starts at %s"%self.current_time()[1])
+                self.ser.write("3".encode()) # blue laser on
+                time.sleep(duration)
+                self.ser.write("4".encode()) # blue laser off
+                print("bluelaser ends at %s"%self.current_time()[1])
+
+    def yellowlaser(self,duration=5):
+        while not Exp.is_stop:
+            if Exp.is_yellowlaser:
+                print("yellowlaser starts at %s"%self.current_time()[1])
+                self.ser.write("5".encode()) # yellow laser on
+                time.sleep(duration)
+                self.ser.write("6".encode()) # yellow laser off
+                print("yellowlaser ends at %s"%self.current_time()[1])
+
+
+    def do_shock(self):
+        Exp.is_shock = 1
+    def do_tone(self):
+        Exp.is_tone_1 = 1
+    def do_bluelaser(self):
+        Exp.is_bluelaser = 1
+    def do_yellowlaser(self):
+        Exp.is_yellowlaser = 1
+
+#%%=========================================
 
     @staticmethod
     def countdown(seconds):
@@ -50,7 +106,7 @@ class Exp():
                 break
             if Exp.is_stop == 1:
                 break
-
+    #%% use ffmpeg
     def record_camera(self,video_path):
         print("----start camera recording----")
         p = video_recording(video_path)
@@ -68,10 +124,7 @@ class Exp():
         except Exception as e:
             print(e)
             
-    def opencv_is_record(self):
-        Exp.is_record = 1 - Exp.is_record
-    def opencv_is_stop(self):
-        Exp.is_stop = 1 - Exp.is_stop
+    #%% use opencv
         
     @staticmethod
     def add_recording_marker(img):
@@ -93,6 +146,11 @@ class Exp():
         return now,time_str
 
 
+    def opencv_is_record(self):
+        Exp.is_record = 1 - Exp.is_record
+    def opencv_is_stop(self):
+        Exp.is_stop = 1 - Exp.is_stop
+
     def path(self,camera_index):
         time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         videoname = self.mouse_id +'_'+str(camera_index)+'_'+time_str+'.avi'
@@ -100,6 +158,7 @@ class Exp():
         videopath = os.path.join(self.data_dir,videoname)
         tspath=os.path.join(self.data_dir,tsname)
         return videopath,tspath
+
 
     def play_video(self,camera_index):
         print("camera_index: %s"%camera_index)
@@ -114,8 +173,8 @@ class Exp():
                 Exp.is_stop= 1
                 Exp.is_record = 0
 
-            if key == ord('s'):
-                Exp.is_record = 1 - Exp.is_record
+            # if key == ord('s'):
+            #     Exp.is_record = 1 - Exp.is_record
 
             Exp.frames_info.append([Exp.is_record,Exp.is_stop,frame,ts])
 
@@ -130,8 +189,6 @@ class Exp():
         cap.release()
         cv2.destroyAllWindows()
         print("finish record")
-
-
 
     def save_video(self,camera_index,fourcc,fps,sz):
         timestamps = []

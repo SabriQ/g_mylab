@@ -2,7 +2,6 @@ import sys,os
 import time
 import csv
 from mylab.exps.Cexps import *
-from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -43,14 +42,19 @@ class EPM(Exp):
         behave_fourcc = cv2.VideoWriter_fourcc(*'mpeg')
         camera_behave = threading.Thread(target=self.play_video,args=(0,))
         camera_behave_save = threading.Thread(target=self.save_video,args=(0,behave_fourcc,11,(640,480),))
+
         exp = threading.Thread(target=self.optogenetics)
         
         camera_behave.start()
         camera_behave_save.start()
         exp.start()
+
+        camera_behave.join()
+        camera_behave_save.join()
+        exp.join()
         print("main process is done!")
 
 if __name__ =="__main__":
-    lw = EPM(port=None)
+    lw = EPM(port=None,data_dir=r"C:\Users\qiushou\Desktop\test")
     lw()
     # 画图测试
