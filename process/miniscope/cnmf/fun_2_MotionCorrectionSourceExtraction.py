@@ -287,7 +287,6 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
                         pickle.dump({'ms':results_dict},f)
                     print('.pkl files saved')
 
-
             print("Source Extraction is done.")
         cm.stop_server(dview=dview)
         print("All done!,motioncorrection and sourceextraction elapse in seconds:",t2-t1,t4-t3)

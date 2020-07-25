@@ -4,7 +4,7 @@ import glob
 from scipy.io import savemat
 import scipy.io as spio
 import numpy as np
-from caiman.source_extraction.cnmf.cnmf import load_CNMF
+# from caiman.source_extraction.cnmf.cnmf import load_CNMF
 
 def Concatenate_ms_ts(fnames=['data_endscope.tif'],newpath=None):
     ms_ts=[]
@@ -54,6 +54,10 @@ def _todict(matobj):
 
 
 def pkl2mat(ms_mat_path):
+    """
+    将ms_ts.pkl写入到ms.mat中
+    考虑仅有一个ms_ts.pkl的情况
+    """
     result = load_mat(ms_mat_path)
 
     hdf = os.path.join(os.path.dirname(ms_mat_path),"result.hdf5")
@@ -72,9 +76,43 @@ def pkl2mat(ms_mat_path):
     # result["ms"]["SFP"]=SFP
     savemat(mat_path,result)
 
+def pkl2mat2(ms_mat_path):
+    """
+    将多个ms_ts.pkl写入到一个ms.mat中
+    考虑多天合并跑的情况
+    """
+
+    result = load_mat(ms_mat_path)
+
+    hdf = os.path.join(os.path.dirname(ms_mat_path),"result.hdf5")
+    pkl_pathes = glob.glob(os.path.join(os.path.dirname(ms_mat_path),"*\ms_ts.pkl"))
+    # print(pkl_pathes)
+    # cnm = load_CNMF(hdf)
+    # SFP = cnm.estimates.A
+    # SFP_dims = list(cnm.dims).append(len(cnm.estimates.idx_components_bad)+len(cnm.estimates.idx_components))
+    # SFP = np.reshape(SFP.toarray(), SFP_dims, order='F')
+
+    mat_path = os.path.join(os.path.dirname(ms_mat_path),"ms2.mat")
+    ms_ts_all=[]
+    for pkl_path in pkl_pathes:
+        with open(pkl_path,"rb") as f:
+            ms_ts = pickle.load(f)
+        for temp in ms_ts:
+            ms_ts_all.append(np.array(temp))
+    result["ms"]["ms_ts"]=np.array(ms_ts_all)
+    savemat(mat_path,result)
+    print("save mat %s"%mat_path)
+
 if __name__ == "__main__":
-    pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201017\20200422_144525_10fps\ms.mat",
-    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201018\20200422_155451_10fps\ms.mat",
-    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201019\20200422_155524_10fps\ms.mat"]
+    # pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201017\20200422_144525_10fps\ms.mat",
+    # r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201018\20200422_155451_10fps\ms.mat",
+    # r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201019\20200422_155524_10fps\ms.mat"]
+    # for path in pathes:
+    #     pkl2mat(path)
+    
+    pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033\ms.mat",
+    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201034\ms.mat",
+    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201037\ms.mat",
+    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_202061\ms.mat"]
     for path in pathes:
-        pkl2mat(path)
+        pkl2mat2(path)
