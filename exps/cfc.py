@@ -31,7 +31,8 @@ class CFC(Exp):
 
     def conditioning(self):
         mouse_id = input("请输入mouse_id,并按Enter开始实验:")
-        while not self.is_stop:
+        if not self.is_stop:
+            print("")
             self.mouse_id = str(mouse_id)
             if not os.path.exists(self.data_dir):
                 os.makedirs(self.data_dir)            
@@ -55,30 +56,30 @@ class CFC(Exp):
 
 
     def retrieval_test(self,duration):
-        if len(CFC.frames_info)==0:
-            mouse_id = input("请输入mouse_id,并按Enter开始实验:")
-            while not self.is_stop:
-                self.mouse_id = str(mouse_id)
-                if not os.path.exists(self.data_dir):
-                    os.makedirs(self.data_dir)
-                    
-                self.opencv_is_record()# start video record
+        mouse_id = input("请输入mouse_id,并按Enter开始实验:")
+        if not self.is_stop:
+            self.mouse_id = str(mouse_id)
 
-                print("start recording for %s s"%duration)
-                self.countdown(duration)
+            if not os.path.exists(self.data_dir):
+                os.makedirs(self.data_dir)
+                
+            self.opencv_is_record()# start video record
 
-                self.opencv_is_record()# stop video record
+            print("start recording for %s s"%duration)
+            self.countdown(duration)
 
-                if CFC.is_stop == 1:
-                    return 0
-                else:
-                    return self.retrieval_test()
+            self.opencv_is_record()# stop video record
+
+            if CFC.is_stop == 1:
+                return 0
+            else:
+                return self.retrieval_test()
     
 
     def run(self,):
         camera_behave = Thread(target=self.play_video,args=(0,))
         behave_fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        camera_behave_save = Thread(target=self.save_video,args=(0,behave_fourcc,30,(640,480),))
+        camera_behave_save = Thread(target=self.save_video,args=(0,behave_fourcc,10,(640,480),))
         exp = Thread(target=self.conditioning)
         T_tone = Thread(target=self.tone1,args=(3000,500,500,))
 
