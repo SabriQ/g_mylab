@@ -1,26 +1,21 @@
 import sys,os
 import time
 import csv
-from mylab.exps.Cexps import *
+from mylab.exps.Cexps import Exp
 from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
-
+from threading import Thread
+from multiprocessing import Process,Queue
+import cv2
 
 class CFC(Exp):
-
     def __init__(self,port,data_dir=r"D:\CFC"):
-        super().__init__(port,data_dir)
-        print("------------------jichen------------")
+        super(CFC,self).__init__(port,data_dir)
+
     def __call__(self,):
         self.run()
 
-
-    def event_test(self):
-        print("1HZ 1000-HZ tone for 5s")
-        for i in range(5):
-            self.do_tone()
-            time.sleep(1)
 
     def event1(self):
         """
@@ -42,16 +37,16 @@ class CFC(Exp):
                 os.makedirs(self.data_dir)            
 
             self.opencv_is_record()# start video record
-            print("start recording")
-            print("preexposure for 178s")
-            self.countdown(2)
-
-            for i in range(3):
-                self.event_test()
-
-            self.countdown(2)        
             
-            self.opencv_is_record()# stop video record
+            print("preexposure for 178s")
+            self.countdown(10)
+
+            self.do_tone()
+            
+
+            self.countdown(10)        
+            
+            self.opencv_is_stop()# stop video record
 
             if CFC.is_stop == 1:
                 return 0
@@ -60,45 +55,44 @@ class CFC(Exp):
 
 
     def retrieval_test(self,duration):
-        mouse_id = input("请输入mouse_id,并按Enter开始实验:")
-        while not self.is_stop:
-            self.mouse_id = str(mouse_id)
-            if not os.path.exists(self.data_dir):
-                os.makedirs(self.data_dir)
-                
-            self.opencv_is_record()# start video record
+        if len(CFC.frames_info)==0:
+            mouse_id = input("请输入mouse_id,并按Enter开始实验:")
+            while not self.is_stop:
+                self.mouse_id = str(mouse_id)
+                if not os.path.exists(self.data_dir):
+                    os.makedirs(self.data_dir)
+                    
+                self.opencv_is_record()# start video record
 
-            print("start recording for %s s"%duration)
-            self.countdown(duration)
+                print("start recording for %s s"%duration)
+                self.countdown(duration)
 
-            self.opencv_is_record()# stop video record
+                self.opencv_is_record()# stop video record
 
-            if CFC.is_stop == 1:
-                return 0
-            else:
-                return self.retrieval_test()
-        
-    def run(self):
+                if CFC.is_stop == 1:
+                    return 0
+                else:
+                    return self.retrieval_test()
+    
 
-        behave_fourcc = cv2.VideoWriter_fourcc(*'mpeg')
-        # threads 1
-        camera_behave = threading.Thread(target=self.play_video,args=(0,))
-        # threads 2
-        camera_behave_save = threading.Thread(target=self.save_video,args=(0,behave_fourcc,30,(640,480),))
-        # threads 3
-        exp = threading.Thread(target=self.conditioning)
-        # threads 4
-        T_tone = threading.Thread(target=self.tone1,args=(1000,500,500,))
-        # threads 5
-        # T_shock = threading.Thread(target=self.shock,args=(2,))
+    def run(self,):
+        camera_behave = Thread(target=self.play_video,args=(0,))
+        behave_fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        camera_behave_save = Thread(target=self.save_video,args=(0,behave_fourcc,30,(640,480),))
+        exp = Thread(target=self.conditioning)
+        T_tone = Thread(target=self.tone1,args=(3000,500,500,))
 
-        
         camera_behave.start()
         camera_behave_save.start()
-        exp.start()
         T_tone.start()
-        # T_shock.start()
-        
+        exp.start()
+
+
+        camera_behave.join()
+        camera_behave_save.join()
+        T_tone.join()
+        exp.join()
+
         print("main process is done!")
 
 if __name__ =="__main__":

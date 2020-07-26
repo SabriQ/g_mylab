@@ -29,7 +29,7 @@ class Exp():
     def __init__(self,port,data_dir):
 
         self.port = port
-
+        self.mouse_id = "blank"
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
@@ -50,7 +50,7 @@ class Exp():
 #%% ===================events==============
     def shock(self,duration=2):
         while not Exp.is_stop:
-            cv2.waitKey(2)
+            cv2.waitKey(1)
             if Exp.is_shock:
                 print("shock starts at %s"%self.current_time()[1])
                 self.ser.write("1".encode()) # shock on
@@ -59,19 +59,19 @@ class Exp():
                 print("shock ends at %s"%self.current_time()[1])
                 Exp.is_shock = 0
 
-    def tone1(self,frequency=3000,duration=500,latency=0):
+    def tone1(self,frequency=1000,duration=500,latency=500):
         while not Exp.is_stop:
-            cv2.waitKey(2)
+            cv2.waitKey(1)
             if Exp.is_tone_1:
-                print("tone starts at %s"%self.current_time()[1],end=" ")
+                print("tone starts at %s"%self.current_time()[1])
                 winsound.Beep(frequency,duration)
-                print("tone ends at %s"%self.current_time()[1])
+                print("shock ends at %s"%self.current_time()[1])
                 time.sleep(latency/1000)
                 Exp.is_tone_1=0
 
     def bluelaser(self,duration=180):
         while not Exp.is_stop:
-            cv2.waitKey(2)
+            cv2.waitKey(1)
             if Exp.is_bluelaser:
                 print("bluelaser starts at %s"%self.current_time()[1])
                 self.ser.write("3".encode()) # blue laser on
@@ -81,7 +81,7 @@ class Exp():
 
     def yellowlaser(self,duration=5):
         while not Exp.is_stop:
-            cv2.waitKey(2)
+            cv2.waitKey(1)
             if Exp.is_yellowlaser:
                 print("yellowlaser starts at %s"%self.current_time()[1])
                 self.ser.write("5".encode()) # yellow laser on
@@ -155,11 +155,10 @@ class Exp():
 
 
     def opencv_is_record(self):
-        Exp.is_record = 1
-        print("start video recording")
+        Exp.is_record = 1 - Exp.is_record
     def opencv_is_stop(self):
-        Exp.is_record = 0
-        print("end video recording")
+        Exp.is_stop = 1 - Exp.is_stop
+
     def path(self,camera_index):
         time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         videoname = self.mouse_id +'_'+str(camera_index)+'_'+time_str+'.avi'
@@ -168,9 +167,7 @@ class Exp():
         tspath=os.path.join(self.data_dir,tsname)
         return videopath,tspath
 
-
-
-    def play_video2(self,camera_index):
+    def play_video2(self,camera_index,q):
         print("camera_index: %s"%camera_index)
         cap = cv2.VideoCapture(camera_index)
         while True:
@@ -185,8 +182,7 @@ class Exp():
 
             # if key == ord('s'):
             #     Exp.is_record = 1 - Exp.is_record
-
-            Exp.frames_info.append([Exp.is_record,Exp.is_stop,frame,ts])
+            q.put([Exp.is_record,Exp.is_stop,frame,ts])
 
             if Exp.is_stop==1:
                 break
@@ -198,7 +194,7 @@ class Exp():
             cv2.imshow('%s'%camera_index,cv2.addWeighted(frame,1,mask,1,0))
         cap.release()
         cv2.destroyAllWindows()
-        print("finish record")
+        print("finish video record")
 
     def play_video(self,camera_index):
         print("camera_index: %s"%camera_index)
@@ -229,7 +225,37 @@ class Exp():
         cap.release()
         cv2.destroyAllWindows()
         print("finish record")
-    def save_video2(self,camera_index,fourcc,fps,sz):
+
+    def save_video2(self,camera_index,fourcc,fps,sz,q):
+        out = 0
+        timestamps = []
+        while True:
+            if not q.empty():
+                value = q.get()
+                is_record,is_stop,frame,ts = value
+
+                if is_stop:
+                    is_record = 0
+                if is_record:
+                    if not isinstance(out,cv2.VideoWriter):
+                        videosavepath,tspath = self.path(camera_index)
+                        print("initial video: %s"%videosavepath)
+                        out = cv2.VideoWriter()
+                        out.open(videosavepath,fourcc,fps,sz,True)
+                    out.write(frame)
+                    timestamps.append(ts)
+                else:
+                    if isinstance(out,cv2.VideoWriter):
+                        out.release()
+                        pd.DataFrame(data = timestamps).to_csv(tspath,index_label="frame_No")
+                        print("save video and timestamps: %s"%videosavepath)
+                        timestamps=[]
+                        out = 0
+                if is_stop:
+                    break
+        print("finish video save")
+
+    def save_video(self,camera_index,fourcc,fps,sz):
         timestamps = []
         while True:
             key = cv2.waitKey(1) & 0xff
@@ -260,7 +286,6 @@ class Exp():
                         pd.DataFrame(data = timestamps).to_csv(tspath,index_label="frame_No")
                         # clear timestamps
                         timestamps = []
-
                     else:
                         pass
                 if Exp.is_stop:
@@ -270,47 +295,7 @@ class Exp():
                 Exp.frames_info.pop(0)
             else:
                 pass
-
-    def save_video(self,camera_index,fourcc,fps,sz):
-        timestamps = []
-        while True:
-            key = cv2.waitKey(5) & 0xff
-
-            if len(Exp.frames_info)>0:
-                is_record,is_stop,frame,ts = Exp.frames_info.pop(0)
-                if is_stop:
-                    is_record = 0
-                if is_record: # is_record ==1
-                    if len(timestamps)>0:
-                        out.write(frame)
-                        timestamps.append(ts)
-                    else:
-                        videosavepath,tspath = self.path(camera_index)
-                        print(videosavepath)
-                        timestamps=[]
-                        out = cv2.VideoWriter()
-
-                        out.open(videosavepath,fourcc,fps,sz,True)
-                        out.write(frame)
-                        timestamps.append(ts)
-
-                else: # is_record == 0
-                    if len(timestamps)>0:
-                        out.release()
-                        # savestamps in tspath
-                        pd.DataFrame(data = timestamps).to_csv(tspath,index_label="frame_No")
-                        # clear timestamps
-                        timestamps = []
-
-                    else:
-                        pass
-                if is_stop:
-                    break
-            elif len(Exp.frames_info) > 100:
-                print(len(Exp.frames_info))
-                Exp.frames_info.pop(0)
-            else:
-                pass
+            
     def __del__(self):
         if not self.port == None:
             self.close()
