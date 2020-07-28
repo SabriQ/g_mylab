@@ -11,10 +11,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
-logging.basicConfig(format=
-                          "%(relativeCreated)12d [%(filename)s:%(funcName)20s():%(lineno)s] [%(process)d] %(message)s",
-                    # filename="/tmp/caiman.log",
-                    level=logging.DEBUG)
+
 
 import caiman as cm
 from caiman.source_extraction import cnmf
@@ -41,7 +38,7 @@ import time
 
 
 def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = None,motion_correction = True,source_extraction = True,save_mat=True
-    ,n_processes=None,tsub=1,fr=30,gSig=(3,3),gSiz=(13,13)):
+    ,n_processes=None,tsub=1,fr=30,gSig=(3,3),gSiz=(13,13),stride=20):
     """for motioncorrection and sourceextraction
     fnames is a list of of video , the length of which is 1
     motion_correction = True
@@ -62,6 +59,10 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
 
         if newpath == None:
             newpath = os.path.dirname(fnames[0])
+        logging.basicConfig(format=
+                                  "%(relativeCreated)12d [%(filename)s:%(funcName)20s():%(lineno)s] [%(process)d] %(message)s",
+                            filename=os.path.join(newpath,"analog.txt"),
+                            level=logging.DEBUG)
         mc_dict={'fnames': fnames,
             'fr': fr, # movie frame rate
             'decay_time': 0.4, # length of a typical transient in seconds
@@ -100,19 +101,18 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
             fname_new = cm.save_memmap(fname_mc, base_name='memmap_', order='C',border_to_0=bord_px)
 
             cm.load(fname_mc).save(os.path.join(os.path.dirname(fnames[0]),'ms_mc.avi'))
-            print('Motion correction has been done!')
-            print('ms_mc.avi is saved!')
+            logging.debug(print('Motion correction has been done!'))
+            logging.debug(print('ms_mc.avi is saved!'))
         else: # if no motion_correction just memory map the file
             try:
                 fname_new = glob.glob(os.path.join(os.path.dirname(fnames[0]),'memmap_*.mmap'))[0]
             except:
-                print("Motion Correction has not been done!")
+                logging.debug(print("Motion Correction has not been done!"))
                 sys.exit()
             bord_px = 0
-            print(">>>>>>>>>>>>>>>>>>")
-            print(fname_new)
-            print("<<<<<<<<<<<<<<<<<<")
-            print("skip Motion correction, go to Source Extraction!")
+            logging.debug(print(">>>>>>>>>>>>>>>>>>"))
+            logging.debug(print("skip Motion correction, go to Source Extraction!"))
+            logging.debug(print("<<<<<<<<<<<<<<<<<<"))
         t2=time.time()
     #fname_new = cm.save_memmap(fnames, base_name='memmap_',order='C', border_to_0=0, dview=dview)
     # save ms_mc.avi to the samve directory of fnames[0]    
@@ -129,7 +129,7 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
 
                 'gSig':gSig, # gaussian width of a 2D gaussian kernel, which approximates a neuron
                 'gSiz':gSiz, # average diameter of a neuron,in general 4*gSig+1
-                'stride': 20,# amount of overlap between the patches in pixels (keep it at least large as gSiz, i.e 4 times the neuron size gSig)
+                'stride': stride,# amount of overlap between the patches in pixels (keep it at least large as gSiz, i.e 4 times the neuron size gSig)
                 'tsub':tsub,# downsampling factor in time for initialization, increase if you have memory problems
                 'ssub':1,# downsampling factor in space for initialization, increase if you have memory problems
                 'rf': 48, # half-size of the patches in pixels. e.g., if rf=40, patches are 80x80       
@@ -186,15 +186,19 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
                 cnm.save(os.path.join(newpath,'result.hdf5'))
             except Exception as e:
             # when bugerror "ValueError: The data representation in the HDF5 file does not match the original dict.
-                print(e)
+                logging.debug(print(e))
                 cnm.estimates.r_values = np.where(np.isnan(cnm.estimates.r_values), -1, cnm.estimates.r_values)
                 cnm.save(os.path.join(newpath,'result.hdf5')) 
 
-            print(' ***** ')
-            print('Number of total components: ', len(cnm.estimates.C))
-            print('Number of accepted components: ', len(cnm.estimates.idx_components))
+            logging.debug(print(' ***** '))
+            logging.debug(print('Number of total components: ', len(cnm.estimates.C)))
+            logging.debug(print('Number of accepted components: ', len(cnm.estimates.idx_components)))
     #%% plot the result for a glimp 
     #How many neurons to plot 
+            try:
+                cnm.estimates.plot_contours_nb(img=cn_filter, idx=cnm.estimates.idx_components)
+            except:
+                pass
             neuronsToPlot = 30        
                   
             DeconvTraces = cnm.estimates.S
@@ -202,7 +206,7 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
             SFP = cnm.estimates.A     
             SFP_dims = list(dims)     
             SFP_dims.append(SFP.shape[1])
-            print('Spatial foootprints dimensions (height x width x neurons): ' + str(SFP_dims))
+            logging.debug(print('Spatial foootprints dimensions (height x width x neurons): ' + str(SFP_dims)))
             numNeurons = SFP_dims[2]  
             idx_accepted=cnm.estimates.idx_components
             idx_deleted=cnm.estimates.idx_components_bad
@@ -279,25 +283,25 @@ def Motioncorrection_Sourceextraction(fnames=['data_endscope.tif'],newpath = Non
                 SFPperm = np.transpose(SFP,[2,0,1])
                 try:
                     savemat(os.path.join(newpath,'ms.mat'), {'ms': results_dict})
-                    print('.mat Files saved!')
+                    logging.debug(print('.mat Files saved!'))
                 except Exception as e:
-                    print(e)
-                    print('.mat files save problem')
+                    logging.debug(print(e))
+                    logging.debug(print('.mat files save problem'))
                     with open(os.path.join(newpath,'ms.pkl'),'wb') as f:
                         pickle.dump({'ms':results_dict},f)
-                    print('.pkl files saved')
+                    logging.debug(print('.pkl files saved'))
 
-            print("Source Extraction is done.")
+            logging.debug(print("Source Extraction is done."))
         cm.stop_server(dview=dview)
-        print("All done!,motioncorrection and sourceextraction elapse in seconds:",t2-t1,t4-t3)
+        logging.debug(print("All done!,motioncorrection and sourceextraction elapse in seconds:",t2-t1,t4-t3))
     except Exception as e:
-        print(e)
+        logging.debug(print(e))
         cm.stop_server(dview=dview)
-        print("=========Something wrong============")
-        print(t1)
-        print(t2)
-        print(t3)
-        print(t4)
+        logging.debug(print("=========Something wrong============"))
+        logging.debug(print(t1))
+        logging.debug(print(t2))
+        logging.debug(print(t3))
+        logging.debug(print(t4))
 
 if __name__ == "__main__":
     Motioncorrection_Sourceextraction(fnames=[r'/home/qiushou/Documents/QS_data/miniscope/miniscope_result/Results_191082/20191022_164420_test/msCam_concat.avi'],
