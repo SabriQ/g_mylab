@@ -123,6 +123,7 @@ def coordnates2crop_datavideo(video,cropfilename):
 
 def crop_downsample_concatenate(animal_id
                                 ,msFileList
+                                ,tsFileList
                                 ,note
                                 ,resultDir = r'/home/qiushou/Documents/QS_data/miniscope/miniscope_result'
                                ,spatial_downsampling=2
@@ -208,6 +209,7 @@ def crop_downsample_concatenate(animal_id
         
         with open(ms_ts_name,'wb') as output:
             pickle.dump(ms_ts,output,pickle.HIGHEST_PROTOCOL)
+            
         savemat(ms_ts_mat_name,{'ms_ts':ms_ts})
     else:
         with open(ms_ts_name, "rb") as f:
@@ -229,5 +231,5 @@ def crop_downsample_concatenate(animal_id
 if __name__ == "__main__":
     animal_id = "206550"
     msFileList,tsFileList = index_videos(animal_id=animal_id,date="7_15_2020",recorded_method="miniscope",rawdataDir=r"E:\Miniscope\data")
-    crop_downsample_concatenate(animal_id=animal_id,msFileList=msFileList,note="_20200714",resultDir=r'D:\miniscope_results')
+    crop_downsample_concatenate(animal_id=animal_id,msFileList=msFileList,tsFileList=tsFileList,note="_20200714",resultDir=r'D:\miniscope_results')
 
