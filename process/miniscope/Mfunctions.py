@@ -254,7 +254,7 @@ def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
         arch_angles.append(arch_angle)
     return pd.Series(headdirections), pd.Series(taildirections), pd.Series(arch_angles)
     
-def _rlc(x):
+def rlc(x):
     name=[]
     length=[]
     
@@ -293,7 +293,21 @@ def rlc2(X):
     idx_max.append(i)
     df = {"name":name,"length":length,"idx_min":idx_min,"idx_max":idx_max}
     return pd.DataFrame(df)         
+    
+def Standarization(df):
+    temp_mean = np.mean(np.reshape(df.values,(1,-1))[0])
+    temp_std = np.std(np.reshape(df.values,(1,-1))[0],ddof=1)
+    Standarized_df = (df-temp_mean)/temp_std
+    print("mean and std", temp_mean,temp_std)
+    return Standarized_df,temp_mean,temp_std
 
+def Normalization(df):
+    residual = np.max(np.reshape(df.values,(1,-1))[0])-np.min(np.reshape(df.values,(1,-1))[0])
+#     residual = df.max().max()-df.min().min()
+    minimum = np.min(np.reshape(df.values,(1,-1))[0])
+    normalized_df = (df-minimum)/residual
+    print("residual and minimum", residual,minimum)
+    return normalized_df,residual,minimum
 
 if __name__ == "__main__":
     print("done")

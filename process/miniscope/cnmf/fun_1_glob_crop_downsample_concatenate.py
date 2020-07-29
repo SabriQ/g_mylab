@@ -181,7 +181,7 @@ def crop_downsample_concatenate(animal_id
                     else:
                         datatemp['sysClock'][0]=value
 
-                    ts = datatemp['sysClock'].values
+                ts = datatemp['sysClock'].values
             elif "txt" in tsFile: # 如果是脚本录制
                 ts = read_timestamp(tsFile)
                 print(ts)
