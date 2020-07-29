@@ -202,30 +202,32 @@ class Exp():
 
     def play_video(self,camera_index):
         print("camera_index: %s"%camera_index)
-        cap = cv2.VideoCapture(camera_index)
+        cap = cv2.VideoCapture(camera_index,cv2.CAP_DSHOW)
         while True:
             ok,frame = cap.read()
-            now,ts = self.current_time()
-            mask = 255*np.zeros_like(frame)
-            key = cv2.waitKey(1) & 0xff
+            if ok:
+                now,ts = self.cur
+                rent_time()
+                mask = 255*np.zeros_like(frame)
+                key = cv2.waitKey(1) & 0xff
 
-            if key == ord('q'):
-                Exp.is_stop= 1
-                Exp.is_record = 0
+                if key == ord('q'):
+                    Exp.is_stop= 1
+                    Exp.is_record = 0
 
-            # if key == ord('s'):
-            #     Exp.is_record = 1 - Exp.is_record
+                # if key == ord('s'):
+                #     Exp.is_record = 1 - Exp.is_record
 
-            Exp.frames_info.append([Exp.is_record,Exp.is_stop,frame,ts])
+                Exp.frames_info.append([Exp.is_record,Exp.is_stop,frame,ts])
 
-            if Exp.is_stop==1:
-                break
+                if Exp.is_stop==1:
+                    break
 
-            if Exp.is_record == 1:
-                self.add_recording_marker(mask)
-            self.add_timestr(mask)
-            
-            cv2.imshow('%s'%camera_index,cv2.addWeighted(frame,1,mask,1,0))
+                if Exp.is_record == 1:
+                    self.add_recording_marker(mask)
+                self.add_timestr(mask)
+                
+                cv2.imshow('%s'%camera_index,cv2.addWeighted(frame,1,mask,1,0))
         cap.release()
         cv2.destroyAllWindows()
         print("finish record")
