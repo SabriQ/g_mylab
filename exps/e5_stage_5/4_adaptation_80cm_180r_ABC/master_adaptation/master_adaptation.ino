@@ -150,10 +150,10 @@ void process(int p){
       miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-       if (trial[i]==0){
+       if (2-trial[i]==0){
         Signal(52);cur_enter_context=0;
         }
-       else if(trial[i]==1){
+       else if(2-trial[i]==1){
           Signal(53);cur_enter_context=1;
           }
        else{
@@ -250,14 +250,15 @@ void Signal(int s){
   switch (s)
   {
     case 48://ll_pump,nosepoke
-      water_deliver(pump_ll,8);
+    water_deliver(pump_ll,6);
+
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,8); 
+        water_deliver(pump_rl,6);
       break;
       
     case 51://rr_pump

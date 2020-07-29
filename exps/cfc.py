@@ -96,6 +96,6 @@ class CFC(Exp):
         print("main process is done!")
 
 if __name__ =="__main__":
-    lw = CFC(port=None,data_dir=r"C:\Users\qiushou\Desktop\test")
+    lw = CFC(port=None,data_dir=r"C:\Users\dell\Desktop\test")
     lw()
     # 画图测试
