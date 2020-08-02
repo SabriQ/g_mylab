@@ -91,6 +91,7 @@ def read_timestamp(tsFile):
     start = datetime.datetime.strptime(data["0"][0], '%Y-%m-%d %H:%M:%S.%f')
     data["0"]=data["0"].apply(datetime2minisceconds,args=[start,])
     return data["0"]
+
 def coordnates2crop_datavideo(video,cropfilename):
     
     """
@@ -127,7 +128,8 @@ def crop_downsample_concatenate(animal_id
                                 ,note
                                 ,resultDir = r'/home/qiushou/Documents/QS_data/miniscope/miniscope_result'
                                ,spatial_downsampling=2
-                               ,temporal_downsampling=1):
+                               ,temporal_downsampling=1
+                               ,video_process = True):
     """
     
     """
@@ -163,7 +165,8 @@ def crop_downsample_concatenate(animal_id
     if temporal_downsampling>1:
         final_clip=mpv.fx.all.speedx(final_clip, factor=temporal_downsampling)
         
-    final_clip.write_videofile(videoconcat,codec='rawvideo',audio=False,threads=8)
+    if video_process = True:
+        final_clip.write_videofile(videoconcat,codec='rawvideo',audio=False,threads=8)
 ##    final_clip.write_videofile(videoconcat,codec='png',audio=False,threads=8)
 #     final_clip.write_videofile(videoconcat,codec='mpeg4',audio=False,threads=8)
 

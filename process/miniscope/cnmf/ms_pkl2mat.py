@@ -62,15 +62,18 @@ def pkl2mat(ms_mat_path):
 
     hdf = os.path.join(os.path.dirname(ms_mat_path),"result.hdf5")
     pkl_path = os.path.join(os.path.dirname(ms_mat_path),"ms_ts.pkl")
+    ms_mat_path = os.path.join(os.path.dirname(ms_mat_path),"ms_ts.mat")
     # cnm = load_CNMF(hdf)
     # SFP = cnm.estimates.A
     # SFP_dims = list(cnm.dims).append(len(cnm.estimates.idx_components_bad)+len(cnm.estimates.idx_components))
     # SFP = np.reshape(SFP.toarray(), SFP_dims, order='F')
 
     mat_path = os.path.join(os.path.dirname(ms_mat_path),"ms2.mat")
-
-    with open(pkl_path,"rb") as f:
-        ms_ts = pickle.load(f)
+    try:
+        with open(pkl_path,"rb") as f:
+            ms_ts = pickle.load(f)
+    except:
+        ms_ts = load_mat(ms_mat_path)["ms_ts"]
 
     result["ms"]["ms_ts"]=ms_ts
     # result["ms"]["SFP"]=SFP
@@ -84,7 +87,7 @@ def pkl2mat2(ms_mat_path):
 
     result = load_mat(ms_mat_path)
 
-    hdf = os.path.join(os.path.dirname(ms_mat_path),"result.hdf5")
+    # hdf = os.path.join(os.path.dirname(ms_mat_path),"result.hdf5")
     pkl_pathes = glob.glob(os.path.join(os.path.dirname(ms_mat_path),"*\ms_ts.pkl"))
     # print(pkl_pathes)
     # cnm = load_CNMF(hdf)
@@ -104,15 +107,10 @@ def pkl2mat2(ms_mat_path):
     print("save mat %s"%mat_path)
 
 if __name__ == "__main__":
-    # pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201017\20200422_144525_10fps\ms.mat",
-    # r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201018\20200422_155451_10fps\ms.mat",
-    # r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201019\20200422_155524_10fps\ms.mat"]
-    # for path in pathes:
-    #     pkl2mat(path)
-    
-    pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033\ms.mat",
-    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201034\ms.mat",
-    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201037\ms.mat",
-    r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_202061\ms.mat"]
+    pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033\ms.mat"]
     for path in pathes:
         pkl2mat2(path)
+    
+    # pathes = glob.glob(r"\\10.10.46.135\share\zhangna\4_Miniscope\miniscope_result\*\ms.mat")
+    # for path in pathes:
+    #     pkl2mat2(path)

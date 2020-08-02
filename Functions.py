@@ -44,6 +44,9 @@ def Standarization(df):
     return Standarized_df,temp_mean,temp_std
 
 def Normalization(df):
+    """
+    对整个df进行Normalize，取的是所有细胞发放中的最大值、最小值
+    """
     residual = np.max(np.reshape(df.values,(1,-1))[0])-np.min(np.reshape(df.values,(1,-1))[0])
 #     residual = df.max().max()-df.min().min()
     minimum = np.min(np.reshape(df.values,(1,-1))[0])
@@ -75,7 +78,32 @@ def normalized_distribution_test(datalist):
     返回的第二个值是p-value
     """
     return stats.shapiro(datalist)
+    
+def find_close_fast(arr, e):    
+    start_time = datetime.datetime.now()            
+    low = 0    
+    high = len(arr) - 1    
+    idx = -1     
+    while low <= high:        
+        mid = int((low + high) / 2)        
+        if e == arr[mid] or mid == low:            
+            idx = mid            
+            break        
+        elif e > arr[mid]:            
+            low = mid        
+        elif e < arr[mid]:            
+            high = mid     
+    if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
+        idx += 1            
+    use_time = datetime.datetime.now() - start_time    
+    return idx #0作为起始
 
+def find_close_fast2(arr,e):
+    np.add(arr,e*(-1))
+    min_value = min(np.abs(np.add(arr,e*-1)))
+    locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
+    return locations[0][0]
+#    return arr[idx],idx, use_time.seconds * 1000 + use_time.microseconds / 1000
 def var_test(rvs1,rvs2):
     """
     两独立样本t检验-ttest_ind
