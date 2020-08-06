@@ -23,12 +23,12 @@ int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
 //half 0 half1
-int trial[60] = {0,1,0,1,0,1,1,0,1,0,
-                1,0,1,1,0,1,0,0,1,0,
-                0,1,1,0,0,1,1,1,0,0,
-                1,0,0,1,1,0,1,0,1,0,
-                0,1,1,0,0,1,0,1,0,1,
-                0,1,0,1,0,1,1,0,1,0};
+int trial[60] = {2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2
+                ,2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2};
 //35 0; 25 1
 //int trial[60] = {0,1,0,1,0,1,0,0,1,0,
 //                1,0,1,0,0,1,0,0,1,0,
@@ -89,7 +89,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(53);cur_enter_context=0;//每次开始的时候归档至 context 0
+  Signal(54);cur_enter_context=2;//每次开始的时候归档至 context 0
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);

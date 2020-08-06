@@ -250,14 +250,14 @@ void Signal(int s){
   switch (s)
   {
     case 48://ll_pump,nosepoke
-      water_deliver(pump_ll,8);
+      water_deliver(pump_ll,7);
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,8); 
+        water_deliver(pump_rl,7); 
       break;
       
     case 51://rr_pump
