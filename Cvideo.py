@@ -69,7 +69,23 @@ class Video():
         "-i",self.video_path,"-vf",
         "crop=%d:%d:%d:%d" % (x,y,w,h),
         "-loglevel","quiet",croped_video_name]
+    @statictmethod
+    def contrastbrightness(self,videolists):
+        for video in videolists:
+            print(video)
+            command=[
+                "ffmpeg",
+                "-i",video,
+                "-vf","eq=contrast=2:brightness=0.5",
+                video.replace(".AVI",".mp4")
+            ]
 
+            child = subprocess.Popen(command,stdout = subprocess.PIPE,stderr=subprocess.PIPE)
+            out = child.communicate()[1].decode('utf-8')
+        #     print(out)
+            child.wait()
+            print("%s done"%video)
+    
     def _HMS2seconds(self,time_point):
         sum = int(time_point.split(":")[0])*3600+int(time_point.split(":")[1])*60+int(time_point.split(":")[2])*1
         return sum
