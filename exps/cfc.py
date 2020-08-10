@@ -27,7 +27,7 @@ class CFC(Exp):
         self.do_yellowlaser()
         self.countdown(2)
         self.do_shock()
-        self.countdown(58)
+        self.countdown(3)
 
     def conditioning(self):
         mouse_id = input("请输入mouse_id,并按Enter开始实验:")
@@ -40,12 +40,12 @@ class CFC(Exp):
             self.opencv_is_record()# start video record
             
             print("preexposure for 178s")
-            self.countdown(10)
+            self.countdown(2)
 
-            self.do_tone()
+            self.event1()
             
 
-            self.countdown(10)        
+            self.countdown(2)        
             
             self.opencv_is_stop()# stop video record
 
@@ -81,7 +81,7 @@ class CFC(Exp):
         behave_fourcc = cv2.VideoWriter_fourcc(*'XVID')
         camera_behave_save = Thread(target=self.save_video,args=(0,behave_fourcc,10,(640,480),))
         exp = Thread(target=self.conditioning)
-        T_tone = Thread(target=self.tone1,args=(3000,500,500,))
+        T_tone = Thread(target=self.shock,args=(2,))
 
         camera_behave.start()
         camera_behave_save.start()
@@ -97,6 +97,6 @@ class CFC(Exp):
         print("main process is done!")
 
 if __name__ =="__main__":
-    lw = CFC(port=None,data_dir=r"C:\Users\dell\Desktop\test")
+    lw = CFC(port="COM27",data_dir=r"C:\Users\dell\Desktop\test")
     lw()
     # 画图测试
