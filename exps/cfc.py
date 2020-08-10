@@ -78,7 +78,7 @@ class CFC(Exp):
 
     def run(self,):
         camera_behave = Thread(target=self.play_video,args=(0,))
-        behave_fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        behave_fourcc = cv2.VideoWriter_fourcc(*'XVID') # (*'mpeg')
         camera_behave_save = Thread(target=self.save_video,args=(0,behave_fourcc,10,(640,480),))
         exp = Thread(target=self.conditioning)
         T_tone = Thread(target=self.shock,args=(2,))
