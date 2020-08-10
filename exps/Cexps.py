@@ -78,6 +78,7 @@ class Exp():
                 time.sleep(duration)
                 self.ser.write("4".encode()) # blue laser off
                 print("bluelaser ends at %s"%self.current_time()[1])
+                Exp.is_bluelaser = 0
 
     def yellowlaser(self,duration=5):
         while not Exp.is_stop:
@@ -88,7 +89,7 @@ class Exp():
                 time.sleep(duration)
                 self.ser.write("6".encode()) # yellow laser off
                 print("yellowlaser ends at %s"%self.current_time()[1])
-
+                Exp.is_yellowlaser = 0
 
     def do_shock(self):
         Exp.is_shock = 1
