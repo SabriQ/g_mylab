@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as stats
 import pandas as pd
 import os,sys
-def shuffle_by_trials(list):
+def shuffle(df):
     """
     对dataframe进行resample
     计算每个block的context selectivity
@@ -17,33 +17,6 @@ def ContextSelectivityIndex(FrA,FrB):
     """
     return (FrA-FrB)/(FrA+FrB)
 
-def Normalize_list(datalist):
-    """
-    归一化，对异常值敏感
-    (x-min)/(max-min)
-    """
-    minimum = np.min(datalist)
-    maxum = np.max(data)
-    return [(i-minimum)/(maxum-minimum) for i in datalist]
-    
-def Normalize_df(temp,axis=0):
-    """
-    归一化，对异常值敏感
-    (x-min)/(max-min)
-    temp必须是pd.DataFrame
-    axis=0,对每列归一化
-    axis=1 对每行归一化
-    """
-    return (temp-temp.min(axis=axis))/(temp.max(axis=axis)-temp.min(axis=axis))
-
-def Standarization(datalist):
-    """
-    标准化
-    （x-mean)/std
-    """
-    mean = np.mean(datalist)
-    std = np.std(datalist)
-    return [(x-mean)/std for i in datalist]
 
 def normalized_distribution_test(datalist):
     """
