@@ -16,6 +16,7 @@ class MiniAna():
         pre_shock_frame_num: in seconds. default 10s or (pre_shock_frame_num*fps frames) before shock start frame
         post_shock_frame_num:in seconds default 60s or (post_shock_frame_num*fps frames) after shock start frame, ATTENTION, containing the shock duration.
         """
+        
         df = df[idx_accepted]
         total_length=df.shape[0]
 
@@ -29,6 +30,7 @@ class MiniAna():
                 print("pre_shock_seconds set too long")
                 sys.exit()
             else:
+
                 baseline = df[idx_accepted].loc[i-pre_shock_seconds*fps:i,]
 
 
@@ -43,6 +45,8 @@ class MiniAna():
                 print("post_shock_seconds set too long")
                 end2 = total_length
             postshock_withoutshock = df[idx_accepted].loc[(i+shock_seconds*fps):end2]
+
+
 
 
     def hc_meanfr(self,ms_session,by = ["Trial_Num"],maxTrialNum=60):   
