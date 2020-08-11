@@ -9,6 +9,16 @@ from mylab.process.miniscope.context_exposure.Mfunctions import *
 from mylab.process.miniscope.Mfunctions import *
 from mylab.process.miniscope.context_exposure.Mplot import *
 
+import logging 
+import sys,os
+
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+sh = logging.StreamHandler(sys.stdout) #stream handler
+sh.setLevel(logging.DEBUG)
+logger.addHandler(sh)
+
 
 class MiniResult():
     """
@@ -21,10 +31,19 @@ class MiniResult():
         self.Result_dir = Result_dir
         self.ms_mat_path = os.path.join(self.Result_dir,"ms.mat")
         self.ms_ts_path = os.path.join(self.Result_dir,"ms_ts.pkl")
+        self.resulthdf5 =  os.path.join(self.Result_dir,"result.hdf5")
+        self.logfile = os.path.join(self.Result_dir,"pre-process_log.txt")
+
+        fh = logging.FileHandler(self.logfile,mode="w")
+        formatter = logging.Formatter("  %(asctime)s %(message)s")
+        fh.setFormatter(formatter)
+        fh.setLevel(logging.INFO)
+        logger.addHandler(fh)
+
 
     def save_session_pkl(self):
         ms = load_mat(self.ms_mat_path)
-        print("load %s"%self.ms_mat_path)
+        logger.debug("load %s"%self.ms_mat_path)
         dff = ms['ms']['dff']
         sigraw = ms['ms']['sigraw'] #默认为sigraw
         idx_accepted = ms['ms']['idx_accepted']
@@ -33,7 +52,7 @@ class MiniResult():
         with open(self.ms_ts_path,'rb') as f:
             timestamps = pickle.load(f)
 
-        print("timestamps length:%s, dff shape:%s"%(sum([len(i) for i in timestamps]),dff.shape))
+        logger.info("timestamps length:%s, dff shape:%s"%(sum([len(i) for i in timestamps]),dff.shape))
 
         #根据timestamps讲dff切成对应的session
         slice = []
@@ -48,7 +67,7 @@ class MiniResult():
         #         if i == len(timestamps)-1:
         #             stop = -1
                 slice.append((start,stop))
-        print(slice)
+        # print(slice)
 
         for i,s in enumerate(slice,1):
             name = "session"+str(i)+".pkl"
@@ -61,7 +80,7 @@ class MiniResult():
 
             with open(os.path.join(self.Result_dir,name),'wb') as f:
                 pickle.dump(result,f)
-            print("%s is saved"%name)
+            logger.debug("%s is saved"%name)
 
     def save_behave_pkl(self,behavevideo,logfilepath = r"C:\Users\Sabri\Desktop\miniscope_1\202016\starts_firstnp_stops.csv"):
 
@@ -115,7 +134,7 @@ class MiniResult():
         savename = os.path.join(self.Result_dir,"behave_"+str(key)+".pkl")
         with open(savename,'wb') as f:
             pickle.dump(result,f)
-        print("%s get saved"%savename)
+        logger.debug("%s get saved"%savename)
 
 
 
@@ -155,19 +174,19 @@ class MiniResult():
             print(behave_result["behave_track"]["be_ts"][start-1],behave_result["behave_track"]["be_ts"][first_np-1],behave_result["behave_track"]["be_ts"][stop-1])
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
-            print("total time elaspse in 'behavioral video' and 'miniscope vidoe': ****ATTENTION****")
-            print(behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1],end=" ")
-            print(max(task_ms_result["ms_ts"])) #这部分不能相差太多
+            logger.info("total time elaspse in 'behavioral video' and 'miniscope vidoe': ****ATTENTION****")
+            logger.info(behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1],end=" ")
+            logger.info(max(task_ms_result["ms_ts"])) #这部分不能相差太多
 
             # 以行为学视频中，miniscope-led灯亮后的100ms为起始0点
             delta_t = 0-behave_result["behave_track"]["be_ts"][start-1]-0.1 # 这个0.1大约是启动时间
-            print("miniscope timestamps delta_t:%s"%delta_t)
+            logger.info("miniscope timestamps delta_t:%s"%delta_t)
             task_ms_result["corrected_ms_ts"] = task_ms_result["ms_ts"]-delta_t*1000
 
             with open(task_ms_info,'wb') as f:
                 pickle.dump(dict(task_ms_result,**behave_result),f)
         
-            print("corrected ms_ts and behavioral result are saved %s"%task_ms_info)
+            logger.debug("corrected ms_ts and behavioral result are saved %s"%task_ms_info)
             print("---------------------")
         #     print(task_ms_result["ms_ts"])
         #     sys.exit()
