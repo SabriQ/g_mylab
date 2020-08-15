@@ -136,9 +136,7 @@ def crop_downsample_concatenate(animal_id
     Result_animalid_folderpath=os.path.join(resultDir,'Results'+'_'+animal_id)
     if not os.path.exists(Result_animalid_folderpath):
         os.makedirs(Result_animalid_folderpath)        
-    cropfilename=os.path.join(Result_animalid_folderpath,'crop_param.pkl')
-    print(cropfilename)
-    x1,x2,y1,y2 =coordnates2crop_datavideo(msFileList[0],cropfilename=cropfilename)
+
     
     Realtime_folderpath=os.path.join(Result_animalid_folderpath,datetime.datetime.now().strftime("%Y%m%d_%H%M%S")+str(note))
     if not os.path.exists(Realtime_folderpath):
@@ -147,32 +145,37 @@ def crop_downsample_concatenate(animal_id
     videoconcat=os.path.join(Realtime_folderpath,'msCam_concat.avi')
     ms_ts_name = os.path.join(Realtime_folderpath,'ms_ts.pkl')
     ms_ts_mat_name = os.path.join(Realtime_folderpath,'ms_ts.mat')
-    
-    
-    cropped_clip_list=[]
-    iframe=0
-    for video in msFileList:
-        print('Concatenating '+video)
-        clip = VideoFileClip(video)
-        cropped_clip=mpv.fx.all.crop(clip,x1=x1,y1=y1,x2=x2,y2=y2)
-        
-        if spatial_downsampling!=1:
-            cropped_clip=cropped_clip.resize(1/spatial_downsampling)
-        cropped_clip_list.append(cropped_clip)
-        
-    final_clip=concatenate_videoclips(cropped_clip_list)
 
-    if temporal_downsampling>1:
-        final_clip=mpv.fx.all.speedx(final_clip, factor=temporal_downsampling)
-        
-    if video_process = True:
+    if video_process:
+        cropfilename=os.path.join(Result_animalid_folderpath,'crop_param.pkl')
+        print(cropfilename)
+        x1,x2,y1,y2 =coordnates2crop_datavideo(msFileList[0],cropfilename=cropfilename)
+
+        cropped_clip_list=[]
+        iframe=0
+        for video in msFileList:
+            print('Concatenating '+video)
+            clip = VideoFileClip(video)
+            cropped_clip=mpv.fx.all.crop(clip,x1=x1,y1=y1,x2=x2,y2=y2)
+            
+            if spatial_downsampling!=1:
+                cropped_clip=cropped_clip.resize(1/spatial_downsampling)
+            cropped_clip_list.append(cropped_clip)
+            
+        final_clip=concatenate_videoclips(cropped_clip_list)
+
+        if temporal_downsampling>1:
+            final_clip=mpv.fx.all.speedx(final_clip, factor=temporal_downsampling)
+            
+
         final_clip.write_videofile(videoconcat,codec='rawvideo',audio=False,threads=8)
-##    final_clip.write_videofile(videoconcat,codec='png',audio=False,threads=8)
-#     final_clip.write_videofile(videoconcat,codec='mpeg4',audio=False,threads=8)
+    ##    final_clip.write_videofile(videoconcat,codec='png',audio=False,threads=8)
+    #     final_clip.write_videofile(videoconcat,codec='mpeg4',audio=False,threads=8)
 
 #     help(final_clip.write_videofile)
 
     if not os.path.exists(ms_ts_name):
+        print(ms_ts_name)
         ts_session=[]
         for tsFile in tsFileList:
             if "timestamp.dat" in tsFile: # 如果是miniscope原版软件录制
@@ -227,6 +230,7 @@ def crop_downsample_concatenate(animal_id
     else:
         print(f"Attention: concatenated video {concated_video_frames}frames and timestamps {timestamps_frames}frames have different frames")
     print(f'concatenated timestamp of miniscope_video is located at {ms_ts_name}')
+
 
 
 # In[163]:

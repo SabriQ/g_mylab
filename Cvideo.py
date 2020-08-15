@@ -69,8 +69,9 @@ class Video():
         "-i",self.video_path,"-vf",
         "crop=%d:%d:%d:%d" % (x,y,w,h),
         "-loglevel","quiet",croped_video_name]
-    @statictmethod
-    def contrastbrightness(self,videolists):
+
+    @staticmethod
+    def contrastbrightness(videolists):
         for video in videolists:
             print(video)
             command=[
