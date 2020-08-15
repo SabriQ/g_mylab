@@ -41,6 +41,25 @@ class MiniAna():
             self.exp = "task"
         logger.debug("loaded %s"%self.session_path)
 
+    def _dataframe2nparray(self,df):
+        if isinstance(df,dict):
+            for key in list(df.keys()):
+                if isinstance(df[key],pd.core.frame.DataFrame):
+                    df[str(key)+"_column"]=np.array(df[key].columns)
+                    df[key]=df[key].values                    
+                    print("%s has transferred to numpy array"%key)
+                if isinstance(df[key],dict):
+                    return dataframe2nparray(df[key])
+        else:
+            print("df is not a dict")
+        return df
+
+    def savepkl2mat(self,):
+        savematname = self.session_path.replace("pkl","mat")
+        spio.savemat(savematname,self._dataframe2nparray(self.result))
+        logger.info("saved %s"%savematname)
+
+
     def align_behave_ms(self):
         """
         产生 aligned_behave2ms
@@ -430,5 +449,7 @@ class MiniAna():
         """
         pass
 if __name__ == "__main__":
-    session = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
-    session.add_zone2result()
+    sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
+    for session in sessions:
+        S = MiniAna(session)
+        S.savepkl2mat()

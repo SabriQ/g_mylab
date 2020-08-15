@@ -296,3 +296,5 @@ class MiniResult():
         spio.savemat(savematname,result)
         print("saved %s"%savematname)
 
+if __name__ == "__main__":
+    pass

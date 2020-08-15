@@ -146,7 +146,7 @@ def crop_downsample_concatenate(animal_id
     ms_ts_name = os.path.join(Realtime_folderpath,'ms_ts.pkl')
     ms_ts_mat_name = os.path.join(Realtime_folderpath,'ms_ts.mat')
 
-    if video_process = True:
+    if video_process:
         cropfilename=os.path.join(Result_animalid_folderpath,'crop_param.pkl')
         print(cropfilename)
         x1,x2,y1,y2 =coordnates2crop_datavideo(msFileList[0],cropfilename=cropfilename)
@@ -175,6 +175,7 @@ def crop_downsample_concatenate(animal_id
 #     help(final_clip.write_videofile)
 
     if not os.path.exists(ms_ts_name):
+        print(ms_ts_name)
         ts_session=[]
         for tsFile in tsFileList:
             if "timestamp.dat" in tsFile: # 如果是miniscope原版软件录制

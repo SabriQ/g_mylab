@@ -107,7 +107,30 @@ def corr(rsv1,rsv2):
         print("数据至少有一个不符合正太分布%s"%normalizations)
         return stats.spearmanr(rsv1,rsv2)
         # return stats.kendalltau(rvs1,rsv2)
+def find_close_fast(arr, e):    
+    # start_time = datetime.datetime.now()            
+    low = 0    
+    high = len(arr) - 1    
+    idx = -1     
+    while low <= high:        
+        mid = int((low + high) / 2)        
+        if e == arr[mid] or mid == low:            
+            idx = mid            
+            break        
+        elif e > arr[mid]:            
+            low = mid        
+        elif e < arr[mid]:            
+            high = mid     
+    if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
+        idx += 1            
+    # use_time = datetime.datetime.now() - start_time    
+    return idx #0作为起始
 
+def find_close_fast2(arr,e):
+    np.add(arr,e*(-1))
+    min_value = min(np.abs(np.add(arr,e*-1)))
+    locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
+    return locations[0][0]
 def Wilcoxon_signed_ranktest(paired_data1):
     """
     for one sample and two paired samples 

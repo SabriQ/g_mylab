@@ -105,11 +105,36 @@ def pkl2mat2(ms_mat_path):
     result["ms"]["ms_ts"]=np.array(ms_ts_all)
     savemat(mat_path,result)
     print("save mat %s"%mat_path)
+    
+def ms_tses2ms_ts(dirpath):
+    """
+    将每天的ms_ts.pkl合并成一个ms_ts.mat/ms_ts.pkl
+    """
+    ms_tses = glob.glob(os.path.join(dirpath,"*10fps*/ms_ts.pkl"))
+    print(ms_tses)
+    mss = []
+    for ms_ts in ms_tses:
+        with open(ms_ts,"rb") as f:
+            ms = pickle.load(f)
+        mss.append(np.array(ms))
+
+    pklpath=os.path.join(dirpath,"ms_ts.pkl")
+    matpath=os.path.join(dirpath,"ms_ts.mat")
+
+    savemat(matpath,{'ms_ts':np.array(mss)})
+
+    with open(pklpath,"wb") as output:
+        pickle.dump(mss,output)
+
 
 if __name__ == "__main__":
-    pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033\ms.mat"]
-    for path in pathes:
-        pkl2mat2(path)
+    ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033")
+    ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201034")
+    ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201037")
+    ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_202061")
+    # pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033\ms.mat"]
+    # for path in pathes:
+    #     pkl2mat2(path)
     
     # pathes = glob.glob(r"\\10.10.46.135\share\zhangna\4_Miniscope\miniscope_result\*\ms.mat")
     # for path in pathes:
