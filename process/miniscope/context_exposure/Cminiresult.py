@@ -10,7 +10,7 @@ from mylab.process.miniscope.Mfunctions import *
 from mylab.process.miniscope.context_exposure.Mplot import *
 
 import logging 
-import sys,os
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
