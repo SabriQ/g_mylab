@@ -53,7 +53,7 @@ class Video():
         cap.release()
         cv2.destroyAllWindows()
 
-    def crop_video(self,x,y,w,h):
+    def crop_video(self,show_details=False,multiprocess=False):
         '''
         ffmpeg -i $1 -vf crop=$2:$3:$4:$5 -loglevel quiet $6
 
@@ -63,12 +63,39 @@ class Video():
         来返回 x,y,w,h
         '''
 
-        croped_video_name
-        command = [
-        "ffmpeg",
-        "-i",self.video_path,"-vf",
-        "crop=%d:%d:%d:%d" % (x,y,w,h),
-        "-loglevel","quiet",croped_video_name]
+        croped_video = self.abs_prefix+"_crop.avi"
+        crop_video_file = self.abs_prefix+"_crop.txt"
+
+        if not os.path.exists(croped_video):
+            if not os.path.exists(crop_video_file):
+                cap = cv2.VideoCapture(self.video_path)
+                cap.set(cv2.CAP_PROP_POS_FRAMES,1000)
+                ret,frame = cap.read()
+                x,y,w,h = cv2.selectROI("%s"%os.path.basename(self.video_path),frame)
+                cv2.destroyAllWindows()
+                coords = pd.DataFrame(data={"x":[x],"y":[y],"w":[w],"h":[h]})
+                print(coords)
+                coords.to_csv(crop_video_file,index=False)
+            else:
+                print("coords exists")
+                coords = pd.read_table(crop_video_file,sep=",")
+
+            command = [
+            "ffmpeg",
+            "-i",self.video_path,"-vf",
+            "crop=%d:%d:%d:%d" % (coords["w"],coords["h"],coords["x"],coords["y"]),
+            "-loglevel","quiet",croped_video]
+
+            child = subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf-8')
+            out = child.communicate()[1]
+            if show_details:
+                print(out)
+            if not multiprocess:
+                child.wait()
+            print("%s has been cropped"%video)
+        else:
+            print("%s was cropped."%video)
+
 
     @staticmethod
     def contrastbrightness(videolists):
@@ -120,7 +147,7 @@ class Video():
         #print(out)
         child.wait()
 
-    def scale(self,distance):    
+    def scale(self,distance):
         """
         Args:
             distance: the length in cm of a line that you draw
