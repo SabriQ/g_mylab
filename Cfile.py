@@ -33,7 +33,11 @@ class File():
         else:
             print(f"{self.file_path} does not exists.")
 
-    def copy2(self,dst):
+    def copy2dst(self,dst):
+        """
+        将文件copy到指定的位置（文件夹，不是文件名）
+        dst: path of directory
+        """
         if os.path.exists(self.file_path):
             from shutil import copyfile
             newname = os.path.join(dst,self.file_name)
@@ -43,9 +47,6 @@ class File():
             print("{self.file_path} does not exists.")
             
 
-#        if isinstance(variable,str) or isinstance(variable,int),or isinstance(variable,float):
-            
-        
 
 
 class TrackFile(File):

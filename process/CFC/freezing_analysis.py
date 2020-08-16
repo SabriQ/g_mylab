@@ -44,6 +44,7 @@ current_time = time.strftime("%Y%m%d-%H%M%S", time.localtime())
 with open(os.path.join(os.path.dirname(videolists[0]),'freezing_stat.csv'),'w',newline="") as csv_file:
     writer = csv.writer(csv_file)
     writer.writerow(['Time',current_time])
+    writer.writerow(['frame_interval',frame_interval])
     writer.writerow(['diff_gray_value',diff_gray_value])
     writer.writerow(['threshold',threshold])
     writer.writerow(['video_id','freezing%'])
