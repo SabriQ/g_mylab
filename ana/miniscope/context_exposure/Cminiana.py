@@ -50,6 +50,7 @@ class MiniAna():
 
     def _dataframe2nparray(self,df):
         if isinstance(df,dict):
+            print("df is a dict")
             for key in list(df.keys()):
                 if isinstance(df[key],pd.core.frame.DataFrame):
                     df[str(key)+"_column"]=np.array(df[key].columns)
@@ -57,9 +58,10 @@ class MiniAna():
                     print("%s has transferred to numpy array"%key)
                 if isinstance(df[key],dict):
                     return dataframe2nparray(df[key])
-        else:
-            print("df is not a dict")
-        return df
+            return df
+        elif isinstance(df,pd.core.frame.DataFrame):
+            print("df is a DataFrame")
+            return {"df":df.values,"df_columns":np.array(df.columns)}
 
     def savepkl2mat(self,):
         logger.info("FUN:: savepkl2mat")

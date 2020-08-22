@@ -24,7 +24,7 @@ class Video():
         self.videots_path = self.abs_prefix + '_ts.txt'
         self.video_track_path = glob.glob(self.abs_prefix+".h5")
 
-
+        self.videosize = os.path.getsize(self.video_path)/1073741824 # video size is quantified by GB
     def play(self):
         """
         instructions:
@@ -52,6 +52,23 @@ class Video():
                 wait = wait + step
         cap.release()
         cv2.destroyAllWindows()
+
+    def transcode(self,show_details=True):
+        """
+        for save larger size video  as very smaller one
+        """
+        if self.videosize>1:
+            print("%s is as large as %.2fGB"%(self.video_path,self.videosize))
+            if self.video_path.endswith(".avi"):
+                newvideo=self.video_path.replace(".avi",".mp4")
+                command = ["ffmpeg","-i",self.video_path,newvideo]
+
+                child = subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf-8')
+                out = child.communicate()[1]
+                if show_details:
+                    print(out)
+                child.wait()
+                print("%s has been transcoded")
 
     def crop_video(self,show_details=False,multiprocess=False):
         '''

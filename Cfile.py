@@ -10,7 +10,7 @@ import scipy.io as spio
 import glob
 import numpy as np
 import pandas as pd
-
+from shutil import copyfile
 class File():
     def __init__ (self,file_path):
         self.file_path = file_path
@@ -27,7 +27,6 @@ class File():
         if os.path.exists(self.file_path):
             newname = os.path.join(self.dirname,prefix+self.file_name_noextension+suffix+self.extension)
             if keep_origin:
-                from shutil import copyfile
                 copyfile(self.file_path,newname)
                 print("Rename file successfully with original file kept")
             else:
@@ -42,7 +41,6 @@ class File():
         dst: path of directory
         """
         if os.path.exists(self.file_path):
-            from shutil import copyfile
             newname = os.path.join(dst,self.file_name)
             copyfile(self.file_path,newname)
             print(f"Transfer {self.file_path} successfully")
@@ -55,15 +53,55 @@ class File():
 class TrackFile(File):
     def __init__(self,file_path):
         super().__init__(file_path)
-        self.trackvideo_path = os.path.join(self.dirname,self.file_name_noextension+'_labeled.mp4')
-        self.trackfile_path = os.path.join(self.dirname,self.file_name_noextension+'h5')
-        self._load_file()
 
+        if not self.file_path.endswith(".h5"):
+            print("track file is not end with h5")
+        else:
+            self._load_file()
+
+    @property
+    def key_PLX(self):
+        key = re.findall("\d{13}",self.file_name)
+        if len(key)>0:
+            return key[0]
+        else:
+            return 0
+    @property
+    def key_YMDHMS(self):
+        key = re.findall("\d{8}-\d{6}",self.file_name)
+        if len(key)>0:
+            return key[0]
+        else:
+            return 0
+    
     def _load_file(self):
-        track = pd.read_hdf(self.trackfile_path)
+        track = pd.read_hdf(self.file_path)
         self.behave_track=pd.DataFrame(track[track.columns[0:9]].values,
                      columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
+        print("trackfile is loaded.")
 
+    def _dataframe2nparray(self,df):
+        if isinstance(df,dict):
+            print("df is a dict")
+            for key in list(df.keys()):
+                if isinstance(df[key],pd.core.frame.DataFrame):
+                    df[str(key)+"_column"]=np.array(df[key].columns)
+                    df[key]=df[key].values                    
+                    print("%s has transferred to numpy array"%key)
+                if isinstance(df[key],dict):
+                    return dataframe2nparray(df[key])
+            return df
+        elif isinstance(df,pd.core.frame.DataFrame):
+            print("df is a DataFrame")
+            return {"df":df.values,"df_columns":list(df.columns)}
+
+
+
+
+    def savepkl2mat(self,):
+        savematname = self.file_path.replace("h5","mat")
+        spio.savemat(savematname,self._dataframe2nparray(self.behave_track))
+        print("save mat as %s"%savematname)
 
     @staticmethod
     def _angle(dx1,dy1,dx2,dy2):
