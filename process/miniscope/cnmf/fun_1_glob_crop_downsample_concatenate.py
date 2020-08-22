@@ -180,6 +180,7 @@ def crop_downsample_concatenate(animal_id
         for tsFile in tsFileList:
             if "timestamp.dat" in tsFile: # 如果是miniscope原版软件录制
                 datatemp=pd.read_csv(tsFile,sep = "\t", header = 0)
+                datatemp = datatemp[datatemp["camNum"]==0]
                 # incase the first frame of timestamps is not common 比如这里会有一些case的第一帧会出现很大的正/负数
                 if np.abs(datatemp['sysClock'][0])>datatemp['sysClock'][1]:
                     value = datatemp['sysClock'][1]-13 # 用第2帧的时间减去13，13是大约的一个值

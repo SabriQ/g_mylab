@@ -54,7 +54,7 @@ class MiniResult():
 
         logger.info("timestamps length:%s, dff shape:%s"%(sum([len(i) for i in timestamps]),dff.shape))
 
-        #根据timestamps讲dff切成对应的session
+        #根据timestamps将dff切成对应的session
         slice = []
         for i,timestamp in enumerate(timestamps):
             if i == 0:
