@@ -287,6 +287,9 @@ def rlc2(X):
     return pd.DataFrame(df)         
     
 def Standarization(df):
+    """
+    对matrix中的所有值一块进行standarization
+    """
     temp_mean = np.mean(np.reshape(df.values,(1,-1))[0])
     temp_std = np.std(np.reshape(df.values,(1,-1))[0],ddof=1)
     Standarized_df = (df-temp_mean)/temp_std
@@ -294,6 +297,9 @@ def Standarization(df):
     return Standarized_df,temp_mean,temp_std
 
 def Normalization(df):
+    """
+    对matrix中的所有值一块进行 normalization
+    """
     residual = np.max(np.reshape(df.values,(1,-1))[0])-np.min(np.reshape(df.values,(1,-1))[0])
 #     residual = df.max().max()-df.min().min()
     minimum = np.min(np.reshape(df.values,(1,-1))[0])
