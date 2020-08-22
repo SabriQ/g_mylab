@@ -8,6 +8,9 @@ import os,re
 from mylab.Cvideo import Video
 import scipy.io as spio
 import glob
+import numpy as np
+import pandas as pd
+
 class File():
     def __init__ (self,file_path):
         self.file_path = file_path
@@ -53,8 +56,48 @@ class TrackFile(File):
     def __init__(self,file_path):
         super().__init__(file_path)
         self.trackvideo_path = os.path.join(self.dirname,self.file_name_noextension+'_labeled.mp4')
+        self.trackfile_path = os.path.join(self.dirname,self.file_name_noextension+'h5')
+        self._load_file()
+
+    def _load_file(self):
+        track = pd.read_hdf(self.trackfile_path)
+        self.behave_track=pd.DataFrame(track[track.columns[0:9]].values,
+                     columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
 
 
+    @staticmethod
+    def _angle(dx1,dy1,dx2,dy2):
+        """
+        dx1 = v1[2]-v1[0]
+        dy1 = v1[3]-v1[1]
+        dx2 = v2[2]-v2[0]
+        dy2 = v2[3]-v2[1]
+        """
+        angle1 = math.atan2(dy1, dx1) * 180/math.pi
+        if angle1 <0:
+            angle1 = 360+angle1
+        # print(angle1)
+        angle2 = math.atan2(dy2, dx2) * 180/math.pi
+        if angle2<0:
+            angle2 = 360+angle2
+        # print(angle2)
+        return abs(angle1-angle2)
+
+    @classmethod
+    def speed(cls,X,Y,T,s,sigma=3):
+        """
+        X
+        Y
+        T
+        s
+        """
+        speeds=[0]
+        speed_angles=[0]
+        for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
+            distance = np.sqrt(delta_x**2+delta_y**2)
+            speeds.append(distance*s/delta_t)
+            speed_angles.append(cls._angle(1,0,delta_x,delta_y))
+        return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
 class Free2pFile(File):
     def __init__(self,file_path):

@@ -30,9 +30,14 @@ class MiniAna():
         logger.addHandler(fh)
 
         self._load_session()
+        self.align_behave_ms() # self.Trial_Num, self.process
+        self.add_info2aligned_behave2ms() # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
+        self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
+        self.length = self.df.shape[0]
 
     def _load_session(self):
-        logger.info("loading %s"%self.session_path)
+        logger.info("FUN:: _load_session")
+        logger.debug("loading %s"%self.session_path)
         with open(self.session_path,"rb") as f:
             self.result = pickle.load(f)
         if not "aligned_behave2ms" in self.result.keys():
@@ -40,6 +45,8 @@ class MiniAna():
         else:
             self.exp = "task"
         logger.debug("loaded %s"%self.session_path)
+
+
 
     def _dataframe2nparray(self,df):
         if isinstance(df,dict):
@@ -55,30 +62,34 @@ class MiniAna():
         return df
 
     def savepkl2mat(self,):
+        logger.info("FUN:: savepkl2mat")
         savematname = self.session_path.replace("pkl","mat")
         spio.savemat(savematname,self._dataframe2nparray(self.result))
         logger.info("saved %s"%savematname)
 
 
-    def align_behave_ms(self):
+    def align_behave_ms(self,hc_trial_bin=5000):
         """
         产生 aligned_behave2ms
         注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
+        hc_trial_bin: in ms, default 5000ms
         """
-        if not "aligned_behave2ms" in self.result.keys():
-            if "behave_track" in self.result.keys():
-
+        logger.info("FUN:: aligned_behave2ms,hc_trial_bin=%s"%hc_trial_bin)
+        
+        if "behave_track" in self.result.keys():
+            if not "aligned_behave2ms" in self.result.keys():
                 # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
                 logger.debug("aligninging behavioral frame to each ms frame...")
+                logger.info("looking for behave frame for each corrected_ms_ts...")
                 aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
                                                 ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
 
                 _,length = rlc(aligned_behave2ms["ms_behaveframe"])
-                logger.info("max length of the same behave frame in one mini frame: %s"%max(length))
+                logger.info("for one miniscope frame, there are at most %s behavioral frames "%max(length))
 
                 if max(length)>10:
                     logger.info("********ATTENTION when align_behave_ms**********")
-                    logger.info("miniscope frame is longer than behavioral video, please check")
+                    logger.info("miniscope video is longer than behavioral video, please check")
                     logger.info("********ATTENTION when align_behave_ms**********")
 
                 aligned_behave2ms = aligned_behave2ms.join(self.result["behave_track"],on="ms_behaveframe")
@@ -86,15 +97,26 @@ class MiniAna():
                 with open(self.session_path,'wb') as f:
                     pickle.dump(self.result,f)
                 logger.debug("aligned_behave2ms is saved %s" %self.session_path)
-
             else:
-                logger.debug("this session was recorded in homecage")
-        else:
-            logger.debug("behaveiroal timestamps were aligned to ms")
+                logger.debug("behaveiroal timestamps were aligned to ms")
 
+
+            self.Trial_Num = self.result["aligned_behave2ms"]["Trial_Num"]
+            self.process = self.result["aligned_behave2ms"]["process"]
+
+        else:
+            logger.debug("this session was recorded in homecage")
+
+            Trial_Num = []
+            process = []
+            for ts in self.result["ms_ts"]:
+                Trial_Num.append(int(np.ceil(ts/hc_trial_bin)))
+                process.append(-1)
+            self.Trial_Num = pd.Series(Trial_Num)
+            self.process = pd.Series(process)
 
     def add_zone2result(self,zone="in_lineartrack"):
-
+        logger.info("FUN:: add_zone2result at zone %s"%zone)
         mask = zone+"_mask"
         coords = zone+"_coords"
         if not mask in self.result.keys():
@@ -120,35 +142,61 @@ class MiniAna():
 
     def add_info2aligned_behave2ms(self,scale=0.2339021309714166,placebin_number=10):
         #     scale = 0.2339021309714166 #cm/pixel 40cm的台子，202016，202017.202019适用
+        logger.info("FUN:: add_info2aligned_behave2ms scale: %scm/pixel ; placebin_number: %s"%(scale,placebin_number))
         update = 0
             
         if "aligned_behave2ms" in self.result.keys():
             #1 添加 "in_context" in behave_track
-            mask = self.result[""]
-            if not "in_context" in self.result["aligned_behave2ms"].columns:
+            mask = self.result["in_context_mask"]
+            if not "in_context" in self.result.keys():
                 in_context=[]
                 for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
                     if 255 in mask[int(y),int(x)]:
                         in_context.append(0)
                     else:
                         in_context.append(1)
-                self.result["aligned_behave2ms"]["in_context"]=in_context
-                print("'in_context' has added")
+                self.result["in_context"]=pd.Series(in_context)
+                logger.info("'in_context' has been added")
                 update = 1
             else:
                 print("'in_context' has been there")
 
             #2 添加“Body_speed" "Body_speed_angle"
-            if not "Body_speed" in self.result["aligned_behave2ms"].columns:
-                Body_speed,Body_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Body_x"],Y=self.result["aligned_behave2ms"]["Body_y"],T=self.result["aligned_behave2ms"]["be_ts"],s=scale)
-                self.result["aligned_behave2ms"]["Body_speed"]=list(Body_speed)
-                self.result["aligned_behave2ms"]["Body_speed_angle"]=list(Body_speed_angle)
+            if not "Body_speed" in self.result.keys():
+                Body_speed,Body_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Body_x"]
+                                                        ,Y=self.result["aligned_behave2ms"]["Body_y"]
+                                                        ,T=self.result["aligned_behave2ms"]["be_ts"]
+                                                        ,s=scale)
+                self.result["Body_speed"]=Body_speed
+                self.result["Body_speed_angle"]=Body_speed_angle
+                logger.info("Body_speed and Body_speed_angle have been added")
                 update = 1
             else:
                 print("'Body_speed'and'Body_speed_angle' has been there")
             
-            #3 添加 “in_context_place_bin"
-            if not "in_context_placebin_num" in self.result["aligned_behave2ms"].columns:
+            #3 添加"in_context_running_direction"
+            if not "in_context_running_direction" in self.result.keys():
+                in_context_running_direction=[]
+
+                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.Trial_Num,self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
+                    if Trial == -1:
+                        in_context_running_direction.append(-1)
+                    else:
+                        if in_context == 0:
+                            in_context_running_direction.append(-1)
+                        else:
+                            if Body_speed_angle > 90 and Body_speed_angle < 280 :
+                                in_context_running_direction.append(0)
+                            else:
+                                in_context_running_direction.append(1)
+                self.result["in_context_running_direction"]=in_context_running_direction
+                logger.info("in_context_running_direction has been added")
+                update = 1
+            else:
+                print("in_context_running_direction has been there")
+
+            #4 添加 “in_context_place_bin"
+            if not "in_context_placebin_num" in self.result.keys():
                 Cx_min = np.min(self.result["in_context_coords"][:,0])
                 Cx_max = np.max(self.result["in_context_coords"][:,0])
     
@@ -158,7 +206,7 @@ class MiniAna():
                     placebins.append([Cx_min+n*palcebinwidth,Cx_min+(n+1)*palcebinwidth])
                 in_context_placebin_num = []
                 print(placebins)
-                for in_context,x in zip(self.result["aligned_behave2ms"]['in_context'],self.result["aligned_behave2ms"]['Body_x']):
+                for in_context,x in zip(self.result['in_context'],self.result["aligned_behave2ms"]['Body_x']):
                     x = int(x)
                     if not in_context:
                         in_context_placebin_num.append(0)
@@ -181,7 +229,7 @@ class MiniAna():
                                     pass
                         
                 print(len(in_context_placebin_num),self.result["aligned_behave2ms"].shape)
-                self.result["aligned_behave2ms"]["in_context_placebin_num"] = in_context_placebin_num
+                self.result["in_context_placebin_num"] = in_context_placebin_num
                 update = 1
             else:
                 print("'in_context_placebin_num' has been there")
@@ -190,67 +238,62 @@ class MiniAna():
             print("you haven't align behave to ms or it's homecage session")
 
         if update:
-            with open(ms_session,'wb') as f:
+            with open(self.session_path,'wb') as f:
                 pickle.dump(self.result,f)
-            print("aligned_behave2ms is updated and saved %s" %ms_session)
+            print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
-    def hc_meanfr(self,by = ["Trial_Num"],maxTrialNum=60):   
+
+
+
+
+    def meanfr_by_trial(self,df=None,force_neg2zero=True,Trial_Num=None,Normalize=False,standarize=False,in_context=False,in_lineartrack=False,process=None):
         """
-        homecage session:
-            regard every 5000ms as ONE Trial
+        process: list process, for example [0,1,2]
         """
-        Trial_Num = []
-        for ts in self.result["ms_ts"]:
-            Trial_Num.append(int(np.ceil(ts/5000)))
+        logger.info("FUN:: meanfr_by_trial")
 
-        temp_sigraw = pd.DataFrame(result["sigraw"][:,result["idx_accepted"]],columns=result["idx_accepted"])
-        temp_sigraw["Trial_Num"] = Trial_Num
-        temp_sigraw = temp_sigraw.loc[temp_sigraw["Trial_Num"]<=maxTrialNum]
-        temp_mean = temp_sigraw.groupby(by).mean().reset_index()
-        temp_mean["Enter_ctx"] = -1
-        temp_mean["Exit_ctx"] = -1
-        return 
+        if df == None:
+            df = self.df
+        if Trial_Num==None:
+            Trial_Num = self.Trial_Num
+        if force_neg2zero:
+            logger.info("negative values are forced to be zero")
+            df[df<0]=0
+        if Normalize:
+            df,_,_ = Normalization(df)
+            logger.info("NORMALIZED sigraw trace")
+        if standarize:
+            df,_,_ = Standarization(df)
+            logger.info("STANDARIZED sigraw trace")
 
-    def task_meanfr(self,by=["Trial_Num"],**kwargs):
-        """
-        非"hc" self.session_path， 
-            索引result["aligned_behave2ms"] 指定columns指定values的每个trial的平均发放率
-        **kwargs 作为筛选条件
-        输出 按Trial_Num groupby的平均发放率
-        """
-        with open(self.session_path,'rb') as f:
-            self.result = pickle.load(f)
+        df["Trial_Num"] = Trial_Num
 
-        if "aligned_behave2ms" in self.result.keys():
-            #索引指定的columns中指定值的帧,新增"index"列，用于索引“sigraw"中的值
-            temp = self.result["aligned_behave2ms"].reset_index(drop=False)
-            keys = self.result["aligned_behave2ms"].keys()
+        index=pd.DataFrame()
+        index["Trial_Num"] = Trial_Num>=0
+        if in_context:
+            try:
+                index["in_context"] = self.result["in_context"]
+            except:
+                logger.warning("in_context does not exist")
+        if in_lineartrack:
+            try:
+                index["in_lineartrack"] = self.result["in_lineartrack"]
+            except:
+                logger.warning("in_lineartrack does not exist")
+        
+        if not process == None:
+            indes["in_process"] = self.process.isin(process)
+        else:
+            logger.warning("process is [None], please specify.")
 
-            # **kwargs 作为筛选条件
-            for key,value in kwargs.items():
-                print("%s is limited to %s"%(key,value),end=":  ")
-                print(temp.shape,end=">>>")
-                if key in keys:
-                    if key == "Body_speed":                
-                        temp = temp.loc[temp["Body_speed"]>3]
-        #                 print(temp["Body_speed"])
-                    else:
-                        temp = temp.loc[temp[key].isin(value)]
-                    print(temp.shape)
-                else:
-                    print("%s does not exist")
-                    sys.exit()
-                
-            temp = temp.reset_index()
 
-            temp_sigraw = pd.DataFrame(result["sigraw"][:,result["idx_accepted"]][temp["index"],:],columns=result["idx_accepted"])
-            temp_sigraw["Trial_Num"] = temp["Trial_Num"]
-            return temp_sigraw.groupby(by).mean().reset_index().join(result["behavelog_info"].set_index("Trial_Num")[["Enter_ctx","Exit_ctx"]],on="Trial_Num")
+        df = df[index.all(axis=1)]
+        
+        return df.groupby(["Trial_Num"]).mean().reset_index().rename(columns={"index":"Trial_Num"})
 
-    def shuffle(self,df,times=1000):
-        for i in range(times):
-            new_df = df.sample(frac=1).reset_index(drop=True)
-            yield new_df
+    def shuffle(self,df):
+        new_df = df.sample(frac=1).reset_index(drop=True)
+        yield new_df
 
     def cellids_HCTrack_Context(self,idx_accept,df):
         """
@@ -333,49 +376,58 @@ class MiniAna():
                  ,"strange_cells":strange_cells}
 
 
-    def cellids_Context(self,idx_accept,df,method="ranksum"):
+
+
+    def cellids_Context(self,idxes,meanfr_df=None,Context=None,context_map=["A","B","C","N"]):
         """
-        df 必须具备 Trial_Num Enter_ctx 和 Exit_ctx
-
-        输入df包括在contextA和在contextB中的两种trial
-        输出在A B cell ID
+        输入应该全是 in_context==1的数据
+        idxes: the ids of all the cell that you're concerned.
+        meanfr_df: meanfr in each trial only in context
+        context_list:contains ["Trial_Num","context_list"],existed in self.result["behavelog_info"]
+                     two available contexts represented by A or B.N means out of all the context. each trial have a exposured context
+        context_map: 0 means context A, 1 means context B, 2 means context C.
+        standarization to make data of differnet batch compatable
         """
+        logger.info("FUN:: cellids_Context")
+        logger.info("Context 0,1,2,-1 means %s."%context_map)
+        #序列化in_context_list
+        if meanfr_df == None:
+            logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
+            meanfr_df = self.meanfr_by_trial(force_neg2zero=True,Normalize=False,standarize=False,in_context=True)
+        if Context == None:
+            logger.info("""Default:: pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
+            temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+            Context = temp["Enter_ctx"]
+        # 将0，1对应的context信息根据context_map置换成A B
+        Context = pd.Series([context_map[i] for i in Context])
 
-        #重置Trial_Num
-        df["Trial_Num"][df["Enter_ctx"]!=-1] = [i+1 for i in range(len(df["Trial_Num"][df["Enter_ctx"]!=-1]))]
-        df = df.sort_values(by=["Trial_Num"])
-        df[idx_accept],_,_ = Normalization(df[idx_accept])
-
+        ctx_pvalue = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[Context=="A"],x[Context=="B"])[1],axis=0)
+        # ctx_pvalue.columns=["ranksum_p_value"]
+        ctx_meanfr = meanfr_df[idxes].groupby(Context).mean().T
+        ctx_meanfr["ranksums_p_value"] = ctx_pvalue
+        ctx_meanfr["CSI"] = (ctx_meanfr["A"]-ctx_meanfr["B"])/(ctx_meanfr["A"]+ctx_meanfr["B"])
         ContextA_cells=[]
         ContextB_cells=[]
-        CDIs=[]
-        Noncontext_cells=[]
+        non_prefer_cells=[]
 
-        if method == "ranksums":
-            for idx in idx_accept:
-                ctxA_fr = df[idx][df["Enter_ctx"]==0]
-                ctxB_fr = df[idx][df["Enter_ctx"]==1]
-                ctxA_meanfr =np.mean(ctxA_fr)
-                ctxA_std =np.std(ctxA_fr)
-                ctxB_meanfr =np.mean(ctxB_fr)
-                ctxB_std  =np.std(ctxB_fr)
-                ctxA_ctxB_p = stats.ranksums(ctxA_fr,ctxB_fr)[1]
-                CDI= (ctxA_meanfr-ctxB_meanfr)/(ctxA_meanfr+ctxB_meanfr)
-                CIDs.append(CDI)
-
-
-                #判定是novel_ctxA_cell / novel_ctxB_cell / novel_nonctx_cells
-                if ctxA_ctxB_p < 0.05:
-                    if ctxA_meanfr > ctxB_meanfr:
-                        ContextA_cells.append(idx)
-                    else:
-                        ContextB_cells.append(idx)
+        for cellid,a, b, p in zip(ctx_meanfr.index,ctx_meanfr["A"],ctx_meanfr["B"],ctx_meanfr["ranksums_p_value"]):
+            if p>=0.05:
+                non_prefer_cells.append(cellid)
+            else:
+                if a>b:
+                    ContextA_cells.append(cellid)
+                elif a<b:
+                    ContextB_cells.append(cellid)
                 else:
-                    Noncontext_cells.append(idx)
+                    logger.warning("meanfr of cell % is equal in Context A and Context B"%cellid)
+                    non_prefer_cells.append(cellid)
 
-            return [ContextA_cells,ContextB_cells,CDIs]
-        if method == "shuffle":
-            pass
+        return{
+        "ctx_meanfr":ctx_meanfr, # meanfr in context A and B, rank_sum_pvalue
+        "ContextA_cells":ContextA_cells,
+        "ContextB_cells":ContextB_cells,
+        "non_prefer_cells":non_prefer_cells
+        }
 
 
 
@@ -448,8 +500,12 @@ class MiniAna():
         比较两个半段的session，输出Novel context /  Familiar contxt cell ID
         """
         pass
+# if __name__ == "__main__":
+#     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
+#     for session in sessions:
+#         S = MiniAna(session)
+#         S.savepkl2mat()
 if __name__ == "__main__":
-    sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
-    for session in sessions:
-        S = MiniAna(session)
-        S.savepkl2mat()
+    s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
+
+    print(s3.cellids_Context(s3.result["idx_accepted"],context_map=["A","B","C","N"]))

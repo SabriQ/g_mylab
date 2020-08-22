@@ -241,60 +241,8 @@ class MiniResult():
             print("%s is recorded in homecage"%session)
 
 
-    def align_behave_ms(self,ms_session,scale=0.2339021309714166):
-        """
-        产生 aligned_behave2ms
-        注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
-        """
-    #     scale = 0.2339021309714166 #cm/pixel 40cm的台子，202016，202017.202019适用
-        with open(ms_session,'rb') as f:
-            result = pickle.load(f)
-        if "behave_track" in result.keys():
-
-            # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
-            print("aligninging behavioral frame to each ms frame...")
-            aligned_behave2ms=pd.DataFrame({"corrected_ms_ts":result["corrected_ms_ts"]
-                                            ,"ms_behaveframe":[find_close_fast(arr=result["behave_track"]["be_ts"]*1000,e=k) for k in result["corrected_ms_ts"]]})
-
-            _,length = rlc(aligned_behave2ms["aligned_behave2ms"])
-            print("max length of the same behave frame in one mini frame: %s"%max(length))
-            if max(length)>10:
-                print("********ATTENTION**********")
-                print("miniscope frame is longer than behavioral video, please check")
-                print("********ATTENTION**********")
-            aligned_behave2ms = aligned_behave2ms.join(result["behave_track"],on="ms_behaveframe")
-            result["aligned_behave2ms"]=aligned_behave2ms
-            with open(ms_session,'wb') as f:
-                pickle.dump(result,f)
-            print("aligned_behave2ms is saved %s" %ms_session)
-
-        else:
-            print("this session was recorded in homecage")
 
 
-    def add_zone2result(self,ms_session,zone="in_lineartrack"):
-        with open(ms_session,'rb') as f:
-            result = pickle.load(f)
-        mask = zone+"_mask"
-        coords = zone+"_coords"
-        if not mask in result.keys():
-            temp_mask,temp_coords=Video(behavevideo).draw_rois(aim=zone,count = 1)
-
-            result[mask]=temp_mask
-            result[coords]=temp_coords
-
-            with open(ms_session,'wb') as f:
-                pickle.dump(result,f)
-            print("%s is saved"%zone)
-        else:
-            print("%s is already there"%zone)
-
-    def savepkl2mat(self,session):
-        with open(session,'rb') as f:
-            result = pickle.load(f)
-        savematname = session.replace("pkl","mat")
-        spio.savemat(savematname,result)
-        print("saved %s"%savematname)
 
 if __name__ == "__main__":
     pass
