@@ -468,7 +468,7 @@ class Video():
         
         return masks,coords
 
-    def check_frames(self,location = "rightup",*args):
+    def check_frames(self,*args,location = "rightup"):
         '''
         'a':后退一帧
         'd':前进一帧
@@ -486,18 +486,22 @@ class Video():
         def nothing(x):  
             pass
             
-        cv2.namedWindow("check_frames")
+        # cv2.namedWindow("check_frames")
         total_frame = int(cap.get(7))
-        cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
+        # cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
         print(f"there are {int(total_frame)} frames in total")
         
         frame_No=1
         specific_frames = args
         if len(specific_frames)==0:
             specific_frames=[0]
+        else:
+            print(specific_frames,"frames to check")
         marked_frames=[]
         
         for i in specific_frames:
+            cv2.namedWindow("check_frames")
+            cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
             if i < 1:
                 frame_No = 1
                 print(f"there is before the first frame")
@@ -586,7 +590,7 @@ class Video():
                     cv2.imshow('check_frames',frame)
                 if key == ord('n'):
                     #led_ons.pop(i-1)
-                    print('end of checking')
+                    print('end of this round checking')
                     cv2.destroyAllWindows()
                     break
                 if key == ord('q'):

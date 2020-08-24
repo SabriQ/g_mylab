@@ -191,7 +191,7 @@ class MiniAna():
                                 in_context_running_direction.append(0)
                             else:
                                 in_context_running_direction.append(1)
-                self.result["in_context_running_direction"]=in_context_running_direction
+                self.result["in_context_running_direction"]=pd.Series(in_context_running_direction)
                 logger.info("in_context_running_direction has been added")
                 update = 1
             else:
@@ -248,16 +248,14 @@ class MiniAna():
 
 
 
-    def meanfr_by(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
+    def trim_df(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
         ,Trial_Num=None
         ,in_process=False,process=None
-        ,in_context=False,in_lineartrack=False
-        ,in_context_running_direction=False
-        ,by=["Trial_Num"]):
+        ,in_context=False,in_lineartrack=False):
         """
         process: list process, for example [0,1,2]
         """
-        logger.info("FUN:: meanfr_by")
+        logger.info("FUN:: trim_df")
 
         if df == None:
             df = self.df
@@ -275,8 +273,6 @@ class MiniAna():
         if Trial_Num==None:
             Trial_Num = self.Trial_Num
 
-
-        # df["Trial_Num"] = Trial_Num
 
         index=pd.DataFrame()
         index["Trial_Num"] = Trial_Num>=0
@@ -297,13 +293,12 @@ class MiniAna():
                 index["in_lineartrack"] = self.result["in_lineartrack"]
             except:
                 logger.warning("in_lineartrack does not exist")
+
+
+        # df = df[index.all(axis=1)]
+        # print(index.all(axis=1))
         
-
-
-
-        df = df[index.all(axis=1)]
-        
-        return df.groupby(by).mean().reset_index(by)
+        return df, index.all(axis=1)
 
     def shuffle(self,df):
         new_df = df.sample(frac=1).reset_index(drop=True)
@@ -407,10 +402,13 @@ class MiniAna():
         #序列化in_context_list
         if meanfr_df == None:
             logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
-            meanfr_df = self.meanfr_by(force_neg2zero=True
-                ,Normalize=False,standarize=False,in_context=True,by=["Trial_Num"])
+            df,index = self.trim_df(force_neg2zero=True
+                ,Normalize=False,standarize=False,in_context=True)
+
+            meanfr_df = df[index].groupby(self.Trial_Num[index]).mean().reset_index(drop=False)
+
         if Context == None:
-            logger.info("""Default:: pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
+            logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
             temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
             Context = temp["Enter_ctx"]
         # 将0，1对应的context信息根据context_map置换成A B
@@ -446,7 +444,7 @@ class MiniAna():
 
 
 
-    def cellids_RD_incontext(self,idxes,mean_df=None,in_context_running_direction=None,rd_map=["left","right","None"]):
+    def cellids_RD_incontext(self,idxes,mean_df=None,Context=None,in_context_running_direction=None,in_context_placebin_num=None,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
         """
         输入应该全是 in_context==1的数据. in_context_running_direction is -1 when out of context
         idxes: the ids of all the cell that you're concerned.
@@ -461,61 +459,42 @@ class MiniAna():
 
 
         if mean_df == None:
-            logger.info("Default :: self.df")
-            meanfr_df = self.meanfr_by(force_neg2zero=True
-                ,Normalize=False,standarize=False,in_context=True,by=["Trial_Num"])
-        
+            logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
+            df,index = self.trim_df(force_neg2zero=True
+                ,Normalize=False,standarize=False,in_context=True)
+
+
         if in_context_running_direction == None:
             logger.info("Default ::")
             in_context_running_direction=self.result["in_context_running_direction"]
+        in_context_running_direction = pd.Series([rd_map[i] for i in in_context_running_direction])
+
+        meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
+        # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
+        if Context == None:
+            logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
+            temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+            Context = temp["Enter_ctx"]
+        # 将0，1对应的context信息根据context_map置换成A B
+        Context = pd.Series([context_map[i] for i in Context])
+        #meanfr context 
+        #context A rd 0
+        print(meanfr_df)
+        print(meanfr_df[(Context=="A") & (meanfr_df['rd']=="left")])
+        #context A rd 1
+        #context B rd 0
+        #context B rd 1
+        #rd 0
+        #rd 1
 
 
-        ContextA_RD0_cells=[]
-        ContextA_RD1_cells=[]
-        ContextB_RD0_cells=[]
-        ContextB_RD1_cells=[]
 
-        ContextA_NonRD_cells=[]
-        ContextB_NonRD_cells=[]
-
-        for idx in idx_accept:
-            ctxA_RD0_fr = df[idx][df["Enter_ctx"]==0][df["rd"]==0]
-            ctxA_RD0_meanfr=np.mean(ctxA_RD0_fr)
-            ctxA_RD0_std=np.std(ctxA_RD0_fr)
-
-            ctxA_RD1_fr = df[idx][df["Enter_ctx"]==0][df["rd"]==1]
-            ctxA_RD1_meanfr=np.mean(ctxA_RD1_fr)
-            ctxA_RD1_std=np.std(ctxA_RD1_fr)
-
-            ctxB_RD0_fr = df[idx][df["Enter_ctx"]==1][df["rd"]==0]
-            ctxB_RD0_meanfr=np.mean(ctxB_RD0_fr)
-            ctxB_RD0_std=np.std(ctxB_RD0_fr)
-
-            ctxB_RD1_fr = df[idx][df["Enter_ctx"]==1][df["rd"]==1]
-            ctxB_RD1_meanfr=np.mean(ctxB_RD1_fr)
-            ctxB_RD1_std=np.std(ctxB_RD1_fr)
-
-
-            ctxA_ctxB_p = stats.ranksums(ctxA_fr,ctxB_fr)[1]
-            CDI= (ctxA_meanfr-ctxB_meanfr)/(ctxA_meanfr+ctxB_meanfr)
-            CIDs.append(CDI)
-
-
-            #判定是novel_ctxA_cell / novel_ctxB_cell / novel_nonctx_cells
-            if ctxA_ctxB_p < 0.05:
-                if ctxA_meanfr > ctxB_meanfr:
-                    ContextA_cells.append(idx)
-                else:
-                    ContextB_cells.append(idx)
-            else:
-                Noncontext_cells.append(idx)
-
-        return {
-        "rd_meanfr":rd_meanfr# meanfr in running direction o and 1, rank_sum_pvalue,RDSI
-        "rd_0_cells":rd_0_cells,
-        "rd_1_cells":rd_1_cells,
-        "non_rd_cells":non_rd_cells
-        }
+        # return {
+        # "rd_meanfr":rd_meanfr# meanfr in running direction o and 1, rank_sum_pvalue,RDSI
+        # "rd_0_cells":rd_0_cells,
+        # "rd_1_cells":rd_1_cells,
+        # "non_rd_cells":non_rd_cells
+        # }
 
     def cellids_PC_incontext(self,df):
         """
@@ -541,4 +520,4 @@ class MiniAna():
 if __name__ == "__main__":
     s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
 
-    print(s3.cellids_Context(s3.result["idx_accepted"],context_map=["A","B","C","N"]))
+    print(s3.cellids_RD_incontext(s3.result["idx_accepted"]))
