@@ -5,6 +5,7 @@ import os,sys,glob,csv
 import json
 import scipy.io as spio
 import pickle
+import scipy.stats as stats
 
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mfunctions import *
@@ -300,9 +301,6 @@ class MiniAna():
         
         return df, index.all(axis=1)
 
-    def shuffle(self,df):
-        new_df = df.sample(frac=1).reset_index(drop=True)
-        yield new_df
 
     def cellids_HCTrack_Context(self,idx_accept,df):
         """
@@ -385,8 +383,6 @@ class MiniAna():
                  ,"strange_cells":strange_cells}
 
 
-
-
     def cellids_Context(self,idxes,meanfr_df=None,Context=None,context_map=["A","B","C","N"]):
         """
         输入应该全是 in_context==1的数据
@@ -443,7 +439,6 @@ class MiniAna():
         }
 
 
-
     def cellids_RD_incontext(self,idxes,mean_df=None,Context=None,in_context_running_direction=None,in_context_placebin_num=None,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
         """
         输入应该全是 in_context==1的数据. in_context_running_direction is -1 when out of context
@@ -457,44 +452,90 @@ class MiniAna():
         logger.info("FUN:: cellids_RD_incontext")
         logger.info("in_context_running_direction 0,1,-1 means%s."%rd_map)
 
-
         if mean_df == None:
-            logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
+            logger.info("Normalize=False,standarize=False,in_context=True")
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
-
         if in_context_running_direction == None:
-            logger.info("Default ::")
             in_context_running_direction=self.result["in_context_running_direction"]
         in_context_running_direction = pd.Series([rd_map[i] for i in in_context_running_direction])
 
         meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
         # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
         if Context == None:
-            logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
             temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
             Context = temp["Enter_ctx"]
         # 将0，1对应的context信息根据context_map置换成A B
         Context = pd.Series([context_map[i] for i in Context])
+        meanfr_df["Context"]=Context
+
+        # print(meanfr_df)
         #meanfr context 
-        #context A rd 0
-        print(meanfr_df)
-        print(meanfr_df[(Context=="A") & (meanfr_df['rd']=="left")])
-        #context A rd 1
-        #context B rd 0
-        #context B rd 1
-        #rd 0
-        #rd 1
+        # #context A rd 0
+        # A_left = meanfr_df[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="left")]
+        # #context A rd 1
+        # A_right = meanfr_df[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="right")]
+        # #context B rd 0
+        # B_left = meanfr_df[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="left")]
+        # #context B rd 1
+        # B_right = meanfr_df[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="right")]
+        # #rd 0
+        # left = meanfr_df[meanfr_df['rd']=="left"]
+        # #rd 1
+        # right = meanfr_df[meanfr_df['rd']=="right"]
+
+        rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
+        rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
+        rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
+        left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]>rd_meanfr["right"])].index
+        right_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]<rd_meanfr["right"])].index
+        non_rd_cells = rd_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
+        # print(non_rd_cells)
+
+        rd_ctx_meanfr = meanfr_df[idxes].groupby([meanfr_df["Context"],meanfr_df["rd"]]).mean()
+        rd_A_meanfr = rd_ctx_meanfr.xs("A").T
+        rd_A_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="left")]
+            ,x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="right")])[1],axis=0)
+        rd_A_meanfr["RDSI"] = (rd_A_meanfr["left"]-rd_A_meanfr["right"])/(rd_A_meanfr["left"]+rd_A_meanfr["right"])
 
 
+        A_left_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]>rd_A_meanfr["right"])].index
+        A_right_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]<rd_A_meanfr["right"])].index
+        A_non_rd_cells = rd_meanfr[rd_A_meanfr["rd_pvalue"]>0.05].index
+        # print(A_non_rd_cells)
 
-        # return {
-        # "rd_meanfr":rd_meanfr# meanfr in running direction o and 1, rank_sum_pvalue,RDSI
-        # "rd_0_cells":rd_0_cells,
-        # "rd_1_cells":rd_1_cells,
-        # "non_rd_cells":non_rd_cells
-        # }
+        rd_B_meanfr = rd_ctx_meanfr.xs("B").T
+        rd_B_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="left")]
+            ,x[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="right")])[1],axis=0)
+        rd_B_meanfr["RDSI"] = (rd_B_meanfr["left"]-rd_B_meanfr["right"])/(rd_B_meanfr["left"]+rd_B_meanfr["right"])
+
+        B_left_cells = rd_B_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_B_meanfr["left"]>rd_B_meanfr["right"])].index
+        B_right_cells = rd_B_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_B_meanfr["left"]<rd_B_meanfr["right"])].index
+        B_non_rd_cells = rd_B_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
+        # print(B_non_rd_cells)
+
+        return {
+        "meanfr_df":meanfr_df,
+        "rd_meanfr":rd_meanfr,# meanfr in running direction o and 1, rank_sum_pvalue,RDSI
+        "left_cells":left_cells,
+        "right_cells":right_cells,
+        "non_rd_cells":non_rd_cells,
+
+        "rd_A_meanfr":rd_A_meanfr,
+        "A_left_cells":A_left_cells,
+        "A_right_cells":A_right_cells,
+        "A_non_rd_cells":A_non_rd_cells,
+
+        "rd_B_meanfr":rd_B_meanfr,
+        "B_left_cells":B_left_cells,
+        "B_right_cells":B_right_cells,
+        "B_non_rd_cells":B_non_rd_cells
+        }
+
+    def shuffle(self,df):
+        new_df = df.sample(frac=1).reset_index(drop=True)
+        yield new_df
 
     def cellids_PC_incontext(self,df):
         """
@@ -520,4 +561,4 @@ class MiniAna():
 if __name__ == "__main__":
     s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
 
-    print(s3.cellids_RD_incontext(s3.result["idx_accepted"]))
+    s3.cellids_RD_incontext(s3.result["idx_accepted"])
