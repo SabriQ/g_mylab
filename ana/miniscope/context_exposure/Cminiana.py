@@ -450,6 +450,7 @@ class MiniAna():
         """
 
         logger.info("FUN:: cellids_RD_incontext")
+        logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_running_direction 0,1,-1 means%s."%rd_map)
 
         if mean_df == None:
