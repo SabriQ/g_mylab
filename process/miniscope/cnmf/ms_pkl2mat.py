@@ -127,11 +127,12 @@ def ms_tses2ms_ts(dirpath):
     with open(pklpath,"wb") as output:
         pickle.dump(mss,output)
 
+    print("concate all the ms_ts and saved")
 
 if __name__ == "__main__":
     # ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033")
     # ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201034")
-    ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201037")
+    ms_tses2ms_ts(dirpath=r"\\10.10.46.135\share\zhangna\miniscope_result\Results_201037")
     ms_tses2ms_ts(dirpath=r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_202061")
     # pathes = [r"\\10.10.47.163\Data_archive\chenhaoshan\miniscope_results\Results_201033\ms.mat"]
     # for path in pathes:

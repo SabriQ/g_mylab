@@ -22,7 +22,10 @@ class Video():
         self.abs_prefix = os.path.splitext(self.video_path)[-2]
         self.xy = os.path.dirname(self.video_path)+'\\'+'xy.txt'
         self.videots_path = self.abs_prefix + '_ts.txt'
-        self.video_track_path = glob.glob(self.abs_prefix+"*.h5")[0]
+        try:
+            self.video_track_path = glob.glob(self.abs_prefix+"*.h5")[0]
+        except:
+            print("video havenp't been tracked")
 
         self.videosize = os.path.getsize(self.video_path)/1073741824 # video size is quantified by GB
     def play(self):
@@ -114,22 +117,21 @@ class Video():
             print("%s was cropped."%video)
 
 
-    @staticmethod
-    def contrastbrightness(videolists):
-        for video in videolists:
-            print(video)
-            command=[
-                "ffmpeg",
-                "-i",video,
-                "-vf","eq=contrast=2:brightness=0.5",
-                video.replace(".AVI",".mp4")
-            ]
-
-            child = subprocess.Popen(command,stdout = subprocess.PIPE,stderr=subprocess.PIPE)
-            out = child.communicate()[1].decode('utf-8')
-        #     print(out)
-            child.wait()
-            print("%s done"%video)
+    
+    def contrastbrightness(self,):
+        print(self.video_path)
+        command=[
+            "ffmpeg",
+            "-i",self.video_path,
+            "-vf","eq=contrast=2:brightness=0.5",
+            self.video_path.replace(".mp4",".avi")
+        ]
+        print("%s is adjusting contrast and brightness" % self.video_path)
+        child = subprocess.Popen(command,stdout = subprocess.PIPE,stderr=subprocess.PIPE)
+        out = child.communicate()[1].decode('utf-8')
+    #     print(out)
+        child.wait()
+        print("%s done"%self.video_path)
     
     def _HMS2seconds(self,time_point):
         sum = int(time_point.split(":")[0])*3600+int(time_point.split(":")[1])*60+int(time_point.split(":")[2])*1

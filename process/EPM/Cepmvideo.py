@@ -25,7 +25,8 @@ class EPMvideo(Video):
         return locations[0][0]
 
     @timeit
-    def epmtimer(self,start=None,stop=None,start_index=None,stop_index=None,Interval_number=1,according="Body"):
+    def epmtimer(self,start=None,stop=None,start_index=None,stop_index=None
+        ,Interval_number=1,according="Body"):
         """
         Args:
             start. start time in seconds
@@ -50,8 +51,9 @@ class EPMvideo(Video):
             print("you haven't done deeplabcut tracking")
             sys.exit()
         else:
+            print("loading track")
             track = pd.read_hdf(self.video_track_path)
-
+            print("loaded track")
         # extract coordinates of Head and Body
         try:
             behaveblock=pd.DataFrame(track[track.columns[0:9]].values,columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
@@ -127,6 +129,7 @@ class EPMvideo(Video):
             writer.writerow(["Interval_number",Interval_number])
             writer.writerow(['videos','start','stop','start_index','start_index','area1','area2','area3','area4','area5','other'])
             for video in videolists:
+                print(video)
                 if start_indexes==None and start_indexes==None:
                     for start,stop in zip(starts,stops):
                         area_time = cls(video).epmtimer(start=start,stop=stop,Interval_number=Interval_number,according=according)
@@ -138,8 +141,10 @@ class EPMvideo(Video):
 
 
 if __name__=="__main__":
-    video_path = r"C:\Users\Sabri\Desktop\EPM_20191015_CA3-CA1_CHR2\196551-20191015-095139.mp4"
-    # EPMvideo(video_path).play_with_track(show="Head")
-    EPMvideo(video_path).epmtimer(start=0,stop=300)
-    # EPMvideo.epmtimers([video_path],starts=[0,300],stops=[300,500],Interval_number=7)
+
+    # video_path = r"C:\Users\qiushou\Desktop\EPM_20191015_CA3-CA1_CHR2\196551-20191015-095139.mp4"
+    # EPMvideo(video_path).epmtimer(start=0,stop=302)
+
+    videos = glob.glob(r"C:\Users\qiushou\Desktop\EPM\*[0-9].mp4")
+    EPMvideo.epmtimers(videos,starts=[0,179,358],stops=[182,362,543],Interval_number=7)
     
