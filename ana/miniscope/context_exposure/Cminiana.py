@@ -232,7 +232,7 @@ class MiniAna():
                                     pass
                         
                 print(len(in_context_placebin_num),self.result["aligned_behave2ms"].shape)
-                self.result["in_context_placebin_num"] = in_context_placebin_num
+                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num)
                 update = 1
             else:
                 print("'in_context_placebin_num' has been there")
@@ -403,12 +403,16 @@ class MiniAna():
 
             meanfr_df = df[index].groupby(self.Trial_Num[index]).mean().reset_index(drop=False)
 
-        if Context == None:
-            logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
-            temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
-            Context = temp["Enter_ctx"]
-        # 将0，1对应的context信息根据context_map置换成A B
-        Context = pd.Series([context_map[i] for i in Context])
+        try:
+            if Context == None:
+                logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
+                temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+                Context = temp["Enter_ctx"]
+            # 将0，1对应的context信息根据context_map置换成A B
+            Context = pd.Series([context_map[i] for i in Context])
+        except:
+            logger.info("homecage session, no context cells")
+            sys.exit()
 
         ctx_pvalue = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[Context=="A"],x[Context=="B"])[1],axis=0)
         # ctx_pvalue.columns=["ranksum_p_value"]
@@ -439,7 +443,8 @@ class MiniAna():
         }
 
 
-    def cellids_RD_incontext(self,idxes,mean_df=None,Context=None,in_context_running_direction=None,in_context_placebin_num=None,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
+    def cellids_RD_incontext(self,idxes,mean_df=None,Context=None,in_context_running_direction=None
+        ,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
         """
         输入应该全是 in_context==1的数据. in_context_running_direction is -1 when out of context
         idxes: the ids of all the cell that you're concerned.
@@ -464,12 +469,16 @@ class MiniAna():
 
         meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
         # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
-        if Context == None:
-            temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
-            Context = temp["Enter_ctx"]
-        # 将0，1对应的context信息根据context_map置换成A B
-        Context = pd.Series([context_map[i] for i in Context])
-        meanfr_df["Context"]=Context
+        try:
+            if Context == None:
+                temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+                Context = temp["Enter_ctx"]
+            # 将0，1对应的context信息根据context_map置换成A B
+            Context = pd.Series([context_map[i] for i in Context])
+            meanfr_df["Context"]=Context
+        except:
+            logger.info("homecage session, no context cells")
+            sys.exit()
 
         # print(meanfr_df)
         #meanfr context 
@@ -538,13 +547,33 @@ class MiniAna():
         new_df = df.sample(frac=1).reset_index(drop=True)
         yield new_df
 
-    def cellids_PC_incontext(self,df):
+    def cellids_PC_incontext(self,idxes,meanfr_df=None,Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
         """
         df 必须具备 place_bin_num
         输入df包括分好的place bin 
         """
-        pass
+        logger.info("FUN:: cellids_PC_incontext")
+        logger.info("context 0,1,2,-1 means%s."%context_map)
+        logger.info("in_context_placebin_num start from 1.")
 
+        if meanfr_df == None:
+            logger.info("Normalize=False,standarize=False,in_context=True")
+            df,index = self.trim_df(force_neg2zero=True
+                ,Normalize=False,standarize=False,in_context=True)
+
+        if in_context_placebin_num == None:
+            in_context_placebin_num=self.result["in_context_placebin_num"]
+        in_context_placebin_num = pd.Series(in_context_placebin_num)
+
+        meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_placebin_num[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"place_bin_num"})
+        # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
+        if Context == None:
+            temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+            Context = temp["Enter_ctx"]
+        # 将0，1对应的context信息根据context_map置换成A B
+        Context = pd.Series([context_map[i] for i in Context])
+        meanfr_df["Context"]=Context
+        print(meanfr_df)
 
     def cellids_NovelFamiliar_incontext(self,df):
         """
@@ -562,4 +591,4 @@ class MiniAna():
 if __name__ == "__main__":
     s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
 
-    s3.cellids_RD_incontext(s3.result["idx_accepted"])
+    s3.cellids_PC_incontext(s3.result["idx_accepted"])
