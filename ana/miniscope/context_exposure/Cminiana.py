@@ -9,6 +9,8 @@ import scipy.stats as stats
 
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mfunctions import *
+
+from Mplacecells import *
 import logging 
 
 
@@ -33,6 +35,7 @@ class MiniAna():
         self._load_session()
         self.align_behave_ms() # self.Trial_Num, self.process
         self.add_info2aligned_behave2ms() # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
+        logger.info("'sigraw' is taken as self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
         self.length = self.df.shape[0]
 
@@ -170,7 +173,8 @@ class MiniAna():
                                                         ,Y=self.result["aligned_behave2ms"]["Body_y"]
                                                         ,T=self.result["aligned_behave2ms"]["be_ts"]
                                                         ,s=scale)
-                self.result["Body_speed"]=Body_speed
+                logger.info("Body_speed is trimed by FUN: speed_optimize with 'gaussian_filter1d' with sigma=3")
+                self.result["Body_speed"]=speed_optimize(Body_speed,method="gaussian_filter1d",sigma=3)
                 self.result["Body_speed_angle"]=Body_speed_angle
                 logger.info("Body_speed and Body_speed_angle have been added")
                 update = 1
@@ -252,7 +256,8 @@ class MiniAna():
     def trim_df(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
         ,Trial_Num=None
         ,in_process=False,process=None
-        ,in_context=False,in_lineartrack=False):
+        ,in_context=False,in_lineartrack=False
+        ,speed_min = False):
         """
         process: list process, for example [0,1,2]
         """
@@ -277,23 +282,35 @@ class MiniAna():
 
         index=pd.DataFrame()
         index["Trial_Num"] = Trial_Num>=0
-        
+        logger.info("Trial_Num start from 0")
+
         if in_process:
             if not process ==None:
-                indes["in_process"] = self.process.isin(process)
+                index["in_process"] = self.process.isin(process)
+                logger.info("process is limited in %s"%process)
             else:
                 logger.warning("process is [None], please specify.")
 
         if in_context:
             try:
                 index["in_context"] = self.result["in_context"]
+                logger.info("interested zone are restricted 'in_context'")
             except:
                 logger.warning("in_context does not exist")
         if in_lineartrack:
             try:
                 index["in_lineartrack"] = self.result["in_lineartrack"]
+                logger.info("interested zone are restricted 'in_lineartrack'")
             except:
                 logger.warning("in_lineartrack does not exist")
+
+        if speed_min:
+            try:
+                index["speed_min"] = self.result["Body_speed"]>speed_min
+                logger.info("minimum speed are restricted to at least %s"%speed_min)
+            except:
+                logger.warning("Body_speed>%s is problemic"%speed_min)
+                
 
 
         # df = df[index.all(axis=1)]
@@ -436,6 +453,7 @@ class MiniAna():
                     non_context_cells.append(cellid)
 
         return{
+        "meanfr_df":meanfr_df,
         "ctx_meanfr":ctx_meanfr, # meanfr in context A and B, rank_sum_pvalue,CSI
         "ContextA_cells":ContextA_cells,
         "ContextB_cells":ContextB_cells,
@@ -498,7 +516,8 @@ class MiniAna():
         rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
         rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
         rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
-        left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]>rd_meanfr["right"])].index
+        left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd
+            meanfr["left"]>rd_meanfr["right"])].index
         right_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]<rd_meanfr["right"])].index
         non_rd_cells = rd_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
         # print(non_rd_cells)
@@ -543,11 +562,8 @@ class MiniAna():
         "B_non_rd_cells":B_non_rd_cells
         }
 
-    def shuffle(self,df):
-        new_df = df.sample(frac=1).reset_index(drop=True)
-        yield new_df
-
-    def cellids_PC_incontext(self,idxes,meanfr_df=None,Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
+    def cellids_PC_incontext(self,idxes,df=None,Context=None,in_context_placebin_num=None
+        ,context_map=["A","B","C","N"],shuffle_times=1000):
         """
         df 必须具备 place_bin_num
         输入df包括分好的place bin 
@@ -556,24 +572,59 @@ class MiniAna():
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_placebin_num start from 1.")
 
-        if meanfr_df == None:
+        if df == None:
             logger.info("Normalize=False,standarize=False,in_context=True")
             df,index = self.trim_df(force_neg2zero=True
-                ,Normalize=False,standarize=False,in_context=True)
+                ,Normalize=False,standarize=False,in_context=True,speed_min=3)
 
         if in_context_placebin_num == None:
             in_context_placebin_num=self.result["in_context_placebin_num"]
         in_context_placebin_num = pd.Series(in_context_placebin_num)
 
-        meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_placebin_num[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"place_bin_num"})
-        # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
-        if Context == None:
-            temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
-            Context = temp["Enter_ctx"]
-        # 将0，1对应的context信息根据context_map置换成A B
-        Context = pd.Series([context_map[i] for i in Context])
-        meanfr_df["Context"]=Context
-        print(meanfr_df)
+
+        if Context ==None:
+            Context = pd.merge(self.Trial_Num,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]
+            Context = pd.Series([context_map[i] for i in Context])
+
+        observed_SIs_A = Cal_SIs(df[df[Context=="A"]],in_context_placebin_num[Context=="A"])
+        shuffle_A = bootstrap_Cal_SIs(df[df[Context=="A"]],in_context_placebin_num[Context=="A"])
+        shuffle_SIs_A=[]
+
+        observed_SIs_B = Cal_SIs(df[df[Context=="B"]],in_context_placebin_num[Context=="B"])
+        shuffle_B = bootstrap_Cal_SIs(df[df[Context=="B"]],in_context_placebin_num[Context=="B"])
+        shuffle_SIs_B=[]
+
+        try:
+            observed_SIs_C = Cal_SIs(df[df[Context=="C"]],in_context_placebin_num[Context=="C"])
+            shuffle_C = bootstrap_Cal_SIs(df[df[Context=="C"]],in_context_placebin_num[Context=="C"])
+            shuffle_SIs_C=[]
+        except:
+            logger.info("No context C")
+            C = False
+        logger.info("we shuffle place bin after mean groupby place bin")
+        
+        
+        
+        for i in range(shuffle_times):
+            if i % 100 ==0:
+                print("%s/%s"%(i+1,shuffle_times))
+            shuffle_SIs_A.append(shuffle_A().values)
+            shuffle_SIs_B.append(shuffle_B().values)
+            if C:
+                shuffle_SIs_C.append(shuffle_C().values)
+
+
+        shuffle_SIs_A = pd.DataFrame(shuffle_SIs_A,columns=idxes)
+        shuffle_SIs_B = pd.DataFrame(shuffle_SIs_B,columns=idxes)
+        if C:
+            shuffle_SIs_C = pd.DataFrame(shuffle_SIs_C,columns=idxes)
+
+
+        
+
+        return{
+
+        }
 
     def cellids_NovelFamiliar_incontext(self,df):
         """
