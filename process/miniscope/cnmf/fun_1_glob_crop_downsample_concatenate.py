@@ -69,7 +69,35 @@ def index_videos(animal_id,date = '20190930',recorded_method="miniscope",
     return msFileList, tsFileList
 
 
-
+def index_videos_wjn(animal_id,date = '20190930',recorded_method="miniscope",
+                 rawdataDir = r'/run/user/1000/gvfs/smb-share:server=10.10.46.135,share=data_archive/qiushou/miniscope'):
+    """
+    index_videos: index miniscope videos recorded  by different recorded_method
+    animal_id
+    date: the day you did the experiment and also the name of the folder you save your raw data
+    recorded_method: "miniscope" or "script". script is established by Qiushou. it will generate two files for each experiment.
+                    formats are like these:
+                        0_201034_20200703-191143.avi   0 means miniscope camera
+                        0_201034_20200703-191143.txt   miniscppe camera timestamps
+                        1_201034_20200703-191143.avi   1 means behavoiral camera
+                        0_201034_20200703-191143.txt   behavoiral camera timestamps
+    rawdataDir: the folder you save your rawdata, usually fixed.
+    """
+    if recorded_method=="miniscope":
+        msFileList = glob.glob(os.path.join(rawdataDir,animal_id,date,"H*/msCam*.avi"))
+        tsFileList = glob.glob(os.path.join(rawdataDir,animal_id,date,"H*/timestamp.dat"))
+        msFileList.sort(key=sort_key)
+        tsFileList.sort(key=sort_key)
+        
+    elif recorded_method=="script":
+        msFileList = glob.glob(os.path.join(rawdataDir,str(date),"0_"+str(animal_id)+"*.avi"))
+        tsFileList = glob.glob(os.path.join(rawdataDir,str(date),"0_"+str(animal_id)+"*.txt"))
+    else:
+        print("wrong recorded_method")
+        return 0
+    
+    
+    return msFileList, tsFileList
 
 import moviepy.video as mpv
 from moviepy.editor import *
@@ -129,7 +157,8 @@ def crop_downsample_concatenate(animal_id
                                 ,resultDir = r'/home/qiushou/Documents/QS_data/miniscope/miniscope_result'
                                ,spatial_downsampling=2
                                ,temporal_downsampling=1
-                               ,video_process = True):
+                               ,video_process = True
+                               ,camNum=0):
     """
     
     """
@@ -180,7 +209,8 @@ def crop_downsample_concatenate(animal_id
         for tsFile in tsFileList:
             if "timestamp.dat" in tsFile: # 如果是miniscope原版软件录制
                 datatemp=pd.read_csv(tsFile,sep = "\t", header = 0)
-                datatemp = datatemp[datatemp["camNum"]==0]
+                datatemp = datatemp[datatemp["camNum"]==camNum] ## wjn的 case 是1， 其他的scope是0
+                print("camNum in miniscope is %s"%camNum)
                 # incase the first frame of timestamps is not common 比如这里会有一些case的第一帧会出现很大的正/负数
                 if np.abs(datatemp['sysClock'][0])>datatemp['sysClock'][1]:
                     value = datatemp['sysClock'][1]-13 # 用第2帧的时间减去13，13是大约的一个值
