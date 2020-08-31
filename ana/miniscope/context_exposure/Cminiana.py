@@ -640,16 +640,16 @@ class MiniAna():
             "observed_SIs_A":observed_SIs_A,
             "place_cells_A":place_cells_A,
             "observed_SIs_B":observed_SIs_B,
-            "place_cells_B":place_cells_B
+            "place_cells_B":place_cells_B,
+            "observed_SIs_C":observed_SIs_C,
+            "place_cells_C":place_cells_C
             }
         else:
             return{
             "observed_SIs_A":observed_SIs_A,
             "place_cells_A":place_cells_A,
             "observed_SIs_B":observed_SIs_B,
-            "place_cells_B":place_cells_B,
-            "observed_SIs_C":observed_SIs_C,
-            "place_cells_C":place_cells_C
+            "place_cells_B":place_cells_B
             }
         
 
