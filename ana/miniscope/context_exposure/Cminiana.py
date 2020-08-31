@@ -10,7 +10,7 @@ import scipy.stats as stats
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mfunctions import *
 
-from Mplacecells import *
+from mylab.ana.miniscope.context_exposure.Mplacecells import *
 import logging 
 
 
@@ -307,7 +307,7 @@ class MiniAna():
         if speed_min:
             try:
                 index["speed_min"] = self.result["Body_speed"]>speed_min
-                logger.info("minimum speed are restricted to at least %s"%speed_min)
+                logger.info("minimum speed are restricted to at least %s cm/s"%speed_min)
             except:
                 logger.warning("Body_speed>%s is problemic"%speed_min)
                 
@@ -516,8 +516,7 @@ class MiniAna():
         rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
         rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
         rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
-        left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd
-            meanfr["left"]>rd_meanfr["right"])].index
+        left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]>rd_meanfr["right"])].index
         right_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]<rd_meanfr["right"])].index
         non_rd_cells = rd_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
         # print(non_rd_cells)
@@ -576,38 +575,44 @@ class MiniAna():
             logger.info("Normalize=False,standarize=False,in_context=True")
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True,speed_min=3)
-
+            df=df[index]
         if in_context_placebin_num == None:
             in_context_placebin_num=self.result["in_context_placebin_num"]
-        in_context_placebin_num = pd.Series(in_context_placebin_num)
+        in_context_placebin_num = pd.Series(in_context_placebin_num)[index]
 
 
         if Context ==None:
             Context = pd.merge(self.Trial_Num,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]
-            Context = pd.Series([context_map[i] for i in Context])
+            Context = Context.fillna(-1) # 将NaN置换成-1
+            # print(self.Trial_Num)
+            # print(self.result["behavelog_info"][["Trial_Num","Enter_ctx"]])
+            Context = pd.Series([context_map[int(i)] for i in Context])[index]
+        # print(Context)
+        # print(df.shape)
 
-        observed_SIs_A = Cal_SIs(df[df[Context=="A"]],in_context_placebin_num[Context=="A"])
-        shuffle_A = bootstrap_Cal_SIs(df[df[Context=="A"]],in_context_placebin_num[Context=="A"])
+        observed_SIs_A = Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
+        shuffle_A = bootstrap_Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
         shuffle_SIs_A=[]
 
-        observed_SIs_B = Cal_SIs(df[df[Context=="B"]],in_context_placebin_num[Context=="B"])
-        shuffle_B = bootstrap_Cal_SIs(df[df[Context=="B"]],in_context_placebin_num[Context=="B"])
+        observed_SIs_B = Cal_SIs(df[Context=="B"],in_context_placebin_num[Context=="B"])
+        shuffle_B = bootstrap_Cal_SIs(df[Context=="B"],in_context_placebin_num[Context=="B"])
         shuffle_SIs_B=[]
-
+        # print(observed_SIs_A)
         try:
-            observed_SIs_C = Cal_SIs(df[df[Context=="C"]],in_context_placebin_num[Context=="C"])
-            shuffle_C = bootstrap_Cal_SIs(df[df[Context=="C"]],in_context_placebin_num[Context=="C"])
+            observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+            shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
             shuffle_SIs_C=[]
+            C = True
         except:
             logger.info("No context C")
             C = False
-        logger.info("we shuffle place bin after mean groupby place bin")
+        logger.info("we shuffle mean firing rate in each place bin")
         
         
         
         for i in range(shuffle_times):
-            if i % 100 ==0:
-                print("%s/%s"%(i+1,shuffle_times))
+            sys.stdout.write("%s/%s"%(i+1,shuffle_times))
+            sys.stdout.write("\r")
             shuffle_SIs_A.append(shuffle_A().values)
             shuffle_SIs_B.append(shuffle_B().values)
             if C:
@@ -619,12 +624,36 @@ class MiniAna():
         if C:
             shuffle_SIs_C = pd.DataFrame(shuffle_SIs_C,columns=idxes)
 
+        logger.info("we define spatial information zscore of cell larger than 1.96 as place cell")
+        zscores_A = (observed_SIs_A-shuffle_SIs_A.mean())/shuffle_SIs_A.std()
+        place_cells_A = (zscores_A[zscores_A>1.96]).index.tolist()
+        zscores_B = (observed_SIs_B-shuffle_SIs_B.mean())/shuffle_SIs_B.std()
+        place_cells_B = (zscores_B[zscores_B>1.96]).index.tolist()
+        if C:
+            zscores_C = (observed_SIs_C-shuffle_SIs_C.mean())/shuffle_SIs_C.std()
+            place_cells_C = (zscores_C[zscores_C>1.96]).index.tolist()
 
+
+
+        if C:
+            return{
+            "observed_SIs_A":observed_SIs_A,
+            "place_cells_A":place_cells_A,
+            "observed_SIs_B":observed_SIs_B,
+            "place_cells_B":place_cells_B
+            }
+        else:
+            return{
+            "observed_SIs_A":observed_SIs_A,
+            "place_cells_A":place_cells_A,
+            "observed_SIs_B":observed_SIs_B,
+            "place_cells_B":place_cells_B,
+            "observed_SIs_C":observed_SIs_C,
+            "place_cells_C":place_cells_C
+            }
         
 
-        return{
-
-        }
+        
 
     def cellids_NovelFamiliar_incontext(self,df):
         """
@@ -642,4 +671,4 @@ class MiniAna():
 if __name__ == "__main__":
     s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
 
-    s3.cellids_PC_incontext(s3.result["idx_accepted"])
+    print(s3.cellids_PC_incontext(s3.result["idx_accepted"]))

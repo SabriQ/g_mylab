@@ -26,17 +26,19 @@ def speed_optimize(speeds,method="gaussian_filter1d",sigma=3,length=12):
 
 def Cal_SIs(df,in_context_placebin_num):
     # p(x) the probability for the mouse being at location x for each trial 
+    print("call Cal_SIs")
     p_xs = []
-    total_frame = data.shape[0]
+    total_frame = df.shape[0]
 
     for place_bin in set(in_context_placebin_num):
         p_x = (in_context_placebin_num==place_bin).sum()/total_frame
         p_xs.append(p_x)
         print("probability in place_bin %s is %s"%(place_bin,p_x))
-    # λ
-    Afr_all = Afr_xs.mean()
+
     # λ(x) the average firing rate for mouse being at location x for each trial
     Afr_xs = df.groupby(in_context_placebin_num).mean()
+    # λ
+    Afr_all = Afr_xs.mean()
     # si
     SIs = ((((Afr_xs.T)*p_xs).T)*(Afr_xs/Afr_all.values).apply(np.log2)).sum()
     return SIs
@@ -44,19 +46,19 @@ def Cal_SIs(df,in_context_placebin_num):
 
 def bootstrap_Cal_SIs(df,in_context_placebin_num):
     # p(x) the probability for the mouse being at location x for each trial 
+    print("call bootstrap_Cal_SIs")
     p_xs = []
-    total_frame = data.shape[0]
+    total_frame = df.shape[0]
 
     for place_bin in set(in_context_placebin_num):
         p_x = (in_context_placebin_num==place_bin).sum()/total_frame
         p_xs.append(p_x)
         print("probability in place_bin %s is %s"%(place_bin,p_x))
-    # λ
-    Afr_all = Afr_xs.mean()
 
     #λ(x) the average firing rate for mouse being at location x for each trial
     Afr_xs = df.groupby(in_context_placebin_num).mean()
-
+    # λ
+    Afr_all = Afr_xs.mean()
     def shuffle():
         shuffle_Afr_xs = Afr_xs.sample(frac=1).reset_index(drop=True)
         shuffle_SIs = ((((shuffle_Afr_xs.T)*p_xs).T)*(shuffle_Afr_xs/Afr_all.values).apply(np.log2)).sum()
