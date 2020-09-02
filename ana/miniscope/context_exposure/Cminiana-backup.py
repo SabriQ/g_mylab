@@ -39,7 +39,6 @@ class MiniAna():
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
         self.length = self.df.shape[0]
 
-
     def _load_session(self):
         logger.info("FUN:: _load_session")
         logger.debug("loading %s"%self.session_path)
@@ -319,18 +318,6 @@ class MiniAna():
         
         return df, index.all(axis=1)
 
-class Cellid(MiniAna):
-    def __init__(self,session_path):
-        super().__init__(session_path)
-
-
-        self.Context = (pd.merge(self.Trial_Num,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
-
-        self.in_context_running_direction = self.result["in_context_running_direction"]
-
-        self.Body_speed = self.result["Body_speed"]
-
-        self.in_context_placebin_num=self.result["in_context_placebin_num"]
 
     def cellids_HCTrack_Context(self,idx_accept,df):
         """
@@ -585,11 +572,10 @@ class Cellid(MiniAna):
         logger.info("in_context_placebin_num start from 1.")
 
         if df == None:
-            logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
+            logger.info("Normalize=False,standarize=False,in_context=True")
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True,speed_min=3)
             df=df[index]
-
         if in_context_placebin_num == None:
             in_context_placebin_num=self.result["in_context_placebin_num"]
         in_context_placebin_num = pd.Series(in_context_placebin_num)[index]
@@ -669,10 +655,6 @@ class Cellid(MiniAna):
 
         
 
-class PopulationAna(MiniAna):
-    def __init__(self,session_path):
-        super().__init__(session_path)
-        pass
 
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
@@ -680,8 +662,6 @@ class PopulationAna(MiniAna):
 #         S = MiniAna(session)
 #         S.savepkl2mat()
 if __name__ == "__main__":
-    s3 = Cellid(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
-    print("----")
-    print(s3.cellids_Context(s3.result["idx_accepted"]))
-    print(s3.cellids_RD_incontext(s3.result["idx_accepted"]))
+    s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
+
     print(s3.cellids_PC_incontext(s3.result["idx_accepted"]))
