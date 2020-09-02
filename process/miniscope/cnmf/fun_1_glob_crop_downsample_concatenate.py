@@ -114,6 +114,7 @@ from scipy.io import savemat
 def datetime2minisceconds(x,start):    
     delta_time = datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f')-start
     return int(delta_time.seconds*1000+delta_time.microseconds/1000)
+    
 def read_timestamp(tsFile):
     data = pd.read_csv(tsFile,sep=",")
     start = datetime.datetime.strptime(data["0"][0], '%Y-%m-%d %H:%M:%S.%f')
