@@ -11,7 +11,7 @@ class EPMvideo(Video):
         super().__init__(video_path)
         self.videoAreaStay_path = self.abs_prefix + '_areas.csv'
 
-    def show_masks(self,show = True):
+    def show_masks(self):
         masks = self.draw_rois(aim="epm",count=5)[0]
         for mask in masks:
             plt.imshow(mask)

@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 from shutil import copyfile
 import datetime
+import warnings
+import csv
 
 class File():
     def __init__ (self,file_path):
@@ -257,8 +259,8 @@ class FreezingFile(File):
 
     def freezing_percentage(self,threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True): 
         data = pd.read_csv(self.file_path)
-        print(len(data['ts(s)']),"time points ;",len(data['Frame_No']),"frames")
-##        if not (len(data['ts(s)']) == len(data['Frame_No'])):
+        print(len(data['0']),"time points ;",len(data['Frame_No']),"frames")
+##        if not (len(data['0']) == len(data['Frame_No'])):
 ##            warnings.warn("the number of timestamp is not consistent with frame number")
         # na.omit    
         data = data.dropna(axis=0)             
@@ -270,23 +272,23 @@ class FreezingFile(File):
         if start>stop:
             start,stop = stop,start
             warning.warn("start time is later than stop time")
-        if start >=max(data['ts(s)']):
+        if start >=max(data['0']):
             warnings.warn("the selected period start is later than the end of experiment")
             sys.exit()
-        elif start <=min(data['ts(s)']):            
+        elif start <=min(data['0']):            
             start_index = 0
         else:
-            start_index = [i for i in range(len(data['ts(s)'])) if data['ts(s)'][i]<=start and  data['ts(s)'][i+1]>start][0]+1
+            start_index = [i for i in range(len(data['0'])) if data['0'][i]<=start and  data['0'][i+1]>start][0]+1
 
         #stop_index
-        if stop >= max(data['ts(s)']):
-            stop_index = len(data['ts(s)'])-1
+        if stop >= max(data['0']):
+            stop_index = len(data['0'])-1
             warnings.warn("the selected period exceed the record time, automatically change to the end time.")
-        elif stop <=min(data['ts(s)']):
+        elif stop <=min(data['0']):
             warnings.warn("the selected period stop is earlier than the start of experiment")
             sys.exit()
         else:            
-            stop_index = [i for i in range(len(data['ts(s)'])) if data['ts(s)'][i]<=stop and  data['ts(s)'][i+1]>stop][0]
+            stop_index = [i for i in range(len(data['0'])) if data['0'][i]<=stop and  data['0'][i+1]>stop][0]
 ##            print(data)
         selected_data = data.iloc[start_index:stop_index+1]
 ##        print(selected_data)
@@ -306,18 +308,18 @@ class FreezingFile(File):
             if value ==1:              
                 begin = sum(lengthes[0:i])
                 end = sum(lengthes[0:i+1])
-                if end > len(selected_data['ts(s)'])-1:
-                    end = len(selected_data['ts(s)'])-1
+                if end > len(selected_data['0'])-1:
+                    end = len(selected_data['0'])-1
 ##                print(begin,end,end=' ')
-##                print(selected_data['ts(s)'].iat[begin],selected_data['ts(s)'].iat[end])
-                condition = selected_data['ts(s)'].iat[end]-selected_data['ts(s)'].iat[begin]
+##                print(selected_data['0'].iat[begin],selected_data['0'].iat[end])
+                condition = selected_data['0'].iat[end]-selected_data['0'].iat[begin]
                 if condition >=1:
                     if show_detail:
-                        print(f"{round(selected_data['ts(s)'].iat[begin],1)}s--{round(selected_data['ts(s)'].iat[end],1)}s,duration is {round(condition,1)}s".rjust(35,'-'))
+                        print(f"{round(selected_data['0'].iat[begin],1)}s--{round(selected_data['0'].iat[end],1)}s,duration is {round(condition,1)}s".rjust(35,'-'))
                     if save_epoch:
                         with open(self.freezingEpochPath,'a+',newline="") as csv_file:
                             writer = csv.writer(csv_file)
-                            writer.writerow([selected_data['ts(s)'].iat[begin],selected_data['ts(s)'].iat[end]])
+                            writer.writerow([selected_data['0'].iat[begin],selected_data['0'].iat[end]])
                     sum_freezing_time = sum_freezing_time + condition
                 else:
                     sum_freezing_time = sum_freezing_time

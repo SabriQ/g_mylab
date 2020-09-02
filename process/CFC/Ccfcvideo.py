@@ -1,7 +1,8 @@
 from mylab.Cvideo import Video
 import os,sys,glob
 import cv2
-from mylab.Ccsv import Csv 
+from mylab.Cfile import TimestampsFile 
+from mylab.Cfile import FreezingFile as FF
 import pandas as pd
 from mylab.Cdecs import *
 import csv
@@ -10,7 +11,6 @@ class CFCvideo(Video):
     def __init__(self,video_path):
         super().__init__(video_path)
         self.videofreezing_path = self.abs_prefix + '_freezing.csv'
-
 
     def __video2csv(self,Interval_number=1,show = True):
 
@@ -39,7 +39,7 @@ class CFCvideo(Video):
         cap.release()
         cv2.destroyAllWindows()
         
-    def video2csv(self,Interval_number=3,diff_gray_value=30,show = True):
+    def video2csv(self,timestamp_method = "ffmpeg",Interval_number=3,diff_gray_value=30,show = True):
         """calculate the change in fixed roi"""
         if not os.path.exists(self.videots_path):
             try:
@@ -47,8 +47,9 @@ class CFCvideo(Video):
             except:
                 print("fail to extract tiemstamps of %s by ffprobe"%self.video_name)
                 sys.exit()
-        ts = pd.read_csv(self.videots_path, sep=" ",encoding = "utf-16",header =None,names=['ts(s)'])
-        ts['Frame_No'] = list(range(1,len(ts)+1));frame_grays = self.__video2csv(Interval_number = Interval_number,show = show)
+        ts = TimestampsFile(self.videots_path,method=timestamp_method).ts
+        ts['Frame_No'] = list(range(1,len(ts)+1))
+        frame_grays = self.__video2csv(Interval_number = Interval_number,show = show)
         
         print(self.video_name+' Frame Number & timestamps are loaded successfully \nvideo is processing frame by frame...')
         changed_pixel_percentages = []
@@ -111,7 +112,7 @@ class CFCvideo(Video):
         else:
             track = pd.read_hdf(self.video_track_path)
 
-    def freezing_percentage(self,Interval_number=3,diff_gray_value=30,show = True
+    def freezing_percentage(self,timestamp_method = "ffmpeg",Interval_number=3,diff_gray_value=30,show = True
         ,threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True):
         """
         Syntax:
@@ -128,16 +129,16 @@ class CFCvideo(Video):
             save_epoch=True
         """
         if not os.path.exists(self.videofreezing_path):
-            self.video2csv(Interval_number=Interval_number,diff_gray_value=diff_gray_value,show = show)
+            self.video2csv(timestamp_method = timestamp_method,Interval_number=Interval_number,diff_gray_value=diff_gray_value,show = show)
 
-        return Csv(self.videofreezing_path).freezing_percentage(threshold=threshold, start = start, stop = stop
+        return FF(self.videofreezing_path).freezing_percentage(threshold=threshold, start = start, stop = stop
             ,show_detail=show_detail,percent =percent,save_epoch=save_epoch)
 
     
     @classmethod
     @timeit
-    def freezing_percentages(cls,videolists,Interval_number=3,diff_gray_value=30,show = True,
-        threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True):
+    def freezing_percentages(cls,videolists,timestamp_method="ffmpeg",Interval_number=3,diff_gray_value=30,show = True,
+        threshold = 0.5, start = 0, stop = 300,show_detail=True,percent =True,save_epoch=True):
         """
         syntax:
             confirm the *args with `CFCvideo(video).freezing_percentage(*args)`, then,
@@ -163,11 +164,11 @@ class CFCvideo(Video):
             writer.writerow(['threshold',threshold])
             writer.writerow(['video','freezing%'])
             for video in videolists:
-                freezing = cls(video).freezing_percentage(Interval_number=Interval_number,diff_gray_value=diff_gray_value,show = show,threshold=threshold, start = start, stop = stop,show_detail=show_detail,percent =percent,save_epoch=save_epoch)
+                freezing = cls(video).freezing_percentage(timestamp_method=timestamp_method,Interval_number=Interval_number,diff_gray_value=diff_gray_value,show = show,threshold=threshold, start = start, stop = stop,show_detail=show_detail,percent =percent,save_epoch=save_epoch)
                 writer.writerow([video,freezing])
 if __name__ == "__main__":
     # help(CFCvideo.freezing_percentage)
-    videolists=glob.glob(r"C:\Users\admin\Desktop\test\*.asf")
+    videolists=glob.glob(r"C:\Users\qiushou\Desktop\CFC\*.avi")
     # for video in videolists:
     CFCvideo.freezing_percentages(videolists)
         # CFCvideo(video).freezing_percentage(Interval_number=1,diff_gray_value=30,show = True
