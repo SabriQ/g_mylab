@@ -14,7 +14,7 @@ byte num=-1;//default to turn off the led
 int ctx[3];
 int c_ctx=-1;
 
-int de_init = 150;
+int de_init = 80;
 int de_stop;
 int de_stops[60] = {
   25, 20, 30, 25, 25, 20, 25, 30, 30, 25, 25, 25, 
@@ -26,7 +26,7 @@ int de = de_init;
 int motor_count_num = 0;
 void setup() {
   // put your setup code here, to run once:
-pinMode(ena,OUTPUT);digitalWrite(ena,HIGH);
+pinMode(ena,OUTPUT);digitalWrite(ena,LOW);
 pinMode(dir,OUTPUT);digitalWrite(dir,LOW);
 pinMode(pul,OUTPUT);digitalWrite(pul,LOW);
 pinMode(c_0,INPUT);
@@ -65,14 +65,12 @@ void rec(){
   {
     case 0:// go to context 0
       Serial.println("move to context 0");
-      digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);//leaving motor
       motor_count();
       while (ctx[0]==0){
       Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=0;
       Serial.println(c_ctx);
       num=-1;
@@ -80,7 +78,6 @@ void rec(){
       
     case 1://go to context 1
       Serial.println("move to context 1");
-      digitalWrite(ena,LOW);
       if (c_ctx==0){       
         digitalWrite(dir,HIGH);//approaching motor
         }
@@ -93,7 +90,6 @@ void rec(){
        }
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=1;
       Serial.println(c_ctx);
       num=-1;
@@ -101,34 +97,34 @@ void rec(){
 
       case 2://go to context 2
       Serial.println("move to context 2");
-      digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//approaching motor
       motor_count();
       while (ctx[2]==0){
         Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=2;
       Serial.println(c_ctx);
       num=-1;
       break;
 
-      case 3: //set motor_count_num=0;
-      motor_count_num = 0; 
+    case 3: //set motor_count_num=0;
+      motor_count_num = 0;
+      digitalWrite(ena,LOW); 
       break;
-      
+    case 4:
+      digitalWrite(ena,HIGH); 
+      break;
     default:
-    digitalWrite(ena,HIGH);
     digitalWrite(dir,LOW);
     digitalWrite(pul,LOW);
 //      Read_ctx();
       break;}}
 
 void Read_ctx(){
-  if (Read_digital(c_0,3)>0.9){ctx[0]=1;}else{ctx[0]=0;}
-  if (Read_digital(c_1,3)>0.9){ctx[1]=1;}else{ctx[1]=0;}
-  if (Read_digital(c_2,3)>0.9){ctx[2]=1;}else{ctx[2]=0;}
+  if (Read_digital(c_0,5)>0.9){ctx[0]=1;}else{ctx[0]=0;}
+  if (Read_digital(c_1,5)>0.9){ctx[1]=1;}else{ctx[1]=0;}
+  if (Read_digital(c_2,5)>0.9){ctx[2]=1;}else{ctx[2]=0;}
 //  Serial.print(Read_digital(c_0,10));Serial.print(" ");
 //  Serial.print(Read_digital(c_1,10));Serial.print(" ");
 //  Serial.println(Read_digital(c_2,10));
@@ -162,7 +158,7 @@ void pulse_stepper2(int port_out)
 
 void pulse_stepper(int port_out)
 {
-  if (de>de_stop+55){
+  if (de>de_stop){
     de = de-1;
   }
   digitalWrite(port_out, LOW);

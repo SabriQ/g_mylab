@@ -31,14 +31,19 @@ float on_signal;
 //                1,2,2,1,2,1,2,2,1,1,
 //                2,2,1,1,2,1,2,1,2,1,
 //                2,1,2,1,2,1,2,1,2,1};
-
-int trial[60] = {0,1,1,0,1,1,0,0,0,1,
-                1,0,1,0,1,0,0,0,1,1,
-                1,0,1,1,1,0,0,1,0,0,
-                1,0,0,1,0,1,0,0,1,1,
-                0,0,1,1,0,1,0,1,0,1,
-                0,1,0,1,0,1,0,1,0,1};
-                              
+int trial[60] = {1,0,1,0,1,0,0,1,0,1,
+                0,0,1,0,1,0,1,0,1,1,
+                1,0,1,0,1,0,1,1,0,0,
+                1,0,1,1,0,1,0,0,1,0,
+                0,1,1,0,0,1,0,0,0,1,
+                0,1,1,1,0,1,0,0,0,1};
+//int trial[60] = {0,1,1,0,1,1,0,0,0,1,
+//                1,0,1,0,1,0,0,0,1,1,
+//                1,0,1,1,1,0,0,1,0,0,
+//                1,0,0,1,0,1,0,0,1,1,
+//                0,0,1,1,0,1,0,1,0,1,
+//                0,1,0,1,0,1,0,1,0,1};
+//                              
 int trial_length = 60;
 
 int i =0;
@@ -231,14 +236,27 @@ void Signal(int s){
       break;
       
     case 50://rl_pump 
+    if (2*right_choice < left_choice || right_choice +15 <= left_choice && Trial_num >= 15){
+      water_deliver(pump_rl,4);
+    }else{
         water_deliver(pump_rl,7);
+    }
+      //如果bias 太严重,增加unprefer这一边的水量一倍
+      if (2*left_choice < right_choice || left_choice +15 <=right_choice && Trial_num >= 15){
+        water_deliver(pump_rl,7); 
+      }
       break;
       
     case 51://rr_pump
-      water_deliver(pump_rr,7);      
-//      if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
-//        water_deliver(pump_rr,8); 
-//      }
+    if (2*left_choice < right_choice || left_choice +15 <=right_choice && Trial_num >= 15){
+      water_deliver(pump_rr,4);
+    }else{
+      water_deliver(pump_rr,7);
+    }
+    
+    if (2*right_choice < left_choice || right_choice +15 <= left_choice && Trial_num >= 15){
+      water_deliver(pump_rr,7); 
+    }
       break;
       
     case 52://to context0 4
@@ -260,6 +278,10 @@ void Signal(int s){
         send2slave1_motor=3;
         write2slave(1,send2slave1_motor);
         break;
+    case 56://enable ena HIGH
+        send2slave1_motor=4;
+        write2slave(1,send2slave1_motor);
+        break;
     default:
       break;}
     }
@@ -269,6 +291,7 @@ void Read_ir(){
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
     if (exp_start ==0 && on_signal>=0.90){
+      Signal(55);
       Signal(48);//默认第一个trial的开始nose poke给水
       exp_start_time=millis();
       digitalWrite(miniscope_trigger,HIGH);
@@ -321,9 +344,11 @@ void Read_ir(){
     Trial_num = 0;  
     left_choice = 0;
     right_choice = 0;
-    exp_start = 0;
     digitalWrite(pump_led,LOW);
     digitalWrite(miniscope_trigger,LOW);
+    if (exp_start == 1){
+    Signal(56);}
+    exp_start = 0;
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {
