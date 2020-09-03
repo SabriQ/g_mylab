@@ -11,11 +11,11 @@ class OFvideo(Video):
         super().__init__(video_path)
         self.videoAreaStay_path = self.abs_prefix + '_areas.csv'
 
-    def show_masks(self,show = True):
-        masks = self.draw_rois(aim="of",count=2)[0]
-        for mask in masks:
-            plt.imshow(mask)
-            plt.show()
+    def show_masks(self):
+        masks = self.draw_of_masks(ratio=6)[0] 
+        cv2.imshow("whole_area",masks[0])
+        cv2.imshow("center",masks[1])
+        cv2.waitKey(0)
 
     @staticmethod
     def find_close_fast(arr,e):
@@ -23,6 +23,57 @@ class OFvideo(Video):
         locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
         # print(locations[0][0])
         return locations[0][0]
+
+    def draw_of_masks(self,ratio=6):
+        """
+        ratio : the area of center zone / the area of the whole zone 
+        """
+        mask,coord = self.draw_rois(aim="of",count=1)
+        
+        coords_xs = coord[0][:,0]
+        coords_ys = coord[0][:,1]
+        delt_x1  = abs(coords_xs[0]-coords_xs[2])/(2*np.sqrt(ratio))
+        delt_x2  = abs(coords_xs[1]-coords_xs[3])/(2*np.sqrt(ratio))
+        delt_y1 = abs(coords_ys[0]-coords_ys[2])/(2*np.sqrt(ratio))
+        delt_y2 = abs(coords_ys[1]-coords_ys[3])/(2*np.sqrt(ratio))
+
+        if coords_xs[0]<coords_xs[2]:
+            nx0 = coords_xs[0]+delt_x1
+            nx2 = coords_xs[2]-delt_x1
+        else:
+            nx0 = coords_xs[0]-delt_x1
+            nx2 = coords_xs[2]+delt_x1
+
+        if coords_xs[1]<coords_xs[3]:
+            nx1 = coords_xs[1]+delt_x2
+            nx3 = coords_xs[3]-delt_x2
+        else:
+            nx1 = coords_xs[1]-delt_x2
+            nx3 = coords_xs[3]+delt_x2
+
+        if coords_ys[0]<coords_ys[2]:
+            ny0 = coords_ys[0]+delt_y1
+            ny2 = coords_ys[2]-delt_y1
+        else:
+            ny0 = coords_ys[0]-delt_y1
+            ny2 = coords_ys[2]+delt_y1
+
+        if coords_ys[1]<coords_ys[3]:
+            ny1 = coords_ys[1]+delt_y2
+            ny3 = coords_ys[3]-delt_y2
+        else:
+            ny1 = coords_ys[1]-delt_y2
+            ny3 = coords_ys[3]+delt_y2
+
+        center_coord = np.array([[nx0,ny0],[nx1,ny1],[nx2,ny2],[nx3,ny3]],np.int32)
+        # print(center_coord)
+        # cv2.imshow("mask",mask[0])
+        center_mask = 255*np.ones_like(mask[0])
+        cv2.fillPoly(center_mask,[center_coord],0)
+        # cv2.imshow(mask[0])
+        # cv2.imshow("center",center)
+        # cv2.waitKey(0)
+        return [mask[0],center_mask], [coord[0],center_coord]
 
     @timeit
     def oftimer(self,start=None,stop=None,start_index=None,stop_index=None
@@ -85,8 +136,8 @@ class OFvideo(Video):
 
         
         # extract masks of video 
-        masks = self.draw_rois(aim="of",count=2)[0]
-
+        # masks = self.draw_rois(aim="of",count=2)[0]
+        masks = self.draw_of_masks(ratio=6)[0]
 
         in_mask = [];t_in_mask=[]
         # print(masks[0][479,639])
@@ -144,7 +195,6 @@ if __name__=="__main__":
 
 
 
-    videos = glob.glob(r"C:\Users\qiushou\Desktop\OF\*[0-9].mp4")
-    [print(i) for i in videos]
-    OFvideo.oftimers(videos,starts=[0,182,362],stops=[182,364,543],Interval_number=7)
+    file = r"C:\Users\Sabri\Desktop\program\Data\video\epm\192093-20190807-102117.mp4"
+    OFvideo(file).show_masks()
     
