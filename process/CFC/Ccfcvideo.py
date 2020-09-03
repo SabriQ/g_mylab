@@ -12,6 +12,10 @@ class CFCvideo(Video):
         super().__init__(video_path)
         self.videofreezing_path = self.abs_prefix + '_freezing.csv'
 
+    def show_masks(self):
+        mask = self.draw_rois(aim="freezing",count=1)[0][0]
+        cv2.imshow("mask",mask)
+
     def __video2csv(self,Interval_number=1,show = True):
 
         mask= self.draw_rois(aim="freezing",count=1)[0][0]
