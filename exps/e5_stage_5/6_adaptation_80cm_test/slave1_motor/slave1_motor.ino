@@ -64,8 +64,8 @@ void rec(){
   switch (num)
   {
     case 0:// go to context 0
-      Serial.println("move to context 0");
       digitalWrite(ena,LOW);
+      Serial.println("move to context 0");      
       digitalWrite(dir,LOW);//leaving motor
       motor_count();
       while (ctx[0]==0){
@@ -79,8 +79,8 @@ void rec(){
       break;
       
     case 1://go to context 1
-      Serial.println("move to context 1");
       digitalWrite(ena,LOW);
+      Serial.println("move to context 1");
       if (c_ctx==0){       
         digitalWrite(dir,HIGH);//approaching motor
         }
@@ -93,35 +93,39 @@ void rec(){
        }
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=1;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
       break;
 
-      case 2://go to context 2
-      Serial.println("move to context 2");
+    case 2://go to context 2
       digitalWrite(ena,LOW);
+      Serial.println("move to context 2");
       digitalWrite(dir,HIGH);//approaching motor
       motor_count();
       while (ctx[2]==0){
         Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=2;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
       break;
 
-      case 3: //set motor_count_num=0;
+    case 3: //set motor_count_num=0;
       motor_count_num = 0; 
+      digitalWrite(ena,LOW); 
+      break;
+    case 4:
+      digitalWrite(ena,HIGH); 
       break;
       
     default:
-    digitalWrite(ena,HIGH);
-    digitalWrite(dir,LOW);
-    digitalWrite(pul,LOW);
+//      digitalWrite(ena,HIGH);
+      digitalWrite(dir,LOW);
+      digitalWrite(pul,LOW);
 //      Read_ctx();
       break;}}
 

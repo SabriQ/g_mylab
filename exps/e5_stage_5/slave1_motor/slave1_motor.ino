@@ -22,6 +22,12 @@ int de_stops[60] = {
   20, 30, 30, 20, 30, 25, 30, 30, 30, 25, 25, 30, 
   25, 25, 20, 25, 20, 20, 30, 20, 25, 30, 20, 20, 
   30, 25, 25, 30, 25, 25, 30, 25, 25, 30, 25, 20};
+//int de_stops[60] = {
+//  20, 20, 30, 30, 20, 20, 30, 30, 30, 20, 30, 20, 
+//  30, 30, 20, 30, 30, 30, 20, 30, 20, 20, 20, 20, 
+//  20, 30, 30, 20, 30, 20, 30, 20, 30, 20, 20, 30, 
+//  30, 20, 20, 30, 20, 20, 30, 20, 30, 30, 20, 30, 
+//  30, 20, 20, 30, 20, 20, 30, 20, 30, 30, 20, 30};
 int de = de_init;
 int motor_count_num = 0;
 void setup() {
@@ -74,6 +80,9 @@ void rec(){
       c_ctx=0;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
+      delay(50);
+      digitalWrite(ena,LOW);
       break;
       
     case 1://go to context 1
@@ -93,9 +102,12 @@ void rec(){
       c_ctx=1;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
+      delay(50);
+      digitalWrite(ena,LOW);
       break;
 
-      case 2://go to context 2
+    case 2://go to context 2
       Serial.println("move to context 2");
       digitalWrite(dir,HIGH);//approaching motor
       motor_count();
@@ -106,6 +118,9 @@ void rec(){
       c_ctx=2;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
+      delay(50);
+      digitalWrite(ena,LOW);
       break;
 
     case 3: //set motor_count_num=0;
@@ -116,8 +131,8 @@ void rec(){
       digitalWrite(ena,HIGH); 
       break;
     default:
-    digitalWrite(dir,LOW);
-    digitalWrite(pul,LOW);
+      digitalWrite(dir,LOW);
+      digitalWrite(pul,LOW);
 //      Read_ctx();
       break;}}
 
