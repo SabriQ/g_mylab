@@ -6,16 +6,69 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mylab.Cdecs import *
 import csv
+from mylab.Cfile import TrackFile
+
 class OFvideo(Video):
     def __init__(self,video_path):  
         super().__init__(video_path)
         self.videoAreaStay_path = self.abs_prefix + '_areas.csv'
+        
 
     def show_masks(self):
         masks = self.draw_of_masks(ratio=6)[0] 
         cv2.imshow("whole_area",masks[0])
         cv2.imshow("center",masks[1])
         cv2.waitKey(0)
+
+    def show_track_fig(self,frame_as_bg=False,save_fig = True):
+        masks,coords = self.draw_of_masks()
+        mask = masks[0]
+        mask_center = mask[1]
+        coord = np.array(coords[0])
+        coord_center = coords[1]
+        try:
+            Track = TrackFile(self.video_track_path)
+        except:
+            print("no track file")
+            sys.exit()
+
+        X=[]
+        Y=[]
+        count = 1
+        for x,y in zip(Track.behave_track["Body_x"],Track.behave_track["Body_y"]):
+            if x<min(coord[:,0]) or x > max(coord[:,0]) or y < min(coord[:,1]) or y>max(coord[:,1]):
+                # print("abort")
+                count=count+1
+            else:
+                X.append(x)
+                Y.append(y)
+
+        if count>10:
+            print("you have about %s points"%count )
+
+        cap = cv2.VideoCapture(self.video_path)
+        ret,frame = cap.read()
+        white_bg = np.ones_like(frame)*255
+        if frame_as_bg:
+            bg = frame
+        else:
+            bg = white_bg
+        cv2.polylines(bg,[coord],True,(0,0,255),2)
+        cv2.polylines(bg,[coord_center],True,(0,255,0),2)
+        for i in range(len(X)-1):
+            pts1=(int(X[i]),int(Y[i]))
+            pts2=(int(X[i+1]),int(Y[i+1]))
+            cv2.line(bg,pts1,pts2,(255,0,0),1,lineType = cv2.LINE_AA)
+
+        M = cv2.getPerspectiveTransform(np.float32(coord),np.float32([[100,100],[100,600],[600,600],[600,100]]))
+        dst = cv2.warpPerspective(bg,M,(700,700))
+        plt.xticks([])
+        plt.yticks([])
+        plt.axis('off')
+        plt.title(self.video_name)
+        plt.imshow(dst)
+        if save_fig:
+            plt.savefig(self.abs_prefix+'_track_fig.png',dpi=600,bbox_inches="tight")
 
     @staticmethod
     def find_close_fast(arr,e):
@@ -29,13 +82,13 @@ class OFvideo(Video):
         ratio : the area of center zone / the area of the whole zone 
         """
         mask,coord = self.draw_rois(aim="of",count=1)
-        
-        coords_xs = coord[0][:,0]
-        coords_ys = coord[0][:,1]
-        delt_x1  = abs(coords_xs[0]-coords_xs[2])/(2*np.sqrt(ratio))
-        delt_x2  = abs(coords_xs[1]-coords_xs[3])/(2*np.sqrt(ratio))
-        delt_y1 = abs(coords_ys[0]-coords_ys[2])/(2*np.sqrt(ratio))
-        delt_y2 = abs(coords_ys[1]-coords_ys[3])/(2*np.sqrt(ratio))
+        # print(coord)
+        coords_xs = np.array(coord)[0][:,0]
+        coords_ys = np.array(coord)[0][:,1]
+        delt_x1  = abs(coords_xs[0]-coords_xs[2])*(1-1/np.sqrt(ratio))/2
+        delt_x2  = abs(coords_xs[1]-coords_xs[3])*(1-1/np.sqrt(ratio))/2
+        delt_y1 = abs(coords_ys[0]-coords_ys[2])*(1-1/np.sqrt(ratio))/2
+        delt_y2 = abs(coords_ys[1]-coords_ys[3])*(1-1/np.sqrt(ratio))/2
 
         if coords_xs[0]<coords_xs[2]:
             nx0 = coords_xs[0]+delt_x1
@@ -165,6 +218,7 @@ class OFvideo(Video):
             in_mask.append(np.array(temp_in_mask))
             t_in_mask.append(np.array(temp_in_mask)*delta_t)
         print(pd.DataFrame(t_in_mask))
+        print("Context","Center","others")
         print("frame numbers: ",end="")
         print(np.sum(in_mask,axis=0))
         print("time longs: ",end="")

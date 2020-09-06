@@ -20,7 +20,7 @@ class Video():
         self.video_name = os.path.basename(self.video_path)
         self.extension = os.path.splitext(self.video_path)[-1]
         self.abs_prefix = os.path.splitext(self.video_path)[-2]
-        self.xy = os.path.dirname(self.video_path)+'\\'+'xy.txt'
+        self.xy = os.path.join(os.path.dirname(self.video_path),'xy.txt')
         self.videots_path = self.abs_prefix + '_ts.txt'
         try:
             self.video_track_path = glob.glob(self.abs_prefix+"*.h5")[0]
@@ -213,7 +213,7 @@ class Video():
             speed_angles.append(cls._angle(1,0,delta_x,delta_y))
         return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
-    def play_with_track(self,show = "Head"):
+    def play_with_track(self,show = "Body",scale=40,latest=300):
         """
         instructions:
             'q' for quit
@@ -239,7 +239,7 @@ class Video():
             track = pd.read_hdf(self.video_track_path)
 
 
-        s = self.scale(70)
+        s = self.scale(40)
         try:
             behaveblock=pd.DataFrame(track[track.columns[0:9]].values,columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
             print("get track of head, body and tail")
@@ -259,7 +259,7 @@ class Video():
             y = [int(i) for i in behaveblock["Head_y"]]
             speed = behaveblock["Headspeeds"]
         else:
-            print("pleas choose from 'Body' and 'Head'")
+            print("please choose from 'Body' and 'Head'")
         t = [i for i in behaveblock["be_ts"]]
 
         font = cv2.FONT_ITALIC
@@ -271,19 +271,22 @@ class Video():
             ret,frame = cap.read()
             if ret:
                 # gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-                cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,0,255),-1)
+                cv2.circle(frame,(x[frame_No],y[frame_No]),3,(0,255,0),-1)
                 cv2.putText(frame,f'{round(speed[frame_No],2)}cm/s',(x[frame_No]+5,y[frame_No]), font, 0.5, (100,100,255))
                 for i in range(frame_No,0,-1):
-                    if (t[frame_No]-t[i])<10:
+                    if (t[frame_No]-t[i])<latest:
                         pts1=(x[i],y[i]);pts2=(x[i-1],y[i-1])
                         thickness=1
+                        color = (0,0,255)
                         if (t[frame_No]-t[i])<5:
                             thickness=2
-                        cv2.line(frame, pts1, pts2, (0, 0, 255), thickness)
+                            color = (0,255,0)
+                        cv2.line(frame, pts1, pts2, color, thickness)
                 cv2.imshow(self.video_name,frame)
                 frame_No = frame_No + 1
                 if cv2.waitKey(wait) & 0xFF == ord('q'):
                     break
+
                 if cv2.waitKey(wait) & 0xFF == ord('f'):
                     if wait > 1:
                         wait = wait -step
@@ -381,10 +384,10 @@ class Video():
                 print(coords[0:count])
                 return masks[0:count],coords[0:count]
             if len(existed_coords) == count:
-                print("you have drawn rois of %s"%aim)
+                print("you have drawn rois of '%s'"%aim)
                 return masks,coords
             if len(existed_coords) < count:
-                print("please draw left rois of %s"%aim)
+                print("please draw left rois of '%s'"%aim)
         else:
             print("please draw rois of %s"%aim)
 

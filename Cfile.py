@@ -120,9 +120,16 @@ class TrackFile(File):
     
     def _load_file(self):
         track = pd.read_hdf(self.file_path)
-        self.behave_track=pd.DataFrame(track[track.columns[0:9]].values,
-                     columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
-        print("trackfile is loaded.")
+        # print(track.columns)
+        try:
+            self.behave_track=pd.DataFrame(track[track.columns[0:9]].values,
+                         columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
+        except:
+            print("you might not mark 'Tail'")
+            self.behave_track=pd.DataFrame(track[track.columns[0:6]].values,
+                         columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh'])
+
+        print("Trackfile is loaded.")
 
     def _dataframe2nparray(self,df):
         if isinstance(df,dict):
@@ -176,6 +183,7 @@ class TrackFile(File):
             distance = np.sqrt(delta_x**2+delta_y**2)
             speeds.append(distance*s/delta_t)
             speed_angles.append(cls._angle(1,0,delta_x,delta_y))
+
         return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
 class Free2pFile(File):
@@ -234,8 +242,6 @@ class LinearTrackBehaviorFile(File):
     def Context_B_Accuracy(self):
         return sum(self.data["Choice_class"][self.Enter_Context=="B"])/len(self.data["Choice_class"][self.Enter_Context=="B"])
     
-        
-    
 
 class FreezingFile(File):
     def __init__(self,file_path):
@@ -260,9 +266,7 @@ class FreezingFile(File):
     def freezing_percentage(self,threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True): 
         data = pd.read_csv(self.file_path)
         print(len(data['0']),"time points ;",len(data['Frame_No']),"frames")
-##        if not (len(data['0']) == len(data['Frame_No'])):
-##            warnings.warn("the number of timestamp is not consistent with frame number")
-        # na.omit    
+
         data = data.dropna(axis=0)             
         #print(f"{self.file_path}")
         data = data.reset_index()
@@ -289,15 +293,12 @@ class FreezingFile(File):
             sys.exit()
         else:            
             stop_index = [i for i in range(len(data['0'])) if data['0'][i]<=stop and  data['0'][i+1]>stop][0]
-##            print(data)
+
         selected_data = data.iloc[start_index:stop_index+1]
-##        print(selected_data)
-        # freezing
-        #values,lengthes = self._rlc(np.int64(np.array(selected_data.iloc[:,2].tolist())<=threshold))
+
         values,lengthes = self._rlc(np.int64(np.array(selected_data['percentage'].tolist())<=threshold))
 
-##        print(values)
-##        print(lengthes)
+
         
         sum_freezing_time = 0
         if save_epoch:
@@ -310,8 +311,6 @@ class FreezingFile(File):
                 end = sum(lengthes[0:i+1])
                 if end > len(selected_data['0'])-1:
                     end = len(selected_data['0'])-1
-##                print(begin,end,end=' ')
-##                print(selected_data['0'].iat[begin],selected_data['0'].iat[end])
                 condition = selected_data['0'].iat[end]-selected_data['0'].iat[begin]
                 if condition >=1:
                     if show_detail:
@@ -333,6 +332,9 @@ class FreezingFile(File):
         else:
             return sum_freezing_time/(stop-start)
 
+class EpmFile(File):
+    pass
+    
 if __name__ == "__main__":
     file = r"C:\Users\Sabri\Desktop\new_method_to_record\behave\LickWater-test-201033-20200825-130238_log.csv"
     data = LinearTrackBehaviorFile(file)
