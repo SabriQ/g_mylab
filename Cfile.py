@@ -14,6 +14,7 @@ from shutil import copyfile
 import datetime
 import warnings
 import csv
+from scipy.ndimage import gaussian_filter1d
 
 class File():
     def __init__ (self,file_path):
@@ -61,8 +62,8 @@ class TimestampsFile(File):
             print("method are only available in 'ffmpeg','datetime',")
             sys.exit()
 
-        self.ts=self.read_timestamp(method=self.method)
-        if self.ts.isnull().any()[0]:
+        self.ts=self.read_timestamp()
+        if self.ts.isnull().any():
             print(self.ts)
             print("ATTENTION: therea are 'NaN' in timestamps !!")
 
@@ -71,15 +72,15 @@ class TimestampsFile(File):
         delta_time = datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f')-start
         return int(delta_time.seconds*1000+delta_time.microseconds/1000)
 
-    def read_timestamp(self,method = "datetime"):
-        if method == "datetime":
+    def read_timestamp(self):
+        if self.method == "datetime":
             data = pd.read_csv(self.file_path,sep=",")
             start = datetime.datetime.strptime(data["0"][0], '%Y-%m-%d %H:%M:%S.%f')
             data["0"]=data["0"].apply(self.datetime2minisceconds,args=[start,])
             return data["0"]
-        if method  == "ffmpeg":
+        if self.method  == "ffmpeg":
             return pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["0"])
-        if method == "miniscope":
+        if self.method == "miniscope":
             temp=pd.read_csv(self.file_path,sep = "\t", header = 0)
             temp = temp[temp["camNum"]==self.camNum] ## wjn的 case 是1， 其他的scope是0
             print("camNum in miniscope is %s"%self.camNum)
@@ -169,8 +170,7 @@ class TrackFile(File):
         # print(angle2)
         return abs(angle1-angle2)
 
-    @classmethod
-    def speed(cls,X,Y,T,s,sigma=3):
+    def speed(self,X,Y,T,s,sigma=3):
         """
         X
         Y
@@ -182,8 +182,10 @@ class TrackFile(File):
         for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
             distance = np.sqrt(delta_x**2+delta_y**2)
             speeds.append(distance*s/delta_t)
-            speed_angles.append(cls._angle(1,0,delta_x,delta_y))
-
+            speed_angles.append(self._angle(1,0,delta_x,delta_y))
+        if sigma:
+            speeds=gaussian_filter1d(speeds)
+            print("speeds are filted by gaussian_filter1d with sigma 3")
         return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
 
 class Free2pFile(File):

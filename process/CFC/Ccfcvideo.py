@@ -51,8 +51,12 @@ class CFCvideo(Video):
             except:
                 print("fail to extract tiemstamps of %s by ffprobe"%self.video_name)
                 sys.exit()
-        ts = TimestampsFile(self.videots_path,method=timestamp_method).ts
-        ts['Frame_No'] = list(range(1,len(ts)+1))
+        ts = pd.DataFrame(TimestampsFile(self.videots_path,method=timestamp_method).ts/1000)
+        print(type(ts))
+        print("====")
+        ts['Frame_No'] = list(range(1,len(ts)+1)) # Frame_No start from 1
+        print(ts)
+        print("---")
         frame_grays = self.__video2csv(Interval_number = Interval_number,show = show)
         
         print(self.video_name+' Frame Number & timestamps are loaded successfully \nvideo is processing frame by frame...')
