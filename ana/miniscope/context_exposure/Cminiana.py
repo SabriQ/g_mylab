@@ -90,7 +90,6 @@ class MiniAna():
                 logger.info("looking for behave frame for each corrected_ms_ts...")
                 aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
                                                 ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
-
                 _,length = rlc(aligned_behave2ms["ms_behaveframe"])
                 logger.info("for one miniscope frame, there are at most %s behavioral frames "%max(length))
 
@@ -107,10 +106,12 @@ class MiniAna():
             else:
                 logger.debug("behaveiroal timestamps were aligned to ms")
 
-
-            self.Trial_Num = self.result["aligned_behave2ms"]["Trial_Num"]
-            self.process = self.result["aligned_behave2ms"]["process"]
-
+            try:
+                self.Trial_Num = self.result["aligned_behave2ms"]["Trial_Num"]
+                self.process = self.result["aligned_behave2ms"]["process"]
+            except:
+                del self.result["aligned_behave2ms"]
+                logger.debug("add Trial_Num and process failed, del aligned_behave2ms")
         else:
             logger.debug("this session was recorded in homecage")
 

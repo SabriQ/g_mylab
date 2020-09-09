@@ -110,7 +110,7 @@ def ms_tses2ms_ts(dirpath):
     """
     将每天的ms_ts.pkl合并成一个ms_ts.mat/ms_ts.pkl
     """
-    ms_tses = glob.glob(os.path.join(dirpath,"*10fps_*/ms_ts.pkl"))
+    ms_tses = glob.glob(os.path.join(dirpath,"*fps_*/ms_ts.pkl"))
     [print(i) for i in ms_tses]
     mss = []
     for ms_ts in ms_tses:

@@ -56,6 +56,12 @@ class Video():
         cap.release()
         cv2.destroyAllWindows()
 
+    def show_masks(self,aim="in_context"):
+        masks = self.draw_rois(aim=aim)[0]
+        for mask in masks:
+            plt.imshow(mask)
+            plt.show()
+
     def transcode(self,show_details=True):
         """
         for save larger size video  as very smaller one

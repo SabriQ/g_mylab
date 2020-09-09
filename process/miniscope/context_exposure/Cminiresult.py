@@ -1,13 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os,sys,glob,csv
-import json
+import json,cv2
 import scipy.io as spio
 import pickle
-from mylab.Cmouseinfo import MouseInfo
 from mylab.process.miniscope.context_exposure.Mfunctions import *
 from mylab.process.miniscope.Mfunctions import *
-from mylab.process.miniscope.context_exposure.Mplot import *
 
 import logging 
 
@@ -34,17 +32,43 @@ class MiniResult():
         self.resulthdf5 =  os.path.join(self.Result_dir,"result.hdf5")
         self.logfile = os.path.join(self.Result_dir,"pre-process_log.txt")
 
+        self.ms_mc_path = os.path.join(self.Result_dir,"ms_mc.avi")
+
         fh = logging.FileHandler(self.logfile,mode="w")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
         fh.setFormatter(formatter)
         fh.setLevel(logging.INFO)
         logger.addHandler(fh)
 
+    
+    def frame_num(self):
+        if os.path.exists(self.ms_mc_path):
+            videoframe_num = int(cv2.VideoCapture(self.ms_mc_path).get(7))
+            print("the length of miniscope video is %d"%videoframe_num)
+        else:
+            print("there is no %s"%self.ms_mc_path)
+            sys.exit()
+
+        with open(self.ms_ts_path,'rb') as f:
+            ms_tss = pickle.load(f)
+        ms_ts_num = int(sum([len(i) for i in ms_tss]))
+        print("the length of ms_ts is %d"%ms_ts_num)
+
+        if videoframe_num == ms_ts_num:
+            return 1
+        else:
+            return 0 
+
 
     def save_session_pkl(self):
+        logger.debug("loading %s"%self.ms_mat_path)
         ms = load_mat(self.ms_mat_path)
-        logger.debug("load %s"%self.ms_mat_path)
-        dff = ms['ms']['dff']
+        logger.debug("loaded %s"%self.ms_mat_path)
+        try:
+            dff = ms['ms']['dff']
+        except:
+            dff = ms['ms']['S_dff']
+            logger.debug("save S_dff as dff")
         sigraw = ms['ms']['sigraw'] #默认为sigraw
         idx_accepted = ms['ms']['idx_accepted']
         idx_deleeted = ms['ms']['idx_deleted']
@@ -82,7 +106,26 @@ class MiniResult():
                 pickle.dump(result,f)
             logger.debug("%s is saved"%name)
 
-    def save_behave_pkl(self,behavevideo,logfilepath = r"C:\Users\Sabri\Desktop\miniscope_1\202016\starts_firstnp_stops.csv"):
+    def show_masks(self,behavevideo,aim="in_context"):
+        mask, coord = Video(behavevideo).draw_rois(aim=aim)
+
+        cap = cv2.VideoCapture(behavevideo)
+        try:
+            cap.set(cv2.CAP_PROP_POS_FRAMES,1000-1)
+        except:
+            print("video is less than 100 frame")
+
+        ret,frame = cap.read()
+
+        cv2.polylines(frame,coord,True,(0,0,255),2)
+        plt.xticks([])
+        plt.yticks([])
+        plt.axis('off')
+        plt.imshow(frame)
+
+
+
+    def save_behave_pkl(self,behavevideo,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
 
         key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
         mark = starts_firstnp_stops(logfilepath)
@@ -108,11 +151,11 @@ class MiniResult():
         
         # aligned log_time and behave video_time
         if mark_point  == 1:
-            delta_t = ts[0][first_frame-1]-behavelog_time["P_nose_poke"][0]
+            delta_t = ts[0][first_np-1]-behavelog_time["P_nose_poke"][0]
             
         ## 这里有时候因为first-np的灯刚好被手遮住，所以用第二个点的信号代替，即第一次enter_ctx的时间
         if mark_point == 2:
-            delta_t = ts[0][first_frame-1]-behavelog_time["P_enter"][0]
+            delta_t = ts[0][first_np-1]-behavelog_time["P_enter"][0]
         behave_track['be_ts']=ts[0]-delta_t
         
         # index in_context
@@ -175,7 +218,8 @@ class MiniResult():
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
             logger.info("total time elaspse in 'behavioral video' and 'miniscope vidoe': ****ATTENTION****")
-            logger.info(behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1],end=" ")
+            t1 = behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1]
+            logger.info(t1)
             logger.info(max(task_ms_result["ms_ts"])) #这部分不能相差太多
 
             # 以行为学视频中，miniscope-led灯亮后的100ms为起始0点
@@ -197,7 +241,7 @@ class MiniResult():
         """
         在session*.pkl中的behave_tracek 加上“Trial_Num”,"process"
         """
-
+        print("FUN:: add_TrialNum_Process2behave_track")
         with open(session,'rb') as f:
             ms_result = pickle.load(f)
 
@@ -226,7 +270,6 @@ class MiniResult():
                         if i>=startstop[2] and i <startstop[3]:
                             Trial_Num.append(startstop[0])
                             process.append(startstop[1])
-    #                         continue #2020-07-16 13:16:00 更改为break,应该会节省一些时间
                             break
                         else:
                             pass

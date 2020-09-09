@@ -193,13 +193,14 @@ class Free2pFile(File):
         super().__init__(file_path)
 
 class LinearTrackBehaviorFile(File):
-    def __init__(self,file_path,context_map=["A","B","C","N"]):
+    def __init__(self,file_path,context_map=["B","A","C","N"]):
         super().__init__(file_path)
 
-        self.context_map = ["A","B","C","N"]
-        print("context map is %s"%self.context_map)
-        self.date = re.findall(r"\d{8}-\d{6}",self.file_path)[0]
+        self.context_map = context_map
+        # print("context map is %s"%self.context_map)
+        self.date = re.findall(r"(\d{8})-\d{6}",self.file_path)[0]
         self.mouse_id = re.findall(r"(\d+)-\d{8}-\d{6}",self.file_path)[0]
+        self.aim = re.findall(r"LickWater-(.*)-%s"%self.mouse_id,self.file_path)[0]
         self.data = pd.read_csv(self.file_path ,skiprows=3)
 
         self.Enter_Context = pd.Series ([self.context_map[i] for i in self.data["Enter_ctx"]])
@@ -218,7 +219,9 @@ class LinearTrackBehaviorFile(File):
                 Choice.append("right")
         self.data["Choice_side"] = Choice
     
-
+    @property
+    def Trial_Num(self):
+        return max(self.data["Trial_Num"])
 
     @property
     def bias(self):
