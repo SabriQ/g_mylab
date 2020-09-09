@@ -79,3 +79,6 @@ def place_cells(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_in
     threshold = scipy.stats.norm.ppf(z_score_cdf)# 大于百分之95的z_score
     z_score = (observe_si-shuffle_SIs.mean())/shuffle_SIs.std()
     return z_score[z_score>threshold].index
+
+def plot():
+    pass
