@@ -51,12 +51,12 @@ class CFCvideo(Video):
             except:
                 print("fail to extract tiemstamps of %s by ffprobe"%self.video_name)
                 sys.exit()
-        ts = pd.DataFrame(TimestampsFile(self.videots_path,method=timestamp_method).ts/1000)
-        print(type(ts))
-        print("====")
+        ts = pd.DataFrame(TimestampsFile(self.videots_path,method=timestamp_method).ts)
+        # print(type(ts))
+        print("==timestamps==")
         ts['Frame_No'] = list(range(1,len(ts)+1)) # Frame_No start from 1
         print(ts)
-        print("---")
+        print("==============")
         frame_grays = self.__video2csv(Interval_number = Interval_number,show = show)
         
         print(self.video_name+' Frame Number & timestamps are loaded successfully \nvideo is processing frame by frame...')
@@ -137,7 +137,8 @@ class CFCvideo(Video):
             save_epoch=True
         """
         if not os.path.exists(self.videofreezing_path):
-            self.video2csv(timestamp_method = timestamp_method,Interval_number=Interval_number,diff_gray_value=diff_gray_value,show = show)
+            self.video2csv(timestamp_method = timestamp_method,Interval_number=Interval_number
+                ,diff_gray_value=diff_gray_value,show = show)
 
         return FF(self.videofreezing_path).freezing_percentage(threshold=threshold, start = start, stop = stop
             ,show_detail=show_detail,percent =percent,save_epoch=save_epoch)

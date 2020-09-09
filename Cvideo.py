@@ -310,6 +310,7 @@ class Video():
 
     def generate_ts_txt(self):
         if not os.path.exists(self.videots_path):
+            print("generating timestamps...")
             if (platform.system()=="Linux"):
                 command = r'ffprobe -i %s -show_frames -select_streams v -loglevel quiet| grep pkt_pts_time= | cut -c 14-24 > %s' % (self.video_path,self.videots_path)
                 child = subprocess.Popen(command,shell=True)

@@ -63,9 +63,9 @@ class TimestampsFile(File):
             sys.exit()
 
         self.ts=self.read_timestamp()
-        if self.ts.isnull().any():
-            print(self.ts)
-            print("ATTENTION: therea are 'NaN' in timestamps !!")
+        # if self.ts.isnull().any():
+        #     print(self.ts)
+        #     print("ATTENTION: therea are 'NaN' in timestamps !!")
 
     def datetime2minisceconds(self,x,start):    
         # print(x,end = " " )
@@ -77,9 +77,13 @@ class TimestampsFile(File):
             data = pd.read_csv(self.file_path,sep=",")
             start = datetime.datetime.strptime(data["0"][0], '%Y-%m-%d %H:%M:%S.%f')
             data["0"]=data["0"].apply(self.datetime2minisceconds,args=[start,])
-            return data["0"]
+            return data["0"]/1000
         if self.method  == "ffmpeg":
-            return pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["0"])
+            try:
+                return pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["0"])
+            except:
+                print("default method is ffmpeg, try 'datetime'")
+                sys.exit()
         if self.method == "miniscope":
             temp=pd.read_csv(self.file_path,sep = "\t", header = 0)
             temp = temp[temp["camNum"]==self.camNum] ## wjn的 case 是1， 其他的scope是0
