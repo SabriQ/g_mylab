@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import os,sys,glob,csv
 import json
@@ -216,26 +217,42 @@ class MiniAna():
                 in_context_placebin_num = []
                 print(placebins)
                 for in_context,x in zip(self.result['in_context'],self.result["aligned_behave2ms"]['Body_x']):
-                    x = int(x)
+                    # x = int(x)
                     if not in_context:
                         in_context_placebin_num.append(0)
                     else:   
-                        for i in range(placebin_number):
-                            if i == 0 :
-                                if x<placebins[i][1]:
-                                    in_context_placebin_num.append(i+1)
+                        if x == placebins[0][0]:
+                            in_context_placebin_num.append(1)
+                        else:
+                            for i,placebin in enumerate(placebins,0):
+                                # print(x,placebin[0],placebin[1],end="|")
+                                if x>placebin[0] and x <= placebin[1]:
+                                    temp=i+1
+                                    break                                    
                                 else:
                                     pass
-                            elif not i == placebin_number-1:
-                                if x>=placebins[i][0] and x<placebins[i][1]:
-                                    in_context_placebin_num.append(i+1)
-                                else:             
-                                    pass
-                            else:
-                                if x>=placebins[i][0]:
-                                    in_context_placebin_num.append(i+1)
-                                else:
-                                    pass
+                            try:
+                                in_context_placebin_num.append(temp)
+                            except:
+                                logger.warning("%s is in context but not in any place bin"%x)
+
+                logger.info("in_context_placebin_num should start from 1, 0 means out of context")
+                        # for i in range(placebin_number):
+                        #     if i == 0 :
+                        #         if x<placebins[i][1]:
+                        #             in_context_placebin_num.append(i+1)
+                        #         else:
+                        #             pass
+                        #     elif not i == placebin_number-1:
+                        #         if x>=placebins[i][0] and x<placebins[i][1]:
+                        #             in_context_placebin_num.append(i+1)
+                        #         else:             
+                        #             pass
+                        #     else:
+                        #         if x>=placebins[i][0]:
+                        #             in_context_placebin_num.append(i+1)
+                        #         else:
+                        #             pass
                         
                 print(len(in_context_placebin_num),self.result["aligned_behave2ms"].shape)
                 self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num)
@@ -265,7 +282,7 @@ class MiniAna():
         """
         logger.info("FUN:: trim_df")
 
-        if df == None:
+        if df is None:
             df = self.df
         if force_neg2zero:
             logger.info("negative values are forced to be zero")
@@ -284,7 +301,7 @@ class MiniAna():
 
         index=pd.DataFrame()
         index["Trial_Num"] = Trial_Num>=0
-        logger.info("Trial_Num start from 0")
+        logger.info("Trial_Num start from 1")
 
         if in_process:
             if not process ==None:
@@ -427,7 +444,7 @@ class Cellid(MiniAna):
         logger.info("FUN:: cellids_Context")
         logger.info("Context 0,1,2,-1 means %s."%context_map)
         #序列化in_context_list
-        if meanfr_df == None:
+        if meanfr_df is None:
             logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
@@ -435,7 +452,7 @@ class Cellid(MiniAna):
             meanfr_df = df[index].groupby(self.Trial_Num[index]).mean().reset_index(drop=False)
 
         try:
-            if Context == None:
+            if Context is None:
                 logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
                 temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
                 Context = temp["Enter_ctx"]
@@ -490,19 +507,19 @@ class Cellid(MiniAna):
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_running_direction 0,1,-1 means%s."%rd_map)
 
-        if mean_df == None:
+        if mean_df is None:
             logger.info("Normalize=False,standarize=False,in_context=True")
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
-        if in_context_running_direction == None:
+        if in_context_running_direction is None:
             in_context_running_direction=self.result["in_context_running_direction"]
         in_context_running_direction = pd.Series([rd_map[i] for i in in_context_running_direction])
 
         meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
         # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
         try:
-            if Context == None:
+            if Context is None:
                 temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
                 Context = temp["Enter_ctx"]
             # 将0，1对应的context信息根据context_map置换成A B
@@ -585,25 +602,23 @@ class Cellid(MiniAna):
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_placebin_num start from 1.")
 
-        if df == None:
+        if df is None:
             logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True,speed_min=3)
             df=df[index]
+        logger.info("indexed shape of df %s"%df.shape[0])
 
-        if in_context_placebin_num == None:
+        if in_context_placebin_num is None:
             in_context_placebin_num=self.result["in_context_placebin_num"]
         in_context_placebin_num = pd.Series(in_context_placebin_num)[index]
-
+        logger.info("indexed shape of in_context_placebin_num %s"%in_context_placebin_num.shape)
 
         if Context ==None:
-            Context = pd.merge(self.Trial_Num,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]
-            Context = Context.fillna(-1) # 将NaN置换成-1
-            # print(self.Trial_Num)
-            # print(self.result["behavelog_info"][["Trial_Num","Enter_ctx"]])
-            Context = pd.Series([context_map[int(i)] for i in Context])[index]
-        # print(Context)
-        # print(df.shape)
+            Context = self.Context
+        Context = pd.Series([context_map[int(i)] for i in Context])[index]
+        logger.info("indexed shape of Context %s"%Context.shape)
+
 
         observed_SIs_A = Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
         shuffle_A = bootstrap_Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
@@ -622,7 +637,6 @@ class Cellid(MiniAna):
             logger.info("No context C")
             C = False
         logger.info("we shuffle mean firing rate in each place bin")
-        
         
         
         for i in range(shuffle_times):
@@ -667,8 +681,75 @@ class Cellid(MiniAna):
             "place_cells_B":place_cells_B
             }
         
+    def plot_in_context_placefield(self,df=None,Trial_Num=None,Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
+        logger.info("FUN:: plot_in_context_placefield")
+        logger.info("context 0,1,2,-1 means%s."%context_map)
+        logger.info("in_context_placebin_num start from 1.")
 
+        if df is None:
+            logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
+            df,index = self.trim_df(force_neg2zero=True
+                ,Normalize=False,standarize=False,in_context=True)
+            df=df[index]
+        logger.info("indexed shape of 'df' %s"%df.shape[0])
+
+        if Trial_Num is None:
+            Trial_Num=self.Trial_Num.values
+        Trial_Num=pd.Series(Trial_Num)[index]
+        logger.info("indexed shape of 'Trial_Num' %s"%Trial_Num.shape)
+
+        if Context is None:
+            Context = self.Context
+        Context = pd.Series([context_map[int(i)] for i in Context])[index]
+        logger.info("indexed shape of 'Context' %s"%Context.shape)
+
+        if in_context_placebin_num is None:
+            in_context_placebin_num=self.result["in_context_placebin_num"]
+        in_context_placebin_num = pd.Series(in_context_placebin_num)[index]
+        logger.info("indexed shape of 'in_context_placebin_num' %s"%in_context_placebin_num.shape)
+
+
+
+        meanfr = df.groupby([Trial_Num,Context,in_context_placebin_num]).mean()
         
+        try:
+            meanfr = meanfr.drop(index=(0,-1),level=0)
+            logger.info("remove Trial_Num '0' or '-1'")
+        except:
+            logger.debug("Trial_Num doesn't contain '-1' or '0'")
+
+        try:
+            meanfr = meanfr.drop(index="N",level=1)
+            logger.info("remove Context 'N'")
+        except:
+            logger.debug("Context doesn't contain 'N'")
+
+        try:
+            meanfr = meanfr.drop(index=0,level=2)
+            logger.info("remove in_context_placebin_num '0'")
+        except:
+            logger.debug("in_context_placebin_num,does'n contain '0'")
+
+        meanfr.index.names=(["Trial_Num","Context","in_context_placebin_num"])
+        def plot_single_cell(idx,legend=True):
+            mean = meanfr.groupby(["Context","in_context_placebin_num"]).mean()
+            sem = meanfr.groupby(["Context","in_context_placebin_num"]).sem()
+            x = meanfr.index.levels[2]
+
+            y_A = mean.xs("A")[idx].values
+            y_B = mean.xs("B")[idx].values
+            sem_A = sem.xs("A")[idx].values
+            sem_B = sem.xs("B")[idx].values
+            plt.plot(x,y_A,color="red")
+            plt.plot(x,y_B,color="green")
+            plt.fill_between(x,y_A-sem_A,y_A+sem_A,facecolor="red",alpha=.3)
+            plt.fill_between(x,y_B-sem_B,y_B+sem_B,alpha=.3,facecolor="green")
+            if legend:
+                plt.legend(["CtxA","CtxB"])
+            plt.yticks([])
+            plt.xlabel("place bin numbers")
+
+        return meanfr,plot_single_cell
 
 class PopulationAna(MiniAna):
     def __init__(self,session_path):

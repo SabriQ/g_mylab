@@ -1,8 +1,11 @@
 from mylab.process.CFC.Ccfcvideo import CFCvideo
 import glob,sys
 
+# 使用前请在powershell 执行 “ conda activate mylab”
+# 然后在执行本脚本 python freezing_analysis.py即可
+
 timestamp_method="ffmpeg" # timestamps 的文件，注意在ffmpeg,datetime,miniscope中进行选择
-Interval_number=7# 选第1+7n帧用于计算。产生_freezing_csv文件时，参考coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
+Interval_number=7 # 选第1+7n帧用于计算。产生_freezing_csv文件时，参考coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
 diff_gray_value=30 #前后两帧同样像素点位置是否变化的阈值，一般不变，但是当曝光很暗，比如低于10lux时可以适当降低这个值
 show = True #显示前100帧视频
 threshold = 0.05#当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.52%
@@ -29,7 +32,7 @@ CFCvideo(videolists[0]).freezing_percentage(
     ,percent =percent
     ,save_epoch=save_epoch)
 
-Batch = False
+Batch = True
 
 if Batch: #如果调仓完毕，将Batch=False 改为Batch=
     CFCvideo.freezing_percentages(

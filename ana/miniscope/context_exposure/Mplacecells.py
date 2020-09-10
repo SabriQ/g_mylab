@@ -66,19 +66,19 @@ def bootstrap_Cal_SIs(df,in_context_placebin_num):
 
     return shuffle 
 
-def place_cells(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_info,context=0,min_speed=3,speed_filter_sigma=3,shuffle_time=1000,z_score_cdf=0.95):
-    observe_si = Cal_SIs(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_info,context,min_speed,speed_filter_sigma)
-    shuffle = bootstrap_Cal_SIs(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_info,context,min_speed,speed_filter_sigma)    
-    shuffle_SIs = pd.DataFrame(columns=[i+1 for i in range(shuffle_time)])
-    for i in range(shuffle_time):
-        shuffle_SIs[i+1]=shuffle().values
-        if i % 100 == 0:
-            print("shuffle times: %s"%i)
-    shuffle_SIs = shuffle_SIs.T
-    shuffle_SIs.columns=idx_accept
-    threshold = scipy.stats.norm.ppf(z_score_cdf)# 大于百分之95的z_score
-    z_score = (observe_si-shuffle_SIs.mean())/shuffle_SIs.std()
-    return z_score[z_score>threshold].index
+# def place_cells(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_info,context=0,min_speed=3,speed_filter_sigma=3,shuffle_time=1000,z_score_cdf=0.95):
+#     observe_si = Cal_SIs(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_info,context,min_speed,speed_filter_sigma)
+#     shuffle = bootstrap_Cal_SIs(idx_accept,corrected_ms_ts,sigraw,aligned_behave2ms,behavelog_info,context,min_speed,speed_filter_sigma)    
+#     shuffle_SIs = pd.DataFrame(columns=[i+1 for i in range(shuffle_time)])
+#     for i in range(shuffle_time):
+#         shuffle_SIs[i+1]=shuffle().values
+#         if i % 100 == 0:
+#             print("shuffle times: %s"%i)
+#     shuffle_SIs = shuffle_SIs.T
+#     shuffle_SIs.columns=idx_accept
+#     threshold = scipy.stats.norm.ppf(z_score_cdf)# 大于百分之95的z_score
+#     z_score = (observe_si-shuffle_SIs.mean())/shuffle_SIs.std()
+#     return z_score[z_score>threshold].index
 
 def plot():
     pass
