@@ -681,7 +681,8 @@ class Cellid(MiniAna):
             "place_cells_B":place_cells_B
             }
         
-    def plot_in_context_placefield(self,df=None,Trial_Num=None,Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
+    def plot_in_context_placefield(self,df=None,Trial_Num=None,
+        Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
         logger.info("FUN:: plot_in_context_placefield")
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_placebin_num start from 1.")
@@ -731,7 +732,8 @@ class Cellid(MiniAna):
             logger.debug("in_context_placebin_num,does'n contain '0'")
 
         meanfr.index.names=(["Trial_Num","Context","in_context_placebin_num"])
-        def plot_single_cell(idx,legend=True):
+
+        def plot_Meanfr_along_Placebin(idx,legend=True):
             mean = meanfr.groupby(["Context","in_context_placebin_num"]).mean()
             sem = meanfr.groupby(["Context","in_context_placebin_num"]).sem()
             x = meanfr.index.levels[2]
@@ -749,7 +751,39 @@ class Cellid(MiniAna):
             plt.yticks([])
             plt.xlabel("place bin numbers")
 
-        return meanfr,plot_single_cell
+        def plot_Fr_in_SingleTrial_along_Placebin(idx,norm=True,colorbar=True
+            ,xlabel=True,ylabel=True,**kwargs):            
+            try:
+                #将整个1d trace按照place_bin的个数变成一个2d 的matrix
+                heatmap_matrix_A = np.reshape(meanfr.xs(("A"),level=("Context"))[idx].values,(-1,max(meanfr.index.levels[2])))
+                heatmap_matrix_B = np.reshape(meanfr.xs(("B"),level=("Context"))[idx].values,(-1,max(meanfr.index.levels[2])))
+            except:
+                print("some trial didn't have %s place bins"%max(meanfr.index.levels[2]))
+            if norm:
+                heatmap_matrix_A = np.apply_along_axis(lambda x:(x-np.mean(x))/np.std(x,ddof=1),axis=1,arr=heatmap_matrix_A)
+                heatmap_matrix_B = np.apply_along_axis(lambda x:(x-np.mean(x))/np.std(x,ddof=1),axis=1,arr=heatmap_matrix_B)
+            plt.subplot(211)
+            plt.imshow(heatmap_matrix_A,aspect='auto',**kwargs)
+            plt.title("CtxA")
+            if colorbar:
+                plt.colorbar(shrink=1)
+            if ylabel:
+                plt.ylabel("Trials")
+            if xlabel:
+                plt.xlabel("Place bins")
+
+            plt.subplot(212)
+            plt.imshow(heatmap_matrix_B,aspect='auto',**kwargs)
+            plt.title("CtxB")
+            if colorbar:
+                plt.colorbar(shrink=1)
+            if ylabel:
+                plt.ylabel("Trials")
+            if xlabel:
+                plt.xlabel("Place bins")
+            plt.tight_layout() 
+
+        return meanfr,plot_Meanfr_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
 
 class PopulationAna(MiniAna):
     def __init__(self,session_path):
