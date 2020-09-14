@@ -125,8 +125,9 @@ class MiniResult():
 
 
 
-    def save_behave_pkl(self,behavevideo,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
-
+    def save_behave_pkl(self,behavevideo
+        ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
+        logger.info("FUN:: save_behave_pkl")
         key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
         mark = starts_firstnp_stops(logfilepath)
 
@@ -136,7 +137,7 @@ class MiniResult():
         log = pd.read_csv(behave_log,skiprows=3)
         behavelog_time = log.iloc[:,12:]-min(log["P_nose_poke"])
         behavelog_info = log.iloc[:,:6]
-
+        logger.info("correct 'behavelog_time' when the first_np as 0")
 
         # index track file
         behave_track = [i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*DLC*h5")) if key in i][0]    
@@ -152,12 +153,14 @@ class MiniResult():
         # aligned log_time and behave video_time
         if mark_point  == 1:
             delta_t = ts[0][first_np-1]-behavelog_time["P_nose_poke"][0]
-            
+        
         ## 这里有时候因为first-np的灯刚好被手遮住，所以用第二个点的信号代替，即第一次enter_ctx的时间
         if mark_point == 2:
             delta_t = ts[0][first_np-1]-behavelog_time["P_enter"][0]
+
         behave_track['be_ts']=ts[0]-delta_t
-        
+
+        logger.info("correct 'be_ts' when the first_np as 0")
         # index in_context
         print(behavevideo)
         in_context_mask,in_context_coords=Video(behavevideo).draw_rois(aim="in_context",count = 1)
@@ -186,6 +189,7 @@ class MiniResult():
         产生 corrected_ms_ts
         """
         # index behave*.pkl
+        logger.info("FUN:: save_alinged_session_pkl")
         behave_infos = glob.glob(os.path.join(self.Result_dir,"behave*"))
 
         # indx session*.pkl
@@ -217,15 +221,16 @@ class MiniResult():
             print(behave_result["behave_track"]["be_ts"][start-1],behave_result["behave_track"]["be_ts"][first_np-1],behave_result["behave_track"]["be_ts"][stop-1])
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
-            logger.info("total time elaspse in 'behavioral video' and 'miniscope vidoe': ****ATTENTION****")
+            logger.info("total time elaspse in 'behavioral video' and 'miniscope video': ****ATTENTION****")
             t1 = behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1]
             logger.info(t1)
             logger.info(max(task_ms_result["ms_ts"])) #这部分不能相差太多
 
             # 以行为学视频中，miniscope-led灯亮后的100ms为起始0点
-            delta_t = 0-behave_result["behave_track"]["be_ts"][start-1]-0.1 # 这个0.1大约是启动时间
-            logger.info("miniscope timestamps delta_t:%s"%delta_t)
+            delta_t = 0-(behave_result["behave_track"]["be_ts"][start-1]) # 这个0.1大约是启动时间
+
             task_ms_result["corrected_ms_ts"] = task_ms_result["ms_ts"]-delta_t*1000
+            logger.info("'corrected_ms_ts' corrected 'ms_ts' when first_np as 0")
 
             with open(task_ms_info,'wb') as f:
                 pickle.dump(dict(task_ms_result,**behave_result),f)
@@ -241,7 +246,7 @@ class MiniResult():
         """
         在session*.pkl中的behave_tracek 加上“Trial_Num”,"process"
         """
-        print("FUN:: add_TrialNum_Process2behave_track")
+        logger.info("FUN:: add_TrialNum_Process2behave_track")
         with open(session,'rb') as f:
             ms_result = pickle.load(f)
 
