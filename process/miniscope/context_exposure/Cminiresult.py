@@ -17,6 +17,18 @@ sh = logging.StreamHandler(sys.stdout) #stream handler
 sh.setLevel(logging.DEBUG)
 logger.addHandler(sh)
 
+def concatenate_sessions(session1,session2):
+    """
+    仅限于记录时有多个sessions但是只有一个behavioral video的情况
+    """
+    with open(session1,"rb") as f:
+        s1 = pickle.load(f)
+    with open(session2,"rb") as f:
+        s2 = pickle.load(f)
+    s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
+    s1["dff"] = np.vstack((s1.get("dff"),s2.get("dff")))
+    s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
+    s1["idx_accepted"] = s1["idx_accepted"]
 
 class MiniResult():
     """
