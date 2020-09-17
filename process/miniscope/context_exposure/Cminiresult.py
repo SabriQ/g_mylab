@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import os,sys,glob,csv
+import os,sys,glob,csv,re
 import json,cv2
 import scipy.io as spio
 import pickle
@@ -32,6 +32,7 @@ class MiniResult():
         self.resulthdf5 =  os.path.join(self.Result_dir,"result.hdf5")
         self.logfile = os.path.join(self.Result_dir,"pre-process_log.txt")
 
+        self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl")).sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
         self.ms_mc_path = os.path.join(self.Result_dir,"ms_mc.avi")
 
         fh = logging.FileHandler(self.logfile,mode="w")

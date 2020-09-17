@@ -50,7 +50,8 @@ class MiniAna():
             self.exp = "hc"
         else:
             self.exp = "task"
-        logger.debug("loaded %s"%self.session_path)
+        logger.debug("loaded")
+        print(self.result.keys())
 
 
 
@@ -82,7 +83,7 @@ class MiniAna():
         注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
         hc_trial_bin: in ms, default 5000ms
         """
-        logger.info("FUN:: aligned_behave2ms,hc_trial_bin=%s"%hc_trial_bin)
+        logger.info("FUN:: aligned_behave2ms")
         
         if "behave_track" in self.result.keys():
             if not "aligned_behave2ms" in self.result.keys():
@@ -92,6 +93,7 @@ class MiniAna():
                 aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
                                                 ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
                 _,length = rlc(aligned_behave2ms["ms_behaveframe"])
+                print(length)
                 logger.info("for one miniscope frame, there are at most %s behavioral frames "%max(length))
 
                 if max(length)>10:
@@ -113,6 +115,9 @@ class MiniAna():
             except:
                 del self.result["aligned_behave2ms"]
                 logger.debug("add Trial_Num and process failed, del aligned_behave2ms")
+                with open(self.session_path,"wb") as f:
+                    pickle.dump(self.result,f)
+                return self.aligned_behave2ms(hc_trial_bin=hc_trial_bin)
         else:
             logger.debug("this session was recorded in homecage")
 
@@ -593,6 +598,7 @@ class Cellid(MiniAna):
         }
 
     def cellids_PC_incontext(self,idxes,df=None,Context=None,in_context_placebin_num=None
+        ,in_process=True,process=[0,1,2,3]
         ,context_map=["A","B","C","N"],shuffle_times=1000):
         """
         df 必须具备 place_bin_num
@@ -604,7 +610,7 @@ class Cellid(MiniAna):
 
         if df is None:
             logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
-            df,index = self.trim_df(force_neg2zero=True
+            df,index = self.trim_df(force_neg2zero=True,in_process=in_process,process=process
                 ,Normalize=False,standarize=False,in_context=True,speed_min=3)
             df=df[index]
         logger.info("indexed shape of df %s"%df.shape[0])
@@ -629,10 +635,13 @@ class Cellid(MiniAna):
         shuffle_SIs_B=[]
         # print(observed_SIs_A)
         try:
-            observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
-            shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
-            shuffle_SIs_C=[]
-            C = True
+            if df[Context=="C"].shape[0] != 0:
+                observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+                shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+                shuffle_SIs_C=[]
+                C = True
+            else:
+                C = False
         except:
             logger.info("No context C")
             C = False
@@ -681,7 +690,7 @@ class Cellid(MiniAna):
             "place_cells_B":place_cells_B
             }
         
-    def plot_in_context_placefield(self,df=None,Trial_Num=None,
+    def plot_in_context_placefield(self,df=None,Trial_Num=None,in_process=True,process=[0,1,2,3,4,5],
         Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
         logger.info("FUN:: plot_in_context_placefield")
         logger.info("context 0,1,2,-1 means%s."%context_map)
@@ -689,7 +698,7 @@ class Cellid(MiniAna):
 
         if df is None:
             logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
-            df,index = self.trim_df(force_neg2zero=True
+            df,index = self.trim_df(force_neg2zero=True,in_process=in_process,process=process
                 ,Normalize=False,standarize=False,in_context=True)
             df=df[index]
         logger.info("indexed shape of 'df' %s"%df.shape[0])
@@ -733,7 +742,7 @@ class Cellid(MiniAna):
 
         meanfr.index.names=(["Trial_Num","Context","in_context_placebin_num"])
 
-        def plot_Meanfr_along_Placebin(idx,legend=True):
+        def plot_Meanfr_trace_along_Placebin(idx,legend=True):
             mean = meanfr.groupby(["Context","in_context_placebin_num"]).mean()
             sem = meanfr.groupby(["Context","in_context_placebin_num"]).sem()
             x = meanfr.index.levels[2]
@@ -750,6 +759,45 @@ class Cellid(MiniAna):
                 plt.legend(["CtxA","CtxB"])
             plt.yticks([])
             plt.xlabel("place bin numbers")
+
+        def plot_Meanfr_heatmap_along_Placebin(idxes,figsize=(8,8),**kwargs):
+            plt.figure(figsize=figsize)
+            
+            df_A = meanfr.xs("A",level="Context").groupby(["in_context_placebin_num"]).mean()
+            norm_df_A = df_A.apply(lambda x:(x-np.mean(x))/np.std(x,ddof=1)).T
+            norm_df_A = norm_df_A.loc[idxes,:]
+
+            df_B = meanfr.xs("B",level="Context").groupby(["in_context_placebin_num"]).mean()
+            norm_df_B = df_B.apply(lambda x:(x-np.mean(x))/np.std(x,ddof=1)).T
+            norm_df_B = norm_df_B.loc[idxes,:]
+
+            plt.subplot(221)
+            sorted_df_A = norm_df_A.loc[norm_df_A.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_A,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("cells in Context A sorted in Context A")
+
+            plt.subplot(222)
+            sorted_df_B = norm_df_B.loc[norm_df_A.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_B,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("cells in Context B sorted in Context A")
+
+            plt.subplot(223)
+            sorted_df_B = norm_df_B.loc[norm_df_B.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_B,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("cells in Context B sorted in Context B")
+            plt.tight_layout() 
+
+            plt.subplot(224)
+            sorted_df_A = norm_df_A.loc[norm_df_B.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_A,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("cells in Context A sorted in Context B")
+
+            plt.tight_layout() 
+            plt.show()
 
         def plot_Fr_in_SingleTrial_along_Placebin(idx,norm=True,colorbar=True
             ,xlabel=True,ylabel=True,**kwargs):            
@@ -783,7 +831,7 @@ class Cellid(MiniAna):
                 plt.xlabel("Place bins")
             plt.tight_layout() 
 
-        return meanfr,plot_Meanfr_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
+        return meanfr,plot_Meanfr_trace_along_Placebin,plot_Meanfr_heatmap_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
 
 class PopulationAna(MiniAna):
     def __init__(self,session_path):
