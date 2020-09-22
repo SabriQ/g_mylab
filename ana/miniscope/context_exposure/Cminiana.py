@@ -7,7 +7,7 @@ import json
 import scipy.io as spio
 import pickle
 import scipy.stats as stats
-
+from mylab.Cvideo import Video
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mfunctions import *
 
@@ -34,8 +34,7 @@ class MiniAna():
         logger.addHandler(fh)
 
         self._load_session()
-        self.align_behave_ms() # self.Trial_Num, self.process
-        self.add_info2aligned_behave2ms() # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
+        self.align_behave_ms() # self.result["Trial_Num"], self.process
         logger.info("'sigraw' is taken as self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
         self.length = self.df.shape[0]
@@ -52,7 +51,6 @@ class MiniAna():
             self.exp = "task"
         logger.debug("loaded")
         print(self.result.keys())
-
 
 
     def _dataframe2nparray(self,df):
@@ -76,6 +74,21 @@ class MiniAna():
         spio.savemat(savematname,self._dataframe2nparray(self.result))
         logger.info("saved %s"%savematname)
 
+    def play_events_in_behavioral_video(self,):
+        if self.exp=="task":
+            event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
+            be_ts = self.result["behave_track"]["be_ts"].to_numpy()
+            frame_points=[find_close_fast(be_ts,i)+1 for i in event_points ]
+
+            Video(self.result["behavevideo"][0]).check_frames(*frame_points)
+        else:
+            print("homecage session doesn't have behaviral video")
+
+    def play_events_in_miniscope_video(self,miniscope_video_path,basicframe_num):
+        event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
+        be_ts = self.result["aligned_behave2ms"]["be_ts"].to_numpy()
+        frame_points=[find_close_fast(be_ts,i)+1+basicframe_num for i in event_points ]
+        Video(miniscope_video_path).check_frames(*frame_points)
 
     def align_behave_ms(self,hc_trial_bin=5000):
         """
@@ -102,6 +115,7 @@ class MiniAna():
                     logger.info("********ATTENTION when align_behave_ms**********")
 
                 aligned_behave2ms = aligned_behave2ms.join(self.result["behave_track"],on="ms_behaveframe")
+                
                 self.result["aligned_behave2ms"]=aligned_behave2ms
                 with open(self.session_path,'wb') as f:
                     pickle.dump(self.result,f)
@@ -110,8 +124,8 @@ class MiniAna():
                 logger.debug("behaveiroal timestamps were aligned to ms")
 
             try:
-                self.Trial_Num = self.result["aligned_behave2ms"]["Trial_Num"]
-                self.process = self.result["aligned_behave2ms"]["process"]
+                self.result["Trial_Num"] = self.result["aligned_behave2ms"]["Trial_Num"]
+                self.result["process"] = self.result["aligned_behave2ms"]["process"]
             except:
                 del self.result["aligned_behave2ms"]
                 logger.debug("add Trial_Num and process failed, del aligned_behave2ms")
@@ -126,8 +140,8 @@ class MiniAna():
             for ts in self.result["ms_ts"]:
                 Trial_Num.append(int(np.ceil(ts/hc_trial_bin)))
                 process.append(-1)
-            self.Trial_Num = pd.Series(Trial_Num)
-            self.process = pd.Series(process)
+            self.result["Trial_Num"] = pd.Series(Trial_Num)
+            self.result["process"] = pd.Series(process)
 
     def add_zone2result(self,zone="in_lineartrack"):
         logger.info("FUN:: add_zone2result at zone %s"%zone)
@@ -193,7 +207,7 @@ class MiniAna():
             if not "in_context_running_direction" in self.result.keys():
                 in_context_running_direction=[]
 
-                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.Trial_Num,self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
+                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.result["Trial_Num"],self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
                     if Trial == -1:
                         in_context_running_direction.append(-1)
                     else:
@@ -301,7 +315,7 @@ class MiniAna():
             logger.info("STANDARIZED sigraw trace")
 
         if Trial_Num==None:
-            Trial_Num = self.Trial_Num
+            Trial_Num = self.result["Trial_Num"]
 
 
         index=pd.DataFrame()
@@ -346,8 +360,9 @@ class Cellid(MiniAna):
     def __init__(self,session_path):
         super().__init__(session_path)
 
+        self.add_info2aligned_behave2ms(scale=0.2339021309714166,placebin_number=10) # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
 
-        self.Context = (pd.merge(self.Trial_Num,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
+        self.Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
 
         self.in_context_running_direction = self.result["in_context_running_direction"]
 
@@ -454,11 +469,11 @@ class Cellid(MiniAna):
             df,index = self.trim_df(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
-            meanfr_df = df[index].groupby(self.Trial_Num[index]).mean().reset_index(drop=False)
+            meanfr_df = df[index].groupby(self.result["Trial_Num"][index]).mean().reset_index(drop=False)
 
         try:
             if Context is None:
-                logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
+                logger.info("""Default:: pd.merge(self.result["Trial_Num"][index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
                 temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
                 Context = temp["Enter_ctx"]
             # 将0，1对应的context信息根据context_map置换成A B
@@ -521,8 +536,8 @@ class Cellid(MiniAna):
             in_context_running_direction=self.result["in_context_running_direction"]
         in_context_running_direction = pd.Series([rd_map[i] for i in in_context_running_direction])
 
-        meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
-        # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
+        meanfr_df = df[index].groupby([self.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
+        # meanfr_df = df[index].groupby([self.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False)
         try:
             if Context is None:
                 temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
@@ -704,7 +719,7 @@ class Cellid(MiniAna):
         logger.info("indexed shape of 'df' %s"%df.shape[0])
 
         if Trial_Num is None:
-            Trial_Num=self.Trial_Num.values
+            Trial_Num=self.result["Trial_Num"].values
         Trial_Num=pd.Series(Trial_Num)[index]
         logger.info("indexed shape of 'Trial_Num' %s"%Trial_Num.shape)
 
