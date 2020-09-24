@@ -10,7 +10,7 @@ import scipy.stats as stats
 from mylab.Cvideo import Video
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mfunctions import *
-
+from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
 from mylab.ana.miniscope.context_exposure.Mplacecells import *
 import logging 
 
@@ -73,6 +73,11 @@ class MiniAna():
         savematname = self.session_path.replace("pkl","mat")
         spio.savemat(savematname,self._dataframe2nparray(self.result))
         logger.info("saved %s"%savematname)
+
+    def detect_ca_transients(self,thresh,baseline,t_half=0.2,FR=30):
+        logger.debug("detecting calcium transients for each cell")
+        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df,thresh,baseline,t_half,FR)
+        logger.info("calcium tansients are detected... ")
 
     def play_events_in_behavioral_video(self,):
         if self.exp=="task":
