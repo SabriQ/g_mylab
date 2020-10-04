@@ -6,7 +6,7 @@ import os,sys,glob
 
 # refer to 'jessica 2020 Neuron Contextual fear memory retrieval by correlated ensembles of ventral CA1 neurons'
 
-def detect_ca_transients(idx,raw_cell,thresh,baseline,t_half=0.2,FR=30):
+def detect_ca_transients(idx,raw_cell,thresh,baseline,t_half=0.2,FR=30,show=True):
     """
     idx, all the cell_ids in raw_cell
     raw_cell, numpy matrix.  m rows, n columns;m means each obeservation in each time point,n means each cell.
@@ -67,28 +67,29 @@ def detect_ca_transients(idx,raw_cell,thresh,baseline,t_half=0.2,FR=30):
                     celldata_detect[:,j][start:finish]=cell_transient.values
             
         ca_transients[cellid]=pd.DataFrame(cell_transients,columns=["cell_transient","maxamp_ind", "maximum","area_AUC"])
-
-    plt.figure(figsize=(40*celldata.shape[0]/20000,len(idx)))
-    y_j=[]
-    for j,id in enumerate(idx):
-        plt.plot(celldata[:,j]+j*10,color="black",linewidth=1)
-        y_j.append(j*10)
-        for i in ca_transients[id]["cell_transient"]:
-            plt.plot(i+j*10,"r",linewidth=1)
-    plt.yticks(ticks=y_j,labels=idx)
-    plt.ylabel("Cellids")
-    plt.show()
-    def single_cell_detected_transient(id):
-        try:
-            j = np.argwhere(idx==id)[0][0]
-        except:
-            print("cell %s is not exist")
-            sys.exit()
-        plt.figure(figsize=(40*celldata.shape[0]/20000,1))
-        plt.plot(celldata[:,j],color="black",linewidth=1)
-        for i in ca_transients[id]["cell_transient"]:
-            plt.plot(i,"r",linewidth=1)
-            # plt.gca().set_axis_off()
-            plt.title(id)
+    if show:
+        print("plotting")
+        plt.figure(figsize=(40*celldata.shape[0]/20000,len(idx)))
+        y_j=[]
+        for j,id in enumerate(idx):
+            plt.plot(celldata[:,j]+j*10,color="black",linewidth=1)
+            y_j.append(j*10)
+            for i in ca_transients[id]["cell_transient"]:
+                plt.plot(i+j*10,"r",linewidth=1)
+        plt.yticks(ticks=y_j,labels=idx)
+        plt.ylabel("Cellids")
         plt.show()
+        def single_cell_detected_transient(id):
+            try:
+                j = np.argwhere(idx==id)[0][0]
+            except:
+                print("cell %s is not exist")
+                sys.exit()
+            plt.figure(figsize=(40*celldata.shape[0]/20000,1))
+            plt.plot(celldata[:,j],color="black",linewidth=1)
+            for i in ca_transients[id]["cell_transient"]:
+                plt.plot(i,"r",linewidth=1)
+                # plt.gca().set_axis_off()
+                plt.title(id)
+            plt.show()
     return ca_transients,celldata_detect,single_cell_detected_transient

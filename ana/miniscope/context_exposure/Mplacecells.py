@@ -24,6 +24,7 @@ def speed_optimize(speeds,method="gaussian_filter1d",sigma=3,length=12):
         
     return speeds # in cm/s
 
+
 def Cal_SIs(df,in_context_placebin_num):
     # p(x) the probability for the mouse being at location x for each trial 
     print("call Cal_SIs")

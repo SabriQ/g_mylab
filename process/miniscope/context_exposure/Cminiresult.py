@@ -25,10 +25,20 @@ def concatenate_sessions(session1,session2):
         s1 = pickle.load(f)
     with open(session2,"rb") as f:
         s2 = pickle.load(f)
-    s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
-    s1["dff"] = np.vstack((s1.get("dff"),s2.get("dff")))
-    s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
-    s1["idx_accepted"] = s1["idx_accepted"]
+
+    if (s1["idx_accepted"]==s2["idx_accepted"]).all():
+        s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
+        s1["dff"] = np.vstack((s1.get("dff"),s2.get("dff")))
+        s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
+        s1["idx_accepted"] = s1["idx_accepted"]
+
+        with open(session1,"wb") as f:
+            pickle.dump(s1,f)
+        print("%s has been merged in %s"%(session2,session1))
+        print("you should remove %s"%session2)
+    else:
+        print("%s is not connected to %s"%(session2,session1))
+
 
 class MiniResult():
     """
@@ -40,20 +50,20 @@ class MiniResult():
     def __init__(self,Result_dir):
         self.Result_dir = Result_dir
         self.ms_mat_path = os.path.join(self.Result_dir,"ms.mat")
+        self.ms_mat_path2 = os.path.join(self.Result_dir,"ms.pkl")
         self.ms_ts_path = os.path.join(self.Result_dir,"ms_ts.pkl")
         self.resulthdf5 =  os.path.join(self.Result_dir,"result.hdf5")
         self.logfile = os.path.join(self.Result_dir,"pre-process_log.txt")
-
-        self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl")).sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
+        self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl"))
+        self.sessions.sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
         self.ms_mc_path = os.path.join(self.Result_dir,"ms_mc.avi")
 
-        fh = logging.FileHandler(self.logfile,mode="w")
+        fh = logging.FileHandler(self.logfile,mode="a")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
         fh.setFormatter(formatter)
         fh.setLevel(logging.INFO)
         logger.addHandler(fh)
 
-    
     def frame_num(self):
         if os.path.exists(self.ms_mc_path):
             videoframe_num = int(cv2.VideoCapture(self.ms_mc_path).get(7))
@@ -72,11 +82,80 @@ class MiniResult():
         else:
             return 0 
 
+    def save_session_pkl(self,orders=None):
+        if os.path.exists(self.ms_mat_path):        
+            logger.debug("loading %s"%self.ms_mat_path)
+            ms = load_mat(self.ms_mat_path)
+            logger.debug("loaded %s"%self.ms_mat_path)
+        else:
+            logger.debug("loading %s"%self.ms_mat_path2)
+            ms = load_pkl(self.ms_mat_path2)
+            logger.debug("loaded %s"%self.ms_mat_path2)
 
-    def save_session_pkl(self):
-        logger.debug("loading %s"%self.ms_mat_path)
-        ms = load_mat(self.ms_mat_path)
-        logger.debug("loaded %s"%self.ms_mat_path)
+        try:
+            # dff = ms['ms']['dff']
+            S_dff = ms['ms']['S_dff']
+        except:            
+            logger.debug("save S_dff or dff problem")
+
+        sigraw = ms['ms']['sigraw'] #默认为sigraw
+
+
+        idx_accepted = ms['ms']['idx_accepted']
+        idx_deleeted = ms['ms']['idx_deleted']
+
+        with open(self.ms_ts_path,'rb') as f:
+            timestamps = pickle.load(f)
+        [print(len(i)) for i in timestamps]
+        logger.info("session lenth:%s, timestamps length:%s, dff shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),dff.shape))
+
+
+        if not orders == None:
+            timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
+            [print(len(i)) for i in timestamps_order]
+            logger.info("timestamps are sorted by %s"%orders)
+
+
+        #根据timestamps将dff切成对应的session
+        slice = []
+        for i,timestamp in enumerate(timestamps_order):
+            if i == 0:
+                start = 0
+                stop = len(timestamp)
+                slice.append((start,stop))
+            else:
+                start = slice[i-1][1]
+                stop = start+len(timestamp)
+        #         if i == len(timestamps)-1:
+        #             stop = -1
+                slice.append((start,stop))
+        # print(slice)
+
+        for s,i in zip(slice,orders):
+            name = "session"+str(i)+".pkl"
+            result = {
+                "ms_ts":timestamps[i-1],
+                "dff":np.transpose(dff)[s[0]:s[1]],
+                "S_dff":np.transpose(S_dff)[s[0]:s[1]],
+                "sigraw":sigraw[s[0]:s[1]],
+                "idx_accepted":idx_accepted
+            }
+
+            with open(os.path.join(self.Result_dir,name),'wb') as f:
+                pickle.dump(result,f)
+            logger.debug("%s is saved"%name)
+
+
+    def save_session_pkl2(self):
+        if os.path.exists(self.ms_mat_path):        
+            logger.debug("loading %s"%self.ms_mat_path)
+            ms = load_mat(self.ms_mat_path)
+            logger.debug("loaded %s"%self.ms_mat_path)
+        else:
+            logger.debug("loading %s"%self.ms_mat_path2)
+            ms = load_pkl(self.ms_mat_path2)
+            logger.debug("loaded %s"%self.ms_mat_path2)
+
         try:
             dff = ms['ms']['dff']
         except:
@@ -294,7 +373,7 @@ class MiniResult():
 
             ms_result["behave_track"]["Trial_Num"]=Trial_Num
             ms_result["behave_track"]["process"]=process
-
+            logger.info("Trial_Num,process here are the same length as behavioral data,not the final version")
             with open(session,'wb') as f:
                 pickle.dump(ms_result,f)
             print("%s is updated and saved"%session)

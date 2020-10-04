@@ -5,7 +5,6 @@ Created on Thu Oct 31 16:07:26 2019
 @author: Sabri
 """
 import os,re
-from mylab.Cvideo import Video
 import scipy.io as spio
 import glob
 import numpy as np
@@ -210,22 +209,52 @@ class LinearTrackBehaviorFile(File):
         self.Enter_Context = pd.Series ([self.context_map[i] for i in self.data["Enter_ctx"]])
         self.Exit_Context = pd.Series ([self.context_map[i] for i in self.data["Exit_ctx"]] )
 
+    @property
+    def choice(self):
+    
         Choice = []
         if self.data["Left_choice"][0]==1:
             Choice.append("left")
         else:
             Choice.append("right")
             
-        for choice in (self.data["Left_choice"].diff()[1:]-self.data["Right_choice"].diff()[1:]):
+        for choice in (np.diff(self.data["Left_choice"])-np.diff(self.data["Right_choice"])):
             if choice == 1:
                 Choice.append("left")
             else:
                 Choice.append("right")
-        self.data["Choice_side"] = Choice
+        return pd.Series(Choice,name="choice")
+    
+
+    @property
+    def noise(self):
+        noisy=[]
+        if self.data["Enter_ctx"][0]==1:
+            noisy.append(0)
+        else:
+            noisy.append(1)
+
+        for context_change in np.diff(self.data["Enter_ctx"]):
+            if context_change == 0:
+                noisy.append(0)
+            else:
+                noisy.append(1)
+                
+        return pd.Series(noisy,name="noise")
+
+
+
+    @property
+    def reward(self):
+        return self.data["Choice_class"]
     
     @property
-    def Trial_Num(self):
-        return max(self.data["Trial_Num"])
+    def Trial_duration(self):        
+        durations = np.diff(self.data.iloc[:,-6:],axis=1)
+        Trial_duration = pd.DataFrame(durations,columns=["process1","process2","process3","process4","process5"])
+        Trial_duration["Trial"] = np.sum(durations,axis=1)
+        return Trial_duration
+
 
     @property
     def bias(self):

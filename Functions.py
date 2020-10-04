@@ -80,7 +80,7 @@ def normalized_distribution_test(datalist):
     return stats.shapiro(datalist)
     
 def find_close_fast(arr, e):    
-    start_time = datetime.datetime.now()            
+    # start_time = datetime.datetime.now()            
     low = 0    
     high = len(arr) - 1    
     idx = -1     
@@ -95,7 +95,7 @@ def find_close_fast(arr, e):
             high = mid     
     if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
         idx += 1            
-    use_time = datetime.datetime.now() - start_time    
+    # use_time = datetime.datetime.now() - start_time    
     return idx #0作为起始
 
 def find_close_fast2(arr,e):

@@ -11,6 +11,7 @@ import math
 import csv 
 import json
 from mylab.Functions import *
+from mylab.Cfile import TimestampsFile as TsF
 
 class Video():
     """
@@ -28,6 +29,15 @@ class Video():
             print("video havenp't been tracked")
 
         self.videosize = os.path.getsize(self.video_path)/1073741824 # video size is quantified by GB
+
+    @property
+    def timestamps(self):
+        if not os.path.exists(self.videots_path):
+            print("generating TimestampsFile by ffmpeg")
+            self.generate_ts_txt()
+        else:
+            return TsF(self.videots_path,method="ffmpeg").ts
+
     def play(self):
         """
         instructions:
@@ -480,7 +490,7 @@ class Video():
         
         return masks,coords
 
-    def check_frames(self,*args,location = "rightup"):
+    def check_frames(self,*args,location = "rightup",time_point=False):
         '''
         'a':后退一帧
         'd':前进一帧
@@ -504,6 +514,11 @@ class Video():
         print(f"there are {int(total_frame)} frames in total")
         
         frame_No=1
+        
+        if time_point:
+            #转换成帧数，start from 1,因为在后面播放的时候，有-1的操作。
+            args=[find_close_fast[self.timestamps.to_numpy(),i]+1 for i in args]
+
         specific_frames = args
         if len(specific_frames)==0:
             specific_frames=[0]

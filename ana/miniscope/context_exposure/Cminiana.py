@@ -74,10 +74,20 @@ class MiniAna():
         spio.savemat(savematname,self._dataframe2nparray(self.result))
         logger.info("saved %s"%savematname)
 
+    def savesession(self,):
+        with open(self.session_path,"wb") as f:
+            pickle.dump(self.result,f)
+        logger.info("self.result is saved at %s"%self.session_path)
+
     def detect_ca_transients(self,thresh,baseline,t_half=0.2,FR=30):
         logger.debug("detecting calcium transients for each cell")
-        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df,thresh,baseline,t_half,FR)
+        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
         logger.info("calcium tansients are detected... ")
+
+    def generate_timebin(self,timebin=1000):
+        self.result["timebin"] = pd.Series([int(np.ceil(i/1000)) for i in self.result["ms_ts"]])
+        logger.info("timebin is binned into %s ms"%timebin)
+        return self.result["timebin"]
 
     def play_events_in_behavioral_video(self,):
         if self.exp=="task":
@@ -231,8 +241,9 @@ class MiniAna():
 
             #4 添加 in_context_placebin_num"
             if not "in_context_placebin_num" in self.result.keys():
-                Cx_min = np.min(self.result["in_context_coords"][:,0])
-                Cx_max = np.max(self.result["in_context_coords"][:,0])
+                # print(self.result["in_context_coords"])
+                Cx_min = np.min(np.array(self.result["in_context_coords"])[:,0])
+                Cx_max = np.max(np.array(self.result["in_context_coords"])[:,0])
     
                 palcebinwidth=(Cx_max-Cx_min)/placebin_number
                 placebins = [] #从1开始 0留给所有‘其他区域’
@@ -365,7 +376,8 @@ class Cellid(MiniAna):
     def __init__(self,session_path):
         super().__init__(session_path)
 
-        self.add_info2aligned_behave2ms(scale=0.2339021309714166,placebin_number=10) # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
+        # self.add_info2aligned_behave2ms(scale=0.2339021309714166,placebin_number=10) 
+        # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
 
         self.Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
 
@@ -618,7 +630,7 @@ class Cellid(MiniAna):
         }
 
     def cellids_PC_incontext(self,idxes,df=None,Context=None,in_context_placebin_num=None
-        ,in_process=True,process=[0,1,2,3]
+        ,in_process=True,process=[0,1,2,3],scale=0.2339021309714166,placebin_number=10
         ,context_map=["A","B","C","N"],shuffle_times=1000):
         """
         df 必须具备 place_bin_num
@@ -627,6 +639,8 @@ class Cellid(MiniAna):
         logger.info("FUN:: cellids_PC_incontext")
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_placebin_num start from 1.")
+
+        self.add_info2aligned_behave2ms(scale=scale,place_bin_num=placebin_number)
 
         if df is None:
             logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
@@ -853,10 +867,34 @@ class Cellid(MiniAna):
 
         return meanfr,plot_Meanfr_trace_along_Placebin,plot_Meanfr_heatmap_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
 
-class PopulationAna(MiniAna):
-    def __init__(self,session_path):
-        super().__init__(session_path)
-        pass
+from mylab.ana.miniscope.Mgraph import *
+
+
+
+class Minimatrix():
+    def __init__(self,df):
+
+        if not isinstance(df,pd.DataFrame):
+            sys.exit("data structure should be pd.DataFrame")
+        self.df = df
+        self.df_np = df.values
+        self.rows = self.df.shape[0]
+        self.columns = self.df.shape[1]
+
+    def generate_timebin(self,ts,timebin=1000):
+        if not len(ts) == self.rows:
+            sys.exit("ts is not the same length as df")
+        else:
+            return pd.Series([int(np.ceil(i/1000)) for i in ts])
+
+    def meanbytimebin(self,ts,timebin=1000):
+        timebin = self.generate_timebin(ts,timebin)
+        return self.df.groupby(timebin).mean()
+
+
+    def graph_plot(self,ts,timebin,cor_thresh,**kargs):
+        cor_df = self.meanbytimebin(ts,timebin).corr()
+        make_graph(cor_df,cor_thresh).plot(**kargs)
 
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
