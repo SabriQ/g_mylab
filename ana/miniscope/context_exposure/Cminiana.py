@@ -873,6 +873,7 @@ from mylab.ana.miniscope.Mgraph import *
 
 class Minimatrix():
     def __init__(self,df):
+        
 
         if not isinstance(df,pd.DataFrame):
             sys.exit("data structure should be pd.DataFrame")

@@ -243,7 +243,6 @@ class LinearTrackBehaviorFile(File):
         return pd.Series(noisy,name="noise")
 
 
-
     @property
     def reward(self):
         return self.data["Choice_class"]
