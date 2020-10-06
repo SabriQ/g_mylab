@@ -30,9 +30,10 @@ int de_stops[60] = {
 //  30, 20, 20, 30, 20, 20, 30, 20, 30, 30, 20, 30};
 int de = de_init;
 int motor_count_num = 0;
+int ena_delay=200;
 void setup() {
   // put your setup code here, to run once:
-pinMode(ena,OUTPUT);digitalWrite(ena,LOW);
+pinMode(ena,OUTPUT);digitalWrite(ena,LOW);//锁死
 pinMode(dir,OUTPUT);digitalWrite(dir,LOW);
 pinMode(pul,OUTPUT);digitalWrite(pul,LOW);
 pinMode(c_0,INPUT);
@@ -48,6 +49,7 @@ void loop() {
 //  if (Serial.available()){num = Serial.read();}
 //  Serial.println(num);
   rec();
+//  Read_ctx();
   if (ctx[0]==1){
     c_ctx=0;
   }
@@ -81,7 +83,7 @@ void rec(){
       Serial.println(c_ctx);
       num=-1;
       digitalWrite(ena,HIGH);
-      delay(50);
+      delay(ena_delay);
       digitalWrite(ena,LOW);
       break;
       
@@ -103,7 +105,7 @@ void rec(){
       Serial.println(c_ctx);
       num=-1;
       digitalWrite(ena,HIGH);
-      delay(50);
+      delay(ena_delay);
       digitalWrite(ena,LOW);
       break;
 
@@ -119,13 +121,13 @@ void rec(){
       Serial.println(c_ctx);
       num=-1;
       digitalWrite(ena,HIGH);
-      delay(50);
+      delay(ena_delay);
       digitalWrite(ena,LOW);
       break;
 
     case 3: //set motor_count_num=0;
       motor_count_num = 0;
-      digitalWrite(ena,LOW); 
+      digitalWrite(ena,LOW); //锁死
       break;
     case 4:
       digitalWrite(ena,HIGH); 
@@ -137,7 +139,7 @@ void rec(){
       break;}}
 
 void Read_ctx(){
-  if (Read_digital(c_0,5)>0.9){ctx[0]=1;}else{ctx[0]=0;}
+  if (Read_digital(c_0,5)>0.8){ctx[0]=1;}else{ctx[0]=0;}
   if (Read_digital(c_1,5)>0.9){ctx[1]=1;}else{ctx[1]=0;}
   if (Read_digital(c_2,5)>0.9){ctx[2]=1;}else{ctx[2]=0;}
 //  Serial.print(Read_digital(c_0,10));Serial.print(" ");

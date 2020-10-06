@@ -76,7 +76,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(54);cur_enter_context=2;//每次开始的时候归档至 context 0
+  Signal(54);cur_enter_context=2;//每次开始的时候归档至 context 2
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);
@@ -199,9 +199,9 @@ void Signal(int s){
   {
     case 48://ll_pump,nosepoke
       if (Trial_num<10){
-      water_deliver(pump_ll,8);
+      water_deliver(pump_ll,6);
       }else{
-        water_deliver(pump_ll,8);
+        water_deliver(pump_ll,6);
       }
 
 //      if (choice_class==1){
@@ -216,10 +216,10 @@ void Signal(int s){
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,8);
+        water_deliver(pump_rl,6);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
-        water_deliver(pump_rl,8); 
+        water_deliver(pump_rl,6); 
       }
       break;
       
