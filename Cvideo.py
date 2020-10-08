@@ -641,13 +641,11 @@ class LT_Videos(Video):
         self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
         self.in_context.xy = self.abs_prefix + '_in_context_xy.txt'
 
-
-
     def _led_brightness(self):
 
         if not os.path.exists(self.led_xy):
             self.draw_led_location()
-        # read led locations
+            # read led locations
         f = open(self.led_xy)
         led_coords = f.read()
         f.close
@@ -679,6 +677,7 @@ class LT_Videos(Video):
 
         cap.release()
         cv2.destroyAllWindows()
+
     def led_pixel_value(self):
         if not os.path.exists(self.videots_path):
             self.generate_ts_txt()
@@ -699,6 +698,7 @@ class LT_Videos(Video):
             df= pd.DataFrame({'ts':ts,'miniscope':miniscope,'event':event,'lick':lick})
             df.to_csv(self.led_value_ts,index = False,sep = ',')
             print("%s is saved"%self.led_value_ts)
+
     def draw_leds_location(self,count=3,frame_No=10000):
         cap = cv2.VideoCapture(self.video_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
@@ -731,9 +731,6 @@ class LT_Videos(Video):
                     print("delete latest point")
                 else:
                     print("no points to delete")
-
-
-
         if os.path.exists(self.led_xy):
             print("you have drawn the location of leds")
             f = open(self.led_xy)
@@ -789,7 +786,10 @@ class LT_Videos(Video):
                 else:
                     pass
 
-
+    def draw_midline_of_whole_track():
+        """
+        to generate place bin of the whole track
+        """
 
 class Videos():
     """

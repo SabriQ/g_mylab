@@ -67,33 +67,11 @@ def load_hdf5_cnmf(hdf5_Path):
 
 
 
-# level = 0
-# def view_variable_structure(variable):       
-#     global level   
-#     level=level+1        
-#     if isinstance(variable,dict):
-#         for key in variable.keys():
-#             print(2*(level-1)*" ","--",key)
-#             view_variable_structure(variable[key])
-#             level = level -1
-#     if isinstance(variable,list):
-#         if isinstance(variable[0],int) or isinstance(variable[0],str) or isinstance(variable[0],tuple):
-#             print(2*(level-1)*" ","--",len(variable),'lists of int/str/tuples')
-#         else: 
-#             print(2*(level-1)*" ","--",len(variable),'lists','for each list there are')
-#             view_variable_structure(variable[0])
-#             level = level-1
-
-#     if isinstance(variable,pd.core.frame.DataFrame):
-#         print(2*(level-1)*" ",level*" ","--",len(variable.columns),"columns |",variable.columns[0],'...',variable.columns[-1],"|")
-#     else:
-#         pass
-    
 
 
 def generate_tsFileList(dateDir=r"X:\miniscope\20191028\191172"):    
     tsFileList = glob.glob(os.path.join(dateDir,"H*/timestamp.dat"))
-#    tsFileList = [i for i in tsFileList if "2019111" not in i]
+    #tsFileList = [i for i in tsFileList if "2019111" not in i]
     def sort_key(s):     
         if s:            
             try:         
@@ -159,31 +137,6 @@ def add_ms_ts2mat(ms_ts_path,mat_path):
     del ms_mat
     del ms_ts
 
-def find_close_fast(arr, e):    
-    start_time = datetime.datetime.now()            
-    low = 0    
-    high = len(arr) - 1    
-    idx = -1     
-    while low <= high:        
-        mid = int((low + high) / 2)        
-        if e == arr[mid] or mid == low:            
-            idx = mid            
-            break        
-        elif e > arr[mid]:            
-            low = mid        
-        elif e < arr[mid]:            
-            high = mid     
-    if idx + 1 < len(arr) and abs(e - arr[idx]) > abs(e - arr[idx + 1]):        
-        idx += 1            
-    use_time = datetime.datetime.now() - start_time    
-    return idx #0作为起始
-
-def find_close_fast2(arr,e):
-    np.add(arr,e*(-1))
-    min_value = min(np.abs(np.add(arr,e*-1)))
-    locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
-    return locations[0][0]
-#    return arr[idx],idx, use_time.seconds * 1000 + use_time.microseconds / 1000
 def angle(dx1,dy1,dx2,dy2):
 #def angle(v1,v2)    #v1 = [0,1,1,1] v2 = [x1,y1,x2,y2]
 #    dx1 = v1[2]-v1[0]

@@ -7,6 +7,32 @@ import pandas as pd
 from networkx.algorithms.approximation import clique
 from matplotlib.pylab import plt
 
+class Minimatrix():
+    def __init__(self,df):
+        
+
+        if not isinstance(df,pd.DataFrame):
+            sys.exit("data structure should be pd.DataFrame")
+        self.df = df
+        self.df_np = df.values
+        self.rows = self.df.shape[0]
+        self.columns = self.df.shape[1]
+
+    def generate_timebin(self,ts,timebin=1000):
+        if not len(ts) == self.rows:
+            sys.exit("ts is not the same length as df")
+        else:
+            return pd.Series([int(np.ceil(i/1000)) for i in ts])
+
+    def meanbytimebin(self,ts,timebin=1000):
+        timebin = self.generate_timebin(ts,timebin)
+        return self.df.groupby(timebin).mean()
+
+
+    def graph_plot(self,ts,timebin,cor_thresh,**kargs):
+        cor_df = self.meanbytimebin(ts,timebin).corr()
+        make_graph(cor_df,cor_thresh).plot(**kargs)
+
 class NeuronNetwork:
     """
     This is a wrapper class for the NetworkX graph data structure. Use this
@@ -19,6 +45,10 @@ class NeuronNetwork:
         self.connections = connections
         self.network = self.create_graph(self.neurons, self.connections)
 
+    @property
+    def comps(self):
+        return nx.connected_components(self.network)
+    
     def create_graph(self, nodes, edges):
         """Wrapper function for creating a NetworkX graph.
 
@@ -356,12 +386,18 @@ def make_graph(matrix, threshold):
     return g
 
 def make_graphs(corr_matrices, threshold):
+    """
+    corr_matrices,dict.keys are session names, values are session dataframes
+    """
     graphs = {}
     for k,v in corr_matrices.items():
         graphs[k] = make_graph(v, threshold)
     return graphs
 
 def get_celltypes(neurons, ctx_shock_cells, ctx_shock_neighbors, name):
+    """
+
+    """
     shock_cells = ctx_shock_cells[name]
     shock_neighbors = list(ctx_shock_neighbors[name])
     ns_cells = list(set(neurons) - set(shock_cells) - set(shock_neighbors))
@@ -394,11 +430,12 @@ def get_neighbors(g=None,neurons=None):
 
 def label_list(neuronlist, *sublists, labels=['red','blue'],both="purple"):
     """
+    返回一个list 对应neuronlist中的每一个neuron，内含颜色
     returns a list of labels for plotting graphs
     
     inputs: 
         neuronlist: a list of all the neurons
-        sublists: 1 or 2 lists of neurons to be labeled 
+        sublists: 1 or 2 lists of neurons to be labeled  列表中是neurons id
         labels: 2 or 3 labels to apply to the lists, and neurons not in either list (there must be 1 more label then there are lists)
     outputs:
         list of labels corresponding to the neurons in neuronlist    
@@ -460,7 +497,7 @@ def num_elements_component(comps):
     
 def frac_nodes_in_component(g,threshold):
     """inputs
-            g: graph
+            g: graph # or NeuronNetwork.network
             threshold: minimum size of component
             
         output
@@ -512,7 +549,7 @@ def is_shock_component_member(g,neuron,threshold,shock_cells):
 
 #helper methods to get graph metrics
 def get_metrics(g):
-    # Get metrics for one graph
+    # Get metrics for one graph，containing degree_cent and uw_cc
 
     
     #degree centrality (unweighted degree- requires thresholding)
