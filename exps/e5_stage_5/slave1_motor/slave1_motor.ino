@@ -1,4 +1,4 @@
-
+// 增加了60个伪随机的de_stops序列。用于随机产生三类不同的电机声音以混淆电机噪声带来的影响 @20200709 by qiushou
 #include <Wire.h>
 
 int ena=2;
@@ -12,15 +12,28 @@ int c_2=7;
 byte num=-1;//default to turn off the led 
 //variables
 int ctx[3];
-int c_ctx;
+int c_ctx=-1;
 
-int de_init = 300;
-int de_stop = 10;
+int de_init = 80;
+int de_stop;
+int de_stops[60] = {
+  25, 20, 30, 25, 25, 20, 25, 30, 30, 25, 25, 25, 
+  30, 30, 20, 30, 30, 25, 20, 30, 20, 25, 25, 20, 
+  20, 30, 30, 20, 30, 25, 30, 30, 30, 25, 25, 30, 
+  25, 25, 20, 25, 20, 20, 30, 20, 25, 30, 20, 20, 
+  30, 25, 25, 30, 25, 25, 30, 25, 25, 30, 25, 20};
+//int de_stops[60] = {
+//  20, 20, 30, 30, 20, 20, 30, 30, 30, 20, 30, 20, 
+//  30, 30, 20, 30, 30, 30, 20, 30, 20, 20, 20, 20, 
+//  20, 30, 30, 20, 30, 20, 30, 20, 30, 20, 20, 30, 
+//  30, 20, 20, 30, 20, 20, 30, 20, 30, 30, 20, 30, 
+//  30, 20, 20, 30, 20, 20, 30, 20, 30, 30, 20, 30};
 int de = de_init;
-
+int motor_count_num = 0;
+int ena_delay=200;
 void setup() {
   // put your setup code here, to run once:
-pinMode(ena,OUTPUT);digitalWrite(ena,HIGH);
+pinMode(ena,OUTPUT);digitalWrite(ena,LOW);//锁死
 pinMode(dir,OUTPUT);digitalWrite(dir,LOW);
 pinMode(pul,OUTPUT);digitalWrite(pul,LOW);
 pinMode(c_0,INPUT);
@@ -36,64 +49,99 @@ void loop() {
 //  if (Serial.available()){num = Serial.read();}
 //  Serial.println(num);
   rec();
+//  Read_ctx();
+  if (ctx[0]==1){
+    c_ctx=0;
+  }
+  if (ctx[1]==1){
+    c_ctx=1;
+  }
+  if (ctx[2]==1){
+    c_ctx=2;
+  }
 }
 
+
+void motor_count(){
+  de_stop = de_stops[motor_count_num];
+  if (motor_count_num<60){    
+    motor_count_num = motor_count_num +1;
+  }else{ motor_count_num = 0; }
+}
 void rec(){
   switch (num)
   {
     case 0:// go to context 0
-     
       Serial.println("move to context 0");
-      digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);//leaving motor
-      do{Read_ctx();pulse_stepper(pul);}while(ctx[0]==0); 
+      motor_count();
+      while (ctx[0]==0){
+      Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=0;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
+      delay(ena_delay);
+      digitalWrite(ena,LOW);
       break;
       
     case 1://go to context 1
       Serial.println("move to context 1");
-      digitalWrite(ena,LOW);
       if (c_ctx==0){       
         digitalWrite(dir,HIGH);//approaching motor
         }
       if (c_ctx==2){  
         digitalWrite(dir,LOW);//leaving motor        
         }else{;}
-      do{Read_ctx();pulse_stepper(pul);}while(ctx[1]==0);
+       motor_count();
+       while(ctx[1]==0){
+        Read_ctx();pulse_stepper(pul);
+       }
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=1;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
+      delay(ena_delay);
+      digitalWrite(ena,LOW);
       break;
 
-      case 2://go to context 2
+    case 2://go to context 2
       Serial.println("move to context 2");
-      digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//approaching motor
-      do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0); 
+      motor_count();
+      while (ctx[2]==0){
+        Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
-      digitalWrite(ena,HIGH);
       c_ctx=2;
       Serial.println(c_ctx);
       num=-1;
+      digitalWrite(ena,HIGH);
+      delay(ena_delay);
+      digitalWrite(ena,LOW);
       break;
 
+    case 3: //set motor_count_num=0;
+      motor_count_num = 0;
+      digitalWrite(ena,LOW); //锁死
+      break;
+    case 4:
+      digitalWrite(ena,HIGH); 
+      break;
     default:
-      Read_ctx();
+      digitalWrite(dir,LOW);
+      digitalWrite(pul,LOW);
+//      Read_ctx();
       break;}}
 
 void Read_ctx(){
-  if (Read_digital(c_0,10)>0.9){ctx[0]=1;}else{ctx[0]=0;}
-  if (Read_digital(c_1,10)>0.9){ctx[1]=1;}else{ctx[1]=0;}
-  if (Read_digital(c_2,10)>0.9){ctx[2]=1;}else{ctx[2]=0;}
+  if (Read_digital(c_0,5)>0.8){ctx[0]=1;}else{ctx[0]=0;}
+  if (Read_digital(c_1,5)>0.9){ctx[1]=1;}else{ctx[1]=0;}
+  if (Read_digital(c_2,5)>0.9){ctx[2]=1;}else{ctx[2]=0;}
 //  Serial.print(Read_digital(c_0,10));Serial.print(" ");
 //  Serial.print(Read_digital(c_1,10));Serial.print(" ");
 //  Serial.println(Read_digital(c_2,10));
@@ -128,11 +176,11 @@ void pulse_stepper2(int port_out)
 void pulse_stepper(int port_out)
 {
   if (de>de_stop){
-    de = de-2;
+    de = de-1;
   }
-  digitalWrite(port_out, HIGH);
-  delayMicroseconds(de);
   digitalWrite(port_out, LOW);
+  delayMicroseconds(de);
+  digitalWrite(port_out, HIGH);
   delayMicroseconds(de);
 }
 

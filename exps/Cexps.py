@@ -38,7 +38,8 @@ class Exp():
         if not self.port == None:
             try:
               self.ser = serial.Serial(self.port,baudrate=9600,timeout=0.1)   
-              self.countdown(3) 
+              self.countdown(3)
+              print("%s is connected"%self.port)
             except Exception as e:
               print(e)
               ports = [i.device for i in serial.tools.list_ports.comports()]
@@ -53,9 +54,9 @@ class Exp():
             cv2.waitKey(2)
             if Exp.is_shock:
                 print("shock starts at %s"%self.current_time()[1])
-                self.ser.write("1".encode()) # shock on
+                self.ser.write("0".encode()) # shock on
                 time.sleep(duration)
-                self.ser.write("2".encode()) # shock off
+                self.ser.write("1".encode()) # shock off
                 print("shock ends at %s"%self.current_time()[1])
                 Exp.is_shock = 0
 
@@ -74,9 +75,9 @@ class Exp():
             cv2.waitKey(2)
             if Exp.is_bluelaser:
                 print("bluelaser starts at %s"%self.current_time()[1])
-                self.ser.write("3".encode()) # blue laser on
+                self.ser.write("4".encode()) # blue laser on
                 time.sleep(duration)
-                self.ser.write("4".encode()) # blue laser off
+                self.ser.write("5".encode()) # blue laser off
                 print("bluelaser ends at %s"%self.current_time()[1])
                 Exp.is_bluelaser = 0
 
@@ -85,9 +86,9 @@ class Exp():
             cv2.waitKey(2)
             if Exp.is_yellowlaser:
                 print("yellowlaser starts at %s"%self.current_time()[1])
-                self.ser.write("5".encode()) # yellow laser on
+                self.ser.write("2".encode()) # yellow laser on
                 time.sleep(duration)
-                self.ser.write("6".encode()) # yellow laser off
+                self.ser.write("3".encode()) # yellow laser off
                 print("yellowlaser ends at %s"%self.current_time()[1])
                 Exp.is_yellowlaser = 0
 
@@ -207,8 +208,7 @@ class Exp():
         while True:
             ok,frame = cap.read()
             if ok:
-                now,ts = self.cur
-                rent_time()
+                now,ts = self.current_time()
                 mask = 255*np.zeros_like(frame)
                 key = cv2.waitKey(1) & 0xff
 

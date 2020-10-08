@@ -14,7 +14,7 @@ byte num=-1;//default to turn off the led
 int ctx[3];
 int c_ctx;
 
-int de_init = 80;
+int de_init = 200;
 int de_stop;
 int de_stops[60] = {
   25, 20, 30, 25, 25, 20, 25, 30, 30, 25, 25, 25, 

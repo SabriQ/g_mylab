@@ -23,26 +23,13 @@ int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
 //half 0 half1
-int trial[60] = {0,1,0,1,0,1,1,0,1,0,
-                1,0,1,1,0,1,0,0,1,0,
-                0,1,1,0,0,1,1,1,0,0,
-                1,0,0,1,1,0,1,0,1,0,
-                0,1,1,0,0,1,0,1,0,1,
-                0,1,0,1,0,1,1,0,1,0};
-//35 0; 25 1
-//int trial[60] = {0,1,0,1,0,1,0,0,1,0,
-//                1,0,1,0,0,1,0,0,1,0,
-//                0,1,1,0,0,1,0,1,0,0,
-//                1,0,0,1,1,0,1,0,1,0,
-//                0,1,1,0,0,0,0,1,0,1,
-//                0,1,0,0,0,1,1,0,1,0};
-//25 0; 35 1
-//int trial[60] = {1,1,0,1,0,1,1,0,1,0,
-//                1,0,1,1,0,1,1,0,1,0,
-//                0,1,1,0,0,1,1,1,0,1,
-//                1,0,0,1,1,0,1,0,1,1,
-//                0,1,1,0,1,1,0,1,0,1,
-//                0,1,1,1,0,1,1,0,1,0};
+int trial[60] = {2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2
+                ,2,2,2,2,2,2,2,2,2,2,
+                2,2,2,2,2,2,2,2,2,2};
+
 
 int trial_length = 60;
 
@@ -89,7 +76,7 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(53);cur_enter_context=0;//每次开始的时候归档至 context 0
+  Signal(54);cur_enter_context=2;//每次开始的时候归档至 context 2
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);
@@ -212,9 +199,9 @@ void Signal(int s){
   {
     case 48://ll_pump,nosepoke
       if (Trial_num<10){
-      water_deliver(pump_ll,8);
+      water_deliver(pump_ll,6);
       }else{
-        water_deliver(pump_ll,8);
+        water_deliver(pump_ll,6);
       }
 
 //      if (choice_class==1){
@@ -229,10 +216,10 @@ void Signal(int s){
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,8);
+        water_deliver(pump_rl,6);
       //如果bias 太严重,增加unprefer这一边的水量一倍
       if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
-        water_deliver(pump_rl,8); 
+        water_deliver(pump_rl,6); 
       }
       break;
       
@@ -258,6 +245,14 @@ void Signal(int s){
         send2slave1_motor=2;
         write2slave(1,send2slave1_motor);
         break;
+    case 55://初始化电机速度序列
+        send2slave1_motor=3;
+        write2slave(1,send2slave1_motor);
+        break;
+    case 56://enable ena HIGH
+        send2slave1_motor=4;
+        write2slave(1,send2slave1_motor);
+        break;
     default:
       break;}
     }
@@ -267,6 +262,7 @@ void Read_ir(){
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
     if (exp_start ==0 && on_signal>=0.90){
+      Signal(55);
       Signal(48);//默认第一个trial的开始nose poke给水
       exp_start_time=millis();
       Serial.print("Stat0: exp_start ");
@@ -320,6 +316,9 @@ void Read_ir(){
     right_choice = 0;
     exp_start = 0;
     digitalWrite(pump_led,LOW);
+    if (exp_start == 1){
+    Signal(56);}
+    exp_start = 0;
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {

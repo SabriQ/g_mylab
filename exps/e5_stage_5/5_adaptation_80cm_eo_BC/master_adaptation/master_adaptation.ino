@@ -24,28 +24,21 @@ int ir_rr =A7;
 int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
-//half 0 half1
-int trial[60] = {0,1,0,1,0,1,1,0,1,0,
-                1,0,1,1,0,1,0,0,1,0,
-                0,1,1,0,0,1,1,1,0,0,
-                1,0,0,1,1,0,1,0,1,0,
-                0,1,1,0,0,1,0,1,0,1,
-                0,1,0,1,0,1,1,0,1,0};
-//35 0; 25 1
-//int trial[60] = {0,1,0,1,0,1,0,0,1,0,
-//                1,0,1,0,0,1,0,0,1,0,
-//                0,1,1,0,0,1,0,1,0,0,
-//                1,0,0,1,1,0,1,0,1,0,
-//                0,1,1,0,0,0,0,1,0,1,
-//                0,1,0,0,0,1,1,0,1,0};
-//25 0; 35 1
-//int trial[60] = {1,1,0,1,0,1,1,0,1,0,
-//                1,0,1,1,0,1,1,0,1,0,
-//                0,1,1,0,0,1,1,1,0,1,
-//                1,0,0,1,1,0,1,0,1,1,
-//                0,1,1,0,1,1,0,1,0,1,
-//                0,1,1,1,0,1,1,0,1,0};
 
+//int trial[60] = {2,1,1,2,1,1,2,2,2,1,
+//                1,2,1,2,1,2,2,2,1,1,
+//                1,2,1,1,1,2,2,1,2,2,
+//                1,2,2,1,2,1,2,2,1,1,
+//                2,2,1,1,2,1,2,1,2,1,
+//                2,1,2,1,2,1,2,1,2,1};
+
+int trial[60] = {0,1,1,0,1,1,0,0,0,1,
+                1,0,1,0,1,0,0,0,1,1,
+                1,0,1,1,1,0,0,1,0,0,
+                1,0,0,1,0,1,0,0,1,1,
+                0,0,1,1,0,1,0,1,0,1,
+                0,1,0,1,0,1,0,1,0,1};
+                              
 int trial_length = 60;
 
 int i =0;
@@ -93,7 +86,8 @@ Serial.begin(9600);
 ////////////////////////////////////////////////
 void loop() {
   // put your main code here, to run repeatedly:  
-  Signal(53);cur_enter_context=0;//每次开始的时候归档至 context 0
+  Signal(55);//初始化电机随机速度序列
+  Signal(53);cur_enter_context=1;//每次开始的时候归档至 context 1
   for (i=0;i<trial_length;i++){
     process(0);
     process(1);
@@ -135,8 +129,15 @@ void process(int p){
       miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(54);cur_enter_context=1;}; //切换context   
-//       if (trial[i]==0){Signal(53);cur_enter_context=0;}else{Signal(52);cur_enter_context=1;}; //切换context  180°调转   
+       if (trial[i]==0){
+        Signal(52);cur_enter_context=0;
+        }
+       else if(trial[i]==1){
+          Signal(53);cur_enter_context=1;
+          }
+       else{
+            Signal(54);cur_enter_context=2;
+            } //切换context   
       break;
 
     case 1://waiting for enter
@@ -160,26 +161,23 @@ void process(int p){
       Serial.print("Stat4: choice");//打印stat 
       if (ir[4]==1){
         Serial.print("_l");
+        Signal(50);//pump_rl给水
         left_choice= left_choice + 1;   
-        if (trial[i]==1){ // switch ctxs location, ctx1 <-> pump_rl
-          Signal(50);//pump_rl给水
+        if (trial[i]==0){
           Serial.println(" correct");
-          Choice_class = 1; }else{ // ctx0 <-> pump_rr
-          Serial.println(" wrong");
-          //just for train
-//          if (left_choice > 2* right_choice || left_choice >= right_choice+15 && Trial_num >= 10){
-//            Signal(51);//pump_rr 给水
-//            }            
+          Choice_class = 1; }else{
+          Serial.println(" wrong");           
           Choice_class = 0;}
       }
        else if (ir[5]==1){
         Serial.print("_r") ;
         right_choice=right_choice + 1;          
-        if (trial[i]==0){  // switch ctxs location, ctx0 <-> pump_rr
+        if (trial[i]==1){  
           Signal(51);//pump_rr给水
           Serial.println(" correct");
-          Choice_class = 1; }else{ // ctx0 <-> pump_rl
+          Choice_class = 1; }else{
           Serial.println(" wrong");
+          Signal(51);//pump_rl给水
           //just for train
 //          if (right_choice > 2* left_choice ||right_choice >= left_choice +15 && Trial_num >= 10){
 //            Signal(50);//pump_rl 给水
@@ -230,30 +228,22 @@ void Signal(int s){
   */
   switch (s)
   {
-    case 48://ll_pump,nosepoke  0
-      if (Trial_num<10){
-      water_deliver(pump_ll,6);
-      }else{
-        water_deliver(pump_ll,6);
-      }
+    case 48://ll_pump,nosepoke
+    water_deliver(pump_ll,7);
+
       break;
-      
-    case 49://lr_pump   1
+    case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
       
-    case 50://rl_pump   2
-        water_deliver(pump_rl,6);
-      //如果bias 太严重,增加unprefer这一边的水量一倍
-      if (2*left_choice < right_choice || left_choice +10 <=right_choice && Trial_num >= 10){
-        water_deliver(pump_rl,6); 
-      }
+    case 50://rl_pump 
+        water_deliver(pump_rl,7);
       break;
       
-    case 51://rr_pump  3
-      water_deliver(pump_rr,6);      
+    case 51://rr_pump
+      water_deliver(pump_rr,8);      
       if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
-        water_deliver(pump_rr,6); 
+        water_deliver(pump_rr,8); 
       }
       break;
       
@@ -270,6 +260,10 @@ void Signal(int s){
       break;    
     case 54://to context2 6
         send2slave1_motor=2;
+        write2slave(1,send2slave1_motor);
+        break;
+    case 55://初始化电机速度序列
+        send2slave1_motor=3;
         write2slave(1,send2slave1_motor);
         break;
     default:

@@ -14,7 +14,7 @@ byte num=-1;//default to turn off the led
 int ctx[3];
 int c_ctx;
 
-int de_init = 150;
+int de_init = 80;
 int de_stop;
 int de_stops[60] = {
   25, 20, 30, 25, 25, 20, 25, 30, 30, 25, 25, 25, 
@@ -68,7 +68,8 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,LOW);//leaving motor
       motor_count();
-      do{Read_ctx();pulse_stepper(pul);}while(ctx[0]==0); 
+      while (ctx[0]==0){
+      Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
@@ -87,7 +88,10 @@ void rec(){
         digitalWrite(dir,LOW);//leaving motor        
         }else{;}
        motor_count();
-      do{Read_ctx();pulse_stepper(pul);}while(ctx[1]==0);
+       while(ctx[1]==0){
+        Read_ctx();pulse_stepper(pul);
+       }
+//      do{Read_ctx();pulse_stepper(pul);}while(ctx[1]==0);
       de = de_init;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);
@@ -101,7 +105,8 @@ void rec(){
       digitalWrite(ena,LOW);
       digitalWrite(dir,HIGH);//approaching motor
       motor_count();
-      do{Read_ctx();pulse_stepper(pul);}while(ctx[2]==0); 
+      while (ctx[2]==0){
+        Read_ctx();pulse_stepper(pul);}
       de = de_init;
       Serial.println(" Done");
       digitalWrite(ena,HIGH);

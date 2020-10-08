@@ -24,42 +24,21 @@ int ir_rr =A7;
 int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
-//27: 0 27:1 6: 2
-int trial[60] = {2,1,0,0,1,1,0,1,0,1,
-                1,0,1,2,1,0,0,0,1,0,
-                1,2,1,0,1,0,0,1,0,0,
-                1,0,0,1,2,1,0,0,1,0,
-                0,0,1,1,0,1,0,1,2,1,
-                0,1,2,1,0,1,0,1,0,1};
-//30:0 30:1
-//int trial[60] = {0,1,0,0,1,1,0,1,0,1,
-//                1,0,1,0,1,0,0,1,1,0,
-//                1,1,1,0,1,0,0,1,0,0,
-//                1,0,0,1,1,1,0,0,1,0,
-//                0,0,1,1,0,1,0,1,0,1,
-//                0,1,1,0,0,1,0,1,0,1};
-//int trial[60] = {1,1,0,1,0,1,0,0,0,1,
-//                1,0,1,0,1,0,0,1,1,0,
-//                1,0,1,0,1,1,0,1,0,0,
-//                1,0,1,1,1,0,0,0,1,0,
-//                1,0,1,0,0,1,0,1,0,1,
-//                0,0,1,1,0,1,0,1,0,1};
-//20: 0 20:1 20: 2    
-            
-//int trial[60] ={2,1,2,1,0,1,0,1,2,0,
-//                0,1,2,1,2,2,0,2,1,0,
-//                0,2,2,0,0,1,2,1,0,1,
-//                2,1,2,1,0,1,0,1,2,0,
-//                0,1,2,1,2,2,0,2,1,0,
-//                0,2,2,0,0,1,2,1,0,1};
-//15: 0 30:1 15: 2               
-//int trial[60] = {0,1,2,1,2,1,0,1,0,1,
-//                2,1,2,1,0,1,2,1,0,1,
-//                2,1,0,1,0,1,0,1,2,1,
-//                0,1,2,1,2,1,0,1,2,1,
-//                0,1,0,1,2,1,0,1,2,1,
-//                0,1,2,1,0,1,2,1,2,1,};
-                
+
+//int trial[60] = {2,1,1,2,1,1,2,2,2,1,
+//                1,2,1,2,1,2,2,2,1,1,
+//                1,2,1,1,1,2,2,1,2,2,
+//                1,2,2,1,2,1,2,2,1,1,
+//                2,2,1,1,2,1,2,1,2,1,
+//                2,1,2,1,2,1,2,1,2,1};
+
+int trial[60] = {0,1,1,0,1,1,0,0,0,1,
+                1,0,1,0,1,0,0,0,1,1,
+                1,0,1,1,1,0,0,1,0,0,
+                1,0,0,1,0,1,0,0,1,1,
+                0,0,1,1,0,1,0,1,0,1,
+                0,1,0,1,0,1,0,1,0,1};
+                              
 int trial_length = 60;
 
 int i =0;
@@ -126,7 +105,7 @@ void loop() {
     if (Choice_class==1){
       i = i;}
     else if(Choice_class==0){
-      i = i;}
+      i = i-1;}
     else{
       i=0;}
     Serial.print(nose_poke_time);Serial.print(" ");
@@ -182,28 +161,22 @@ void process(int p){
       Serial.print("Stat4: choice");//打印stat 
       if (ir[4]==1){
         Serial.print("_l");
-        Signal(50);//pump_rl给水
         left_choice= left_choice + 1;   
         if (trial[i]==0){
+          Signal(50);//pump_rl给水
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");           
           Choice_class = 0;}
       }
-       else if (ir[5]==1){
+      else if (ir[5]==1){
         Serial.print("_r") ;
         right_choice=right_choice + 1;          
         if (trial[i]==1){  
           Signal(51);//pump_rr给水
           Serial.println(" correct");
           Choice_class = 1; }else{
-          Serial.println(" wrong");
-          Signal(51);//pump_rl给水
-          //just for train
-//          if (right_choice > 2* left_choice ||right_choice >= left_choice +15 && Trial_num >= 10){
-//            Signal(50);//pump_rl 给水
-//            }
-            
+          Serial.println(" wrong");            
           Choice_class = 0; }   
        }
        else {
@@ -250,21 +223,22 @@ void Signal(int s){
   switch (s)
   {
     case 48://ll_pump,nosepoke
-      water_deliver(pump_ll,7);
+    water_deliver(pump_ll,7);
+
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,7); 
+        water_deliver(pump_rl,7);
       break;
       
     case 51://rr_pump
-      water_deliver(pump_rr,8);      
-      if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
-        water_deliver(pump_rr,8); 
-      }
+      water_deliver(pump_rr,7);      
+//      if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
+//        water_deliver(pump_rr,8); 
+//      }
       break;
       
     case 52://to context0 4
@@ -315,7 +289,7 @@ void Read_ir(){
       if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
       if (ir_exit_value< 100) {ir[3] = 1;}else{ir[3] = 0;}
       if (ir_rl_value< 800 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
-      if (ir_rr_value< 800 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+      if (ir_rr_value< 750 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
       if (ir[0]+ir[1]+ir[4]+ir[5]==1){
         digitalWrite(pump_led,LOW);
       }else if(ir[0]+ir[1]+ir[4]+ir[5]==0){
