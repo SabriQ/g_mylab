@@ -29,7 +29,17 @@ class CFC(Exp):
         self.do_shock()
         self.countdown(3)
 
-    def conditioning(self):
+    def event2(self):
+        """
+        bluelaser and shock for 2s
+        laser and shock start at the same time, and persistant for 2s.
+        """
+        self.do_bluelaser()
+        self.do_shock()
+        self.countdown(2)
+
+
+    def experiment(self):
         mouse_id = input("请输入mouse_id,并按Enter开始实验:")
         if not self.is_stop:
             print("")
@@ -42,7 +52,7 @@ class CFC(Exp):
             print("preexposure for 178s")
             self.countdown(2)
 
-            self.event1()
+            self.event2()
             
 
             self.countdown(2)        
@@ -55,43 +65,28 @@ class CFC(Exp):
                 return self.conditioning()
 
 
-    def retrieval_test(self,duration):
-        mouse_id = input("请输入mouse_id,并按Enter开始实验:")
-        if not self.is_stop:
-            self.mouse_id = str(mouse_id)
-
-            if not os.path.exists(self.data_dir):
-                os.makedirs(self.data_dir)
-                
-            self.opencv_is_record()# start video record
-
-            print("start recording for %s s"%duration)
-            self.countdown(duration)
-
-            self.opencv_is_record()# stop video record
-
-            if CFC.is_stop == 1:
-                return 0
-            else:
-                return self.retrieval_test()
-    
-
     def run(self,):
+        """
+        this is just a demo
+        """
         camera_behave = Thread(target=self.play_video,args=(0,))
         behave_fourcc = cv2.VideoWriter_fourcc(*'XVID') # (*'mpeg')
         camera_behave_save = Thread(target=self.save_video,args=(0,behave_fourcc,10,(640,480),))
-        exp = Thread(target=self.conditioning)
-        T_tone = Thread(target=self.shock,args=(2,))
+        exp = Thread(target=self.experiment)
+        shock = Thread(target=self.shock,args=(2,))
+        bluelaser= Thread(target=self.bluelaser,args=(2,))
 
         camera_behave.start()
         camera_behave_save.start()
-        T_tone.start()
+        shock.start()
+        bluelaser.start()
         exp.start()
 
 
         camera_behave.join()
         camera_behave_save.join()
-        T_tone.join()
+        shock.oin()
+        bluelaser.join()
         exp.join()
 
         print("main process is done!")
