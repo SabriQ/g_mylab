@@ -8,7 +8,7 @@ import scipy.io as spio
 import pickle
 import scipy.stats as stats
 from mylab.Cvideo import Video
-from mylab.process.miniscope.Mfunctions import *
+from mylab.Functions import *
 from mylab.ana.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
 from mylab.ana.miniscope.context_exposure.Mplacecells import *
@@ -867,34 +867,10 @@ class Cellid(MiniAna):
 
         return meanfr,plot_Meanfr_trace_along_Placebin,plot_Meanfr_heatmap_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
 
-from mylab.ana.miniscope.Mgraph import *
 
 
 
-class Minimatrix():
-    def __init__(self,df):
 
-        if not isinstance(df,pd.DataFrame):
-            sys.exit("data structure should be pd.DataFrame")
-        self.df = df
-        self.df_np = df.values
-        self.rows = self.df.shape[0]
-        self.columns = self.df.shape[1]
-
-    def generate_timebin(self,ts,timebin=1000):
-        if not len(ts) == self.rows:
-            sys.exit("ts is not the same length as df")
-        else:
-            return pd.Series([int(np.ceil(i/1000)) for i in ts])
-
-    def meanbytimebin(self,ts,timebin=1000):
-        timebin = self.generate_timebin(ts,timebin)
-        return self.df.groupby(timebin).mean()
-
-
-    def graph_plot(self,ts,timebin,cor_thresh,**kargs):
-        cor_df = self.meanbytimebin(ts,timebin).corr()
-        make_graph(cor_df,cor_thresh).plot(**kargs)
 
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")

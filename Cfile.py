@@ -223,11 +223,15 @@ class LinearTrackBehaviorFile(File):
                 Choice.append("left")
             else:
                 Choice.append("right")
+                
         return pd.Series(Choice,name="choice")
     
 
     @property
     def noise(self):
+        """
+        Series contains only 0 and 1, 0 means no motion, 1 means motion
+        """
         noisy=[]
         if self.data["Enter_ctx"][0]==1:
             noisy.append(0)
@@ -241,7 +245,6 @@ class LinearTrackBehaviorFile(File):
                 noisy.append(1)
                 
         return pd.Series(noisy,name="noise")
-
 
 
     @property
