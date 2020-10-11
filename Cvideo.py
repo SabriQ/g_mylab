@@ -11,7 +11,7 @@ import math
 import csv 
 import json
 from mylab.Functions import *
-from mylab.Cfile import TimestampsFile as TsF
+from mylab.Cfile import *
 
 class Video():
     """
@@ -36,7 +36,7 @@ class Video():
             print("generating TimestampsFile by ffmpeg")
             self.generate_ts_txt()
         else:
-            return TsF(self.videots_path,method="ffmpeg").ts
+            return TimestampsFile(self.videots_path,method="ffmpeg").ts
 
     def play(self):
         """
@@ -637,10 +637,19 @@ class Video():
 class LT_Videos(Video):
     def __init__(self,video_path):
         super().__init__(video_path)
+        self.place_xy = os.path.join(os.path.dirname(self.video_path),'place_xy.txt')
 
-    def draw_midline_of_whole_track_for_each_day(self,aim="midline_of_track"):
+
+    def draw_midline_of_whole_track_for_each_day(self,aim="midline_of_track",count=7):
         """
-        to generate place bin of the whole track,each day's videos.
+        return coords containing 7 points 
+            0:nosepoke for initial a trial,
+            1:curve near the nosepoke,
+            2:start of context,
+            3:end of context,
+            4:curve near the choise,
+            5:nosepoke for left choice,
+            6:nosepoke for right choice
         """
         cap = cv2.VideoCapture(self.video_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES,1000)
@@ -648,15 +657,155 @@ class LT_Videos(Video):
         cap.release()
         cv2.destroyAllWindows()
 
-    def draw_midline_of_whole_track_for_each_video(self,):
+        coords = []
+
+        def draw_lines(event,x,y,flags,param):
+            nonlocal coords
+            rows,cols,channels= frame.shape
+            black_bg = np.zeros((rows,cols,channels),np.uint8)
+
+            if event == cv2.EVENT_LBUTTONDOWN: 
+                coords.append([x,y])
+                f = open(self.place_xy,"w+")
+                f.write(str(coords))
+                f.close
+                print("you have drawn %s/%s coords"%(len(coords),count))
+
+            if event == cv2.EVENT_MOUSEMOVE:
+                if len(coords) == 0:
+                    pass
+                elif len(coords)==1:
+                    cv2.line(black_bg,tuple(coords[0]),(x,y),(0,255,0),2)
+                elif len(coords)>=2 and len(coords)<=7:
+                    for i in range(len(coords)-1):
+                        cv2.line(black_bg,tuple(coords[i]),tuple(coords[i+1]),(0,255,0),2)
+                    if len(coords)<6:
+                        cv2.line(black_bg,tuple(coords[-1]),(x,y),(0,255,0),2)
+                    if len(coords)==6:
+                        cv2.line(black_bg,tuple(coords[-2]),(x,y),(0,255,0),2)
+                    if len(coords)==7:
+                        cv2.line(black_bg,tuple(coords[-3]),tuple(coords[-1]),(0,255,0),2)
+                else:
+                    pass
+                
+                show_frame = cv2.addWeighted(frame,1,black_bg,0.9,0)
+                cv2.imshow('draw_midline_of_whole_track_for_each_day',show_frame)
+
+            if event == cv2.EVENT_RBUTTONDOWN:
+                if len(coords)>0:
+                    coords.pop()
+                    print("delete the latest point")
+                else:
+                    print("no points to delete")
+
+        if os.path.exists(self.place_xy):
+            print("you have drawn the location of points")
+            f = open(self.place_xy)
+            coords = f.read()
+            coords = eval(coords)
+            f.close
+            if len(coords) == count:
+                # print(coords)
+                return coords
+            else:
+                print("you have drawn %s/%s coords"%(len(coords),count))
+        
+        print("Mark the point")
+        cv2.namedWindow("draw_midline_of_whole_track_for_each_day")
+        cv2.setMouseCallback("draw_midline_of_whole_track_for_each_day",draw_lines,{"img":frame})
+
+        while True:
+            key = cv2.waitKey(10) & 0xFF
+
+            if key == ord("q"):
+                cv2.destroyWindow("draw_midline_of_whole_track_for_each_day")
+                print("give up drawing coords")
+                break
+            else:
+                pass
+        # print(coords)
+        return coords
+
+    def show_midline_of_whole_track(self):
         """
-        to generate place bin of the whole track,each day's videos.
+        show the frame with midline of the track
         """
+        if os.path.exists(self.place_xy):
+            print("you have drawn the location of points")
+            f = open(self.place_xy)
+            coords = f.read()
+            coords = eval(coords)
+            f.close
+        else:
+            return self.draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
         cap = cv2.VideoCapture(self.video_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES,1000)
         ret,frame = cap.read()
         cap.release()
         cv2.destroyAllWindows()
+
+        rows,cols,channels= frame.shape
+        black_bg = np.zeros((rows,cols,channels),np.uint8)
+
+        for i in range(len(coords)-2):
+            cv2.line(black_bg,tuple(coords[i]),tuple(coords[i+1]),(0,255,0),2)
+        cv2.line(black_bg,tuple(coords[-3]),tuple(coords[-1]),(0,255,0),2)
+
+        show_frame = cv2.addWeighted(frame,1,black_bg,0.9,0)
+        while True:
+            key = cv2.waitKey(10) & 0xFF
+            cv2.imshow('midline_of_whole_track',show_frame)
+            if key == ord("q"):
+                cv2.destroyWindow("draw_midline_of_whole_track_for_each_day")
+                print("give up drawing coords")
+                break
+            else:
+                pass        
+        cv2.destroyAllWindows()
+
+    def placebin_according_to_midline(self,Ctrack,place_bin_nums=[3,3,20,3,3,3]):
+        """
+        Ctrack: class of tracking file, which is needed to generate the mouse coords of every frame.
+        """
+        # generate the midline_of_track_coords: in our track,
+        # there are 7 points in the midline, returned by 'self.draw_midline_of_whole_track_for_each_day'
+        coords = self.draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
+        # generate the line segments of each neighbor points 
+        # ((0,1),(1,2),(2,3),(3,4),(4,5)) of the first 6 points
+        # and (4,6) 
+        
+        lines = [(coords[i],coords[i+1]) for i in range(len(coords)-2)] # [(0,1),(1,2),(2,3),(3,4),(4,5)]
+        lines.append((coords[-3],coords[-1])) # (4,6)
+        
+        place_bin_mids=[] # 每个placebin 的中点坐标
+        for line, place_bin_num in zip(lines,place_bin_nums):
+            #计算每个placebin中点的坐标。
+            #首先 计算每个placebin边界点的坐标
+            xs = np.linspace(line[0][0],line[1][0],place_bin_num+1)
+            ys = np.linspace(line[0][1],line[1][1],place_bin_num+1)
+            #然后计算 每个placebin的中点坐标
+            xs_mid = [np.mean([xs[i],xs[i+1]]) for i in range(len(xs)-1)]
+            ys_mid = [np.mean([ys[i],ys[i+1]]) for i in range(len(ys)-1)]
+            place_bin_mids.extend([(x,y) for x,y in zip(xs_mid,ys_mid)])
+        
+
+
+        X = Ctrack.behave_track["Head_x"]
+        Y = Ctrack.behave_track["Head_y"]
+        place_bin_No=[]
+        for x,y in zip(X,Y):
+            distances=[]
+            for place_bin_mid in place_bin_mids:
+                distance = np.sqrt((x-place_bin_mid[0])**2+(y-place_bin_mid[1])**2)
+                distances.append(distance)
+            # print(distances)
+            # sys.exit()  
+            place_bin_No.append(np.argmin(distances))
+        # print(np.unique(place_bin_No))
+        return place_bin_No
+
+
+
 
 class CPP_Video(Video):
     def __init__(self,video_path):
@@ -870,8 +1019,11 @@ class Videos():
         print("concatenation finished!")
 
 if __name__ == "__main__":
-    # Video(r"C:\Users\admin\Desktop\test\test\200309094857Cam-1.asf").play_with_track()
 
-    videolists = glob.glob(r"C:\Users\Sabri\Desktop\*.asf")
-    print(videolists)
-    Videos(videolists).concat()
+    video = r"C:\Users\qiushou\Desktop\Results_test\test\CDC-test-201033-20200901-194548.mp4"
+    track_file = r"C:\Users\qiushou\Desktop\Results_test\test\CDC-test-201033-20200901-194548DLC_resnet50_LinearTrackJun9shuffle1_1000000.h5"
+    print(video)
+    track = TrackFile(track_file)
+    LT_Videos(video).placebin_according_to_midline(Ctrack = track,place_bin_nums=[3,3,20,3,3,3])
+    # CPP_Video(video).draw_leds_location()
+    # LT_Videos(video).show_midline_of_whole_track()

@@ -63,6 +63,30 @@ def Standarization_list(datalist):
     std = np.std(datalist)
     return [(x-mean)/std for i in datalist]
 
+def crossfoot(point,line_points):
+    """
+    给定某个点（x0,y0）
+    给定直线上的两个点[(x1,y1),(x2,y2)]
+    返回 垂足 坐标x,y 以及点到垂足的距离（x,y,distance）
+    """
+    x0,y0 = point
+    (x1,y1),(x2,y2) = line_points
+    if x1==x2: #是一条竖线，垂足为
+        x = x1
+        y = y0
+    else:
+        k = (y2-y1)/(x2-x1)
+        if k == 0: # 是一条横线，垂足为
+            x = x0
+            y = y1
+        else:
+            y = ((k**2)*y0+y1+k*(x0-x1))/((k**2)+1)
+            x = x1+(y-y1)/k
+    distance_crossfoot = np.sqrt((x0-x)**2+(y0-y)**2)
+    distance_point1 = np.sqrt((x0-x1)**2+(y0-y1)**2)
+    distance_point2 = np.sqrt((x0-x2)**2+(y0-y2)**2)
+    return (x,y,distance_crossfoot)
+
 def normalized_distribution_test(datalist):
     """
     检查数据是否符合正太分布
