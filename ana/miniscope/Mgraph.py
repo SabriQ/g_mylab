@@ -6,6 +6,7 @@ import networkx as nx
 import pandas as pd
 from networkx.algorithms.approximation import clique
 from matplotlib.pylab import plt
+from mylab.ana.miniscope.Mquality import *
 
 class Minimatrix():
     def __init__(self,df):
@@ -28,10 +29,23 @@ class Minimatrix():
         timebin = self.generate_timebin(ts,timebin)
         return self.df.groupby(timebin).mean()
 
-
     def graph_plot(self,ts,timebin,cor_thresh,**kargs):
         cor_df = self.meanbytimebin(ts,timebin).corr()
         make_graph(cor_df,cor_thresh).plot(**kargs)
+
+def compute_correlated_pair_ratio(arr,Total_cell_ids):
+    """
+    compute correlated_pair_ratio for each neuron
+    """
+    arr_cor = np.corrcoef(arr)
+    shuffle_cor = shuffle_corrcoef(arr)
+    rows2,cols2 = np.where(arr_cor > np.quantile(shuffle_cor,0.95,axis=0))
+    correlated_pairs_index = [(row,col) for row,col in zip(rows2,cols2) if row <col]
+    
+    ratio = dict()
+    for i,id in enumerate(Total_cell_ids):
+        ratio[id] = sum([1 if i in j else 0 for j in correlated_pairs_index])/len(Total_cell_ids)
+    return ratio
 
 class NeuronNetwork:
     """
@@ -369,6 +383,11 @@ class NeuronNetwork:
         return small_worldness
 
 def corrdf_to_dict(dataframe,cutoff):
+    """
+    dataframe, Pearson's correlation coefficient of each two neurons
+    cutoff, larger than which
+     the Pearson's correlation coefficient of two neurons are paired
+    """
     connections = {}
     
     for neuron_pair in itertools.combinations(dataframe.columns, 2):
@@ -482,7 +501,7 @@ def label_list(neuronlist, *sublists, labels=['red','blue'],both="purple"):
     return c_list 
 
 
-#computations relating to components 
+    #computations relating to components 
 
 def num_elements_component(comps):
     #input: list of sets (output from nx.connected_components)

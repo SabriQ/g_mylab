@@ -9,7 +9,7 @@ import pickle
 import scipy.stats as stats
 from mylab.Cvideo import Video
 from mylab.Functions import *
-from mylab.ana.miniscope.Mfunctions import *
+from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
 from mylab.ana.miniscope.context_exposure.Mplacecells import *
 import logging 

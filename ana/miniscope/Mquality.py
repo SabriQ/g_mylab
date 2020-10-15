@@ -15,11 +15,12 @@ def shuffle_arr(arr,axis=1,times=1000):
     times
     axis: shuffle along rows for each columns, the sum of each row stay the same.
     """
+    arr_c = arr.copy()
     for i in range(times):
-        np.apply_along_axis(np.random.shuffle,axis,arr) # arr will be inplaced.
+        np.apply_along_axis(np.random.shuffle,axis,arr_c) # arr will be inplaced.
         sys.stdout.write("shuffle for %s/%s times "%(i+1,times))
         sys.stdout.write("\r")
-        yield arr
+        yield arr_c
 
 def shuffle_corrcoef(arr):
 
@@ -32,6 +33,7 @@ def shuffle_corrcoef(arr):
     shuffle_cor = np.array(shuffle_cor)
     
     return shuffle_cor #(shuffle_times, neuron_num,neuron_num)
+    
 def correlated_pair_threshold(arr,thresh):
     """
     arr: each row means neuron, each column means fr in timebin
@@ -46,19 +48,20 @@ def correlated_pair_threshold(arr,thresh):
     correlated_pair = np.array([(row,col,arr_cor[row,col]) for row,col in zip(rows,cols) if row <col])
     paried_neurons = [i[0:2] for i in correlated_pair]
     pearson_r = [i[2] for i in correlated_pair]
-    probablity = 1 * np.arange(len(pearson_r)) / (len(pearson_r) - 1)
-    r_sorted1 = pearson_r.copy()
-    r_sorted1.sort()
-   
-    
+
+
     # p<0.05 from shuffle distribution
     shuffle_cor = shuffle_corrcoef(arr)
-
-    # shuffle_cor = shuffle2(arr,1000)
     rows2,cols2 = np.where(arr_cor > np.quantile(shuffle_cor,0.95,axis=0))
     correlated_pair2 = np.array([(row,col,arr_cor[row,col]) for row,col in zip(rows2,cols2) if row <col])
     paried_neurons2 = [i[0:2] for i in correlated_pair2]
     pearson_r2 = [i[2] for i in correlated_pair2]
+
+
+    probablity = 1 * np.arange(len(pearson_r)) / (len(pearson_r) - 1)
+    r_sorted1 = pearson_r.copy()
+    r_sorted1.sort()
+   
     probablity2 = 1 * np.arange(len(pearson_r2)) / (len(pearson_r2) - 1)
     r_sorted2 = pearson_r2.copy()
     r_sorted2.sort()
@@ -93,6 +96,6 @@ def correlated_pair_threshold(arr,thresh):
     plt.legend(["Pearson's R>0.3",">0.95 shuffle Dist."])
     
 
-    return correlated_pair1, correlated_pair2,kstest(correlated_counts.values(),correlated_counts2.values())
+    return correlated_pair, correlated_pair2,kstest(correlated_counts.values(),correlated_counts2.values())
 
 
