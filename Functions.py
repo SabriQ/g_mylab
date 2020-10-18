@@ -67,7 +67,8 @@ def crossfoot(point,line_points):
     """
     给定某个点（x0,y0）
     给定直线上的两个点[(x1,y1),(x2,y2)]
-    返回 垂足 坐标x,y 以及点到垂足的距离（x,y,distance）
+    返回 垂足 坐标x,y 以及点到垂足的距离distance_crossfoot,点到端点的最小距离
+    (x,y,distance_crossfoot,min(distance_point1,distance_point2))
     """
     x0,y0 = point
     (x1,y1),(x2,y2) = line_points
@@ -85,7 +86,7 @@ def crossfoot(point,line_points):
     distance_crossfoot = np.sqrt((x0-x)**2+(y0-y)**2)
     distance_point1 = np.sqrt((x0-x1)**2+(y0-y1)**2)
     distance_point2 = np.sqrt((x0-x2)**2+(y0-y2)**2)
-    return (x,y,distance_crossfoot)
+    return (x,y,distance_crossfoot,min(distance_point1,distance_point2))
 
 def normalized_distribution_test(datalist):
     """

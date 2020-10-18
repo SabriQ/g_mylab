@@ -775,6 +775,7 @@ class LT_Videos(Video):
         # and (4,6) 
         
         lines = [(coords[i],coords[i+1]) for i in range(len(coords)-2)] # [(0,1),(1,2),(2,3),(3,4),(4,5)]
+        
         lines.append((coords[-3],coords[-1])) # (4,6)
         
         place_bin_mids=[] # 每个placebin 的中点坐标
@@ -787,11 +788,10 @@ class LT_Videos(Video):
             xs_mid = [np.mean([xs[i],xs[i+1]]) for i in range(len(xs)-1)]
             ys_mid = [np.mean([ys[i],ys[i+1]]) for i in range(len(ys)-1)]
             place_bin_mids.extend([(x,y) for x,y in zip(xs_mid,ys_mid)])
-        
-
 
         X = Ctrack.behave_track["Head_x"]
         Y = Ctrack.behave_track["Head_y"]
+
         place_bin_No=[]
         for x,y in zip(X,Y):
             distances=[]
@@ -801,7 +801,7 @@ class LT_Videos(Video):
             # print(distances)
             # sys.exit()  
             place_bin_No.append(np.argmin(distances))
-        # print(np.unique(place_bin_No))
+        print(np.unique(place_bin_No))
         return place_bin_No
 
 

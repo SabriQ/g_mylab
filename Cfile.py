@@ -136,6 +136,9 @@ class TrackFile(File):
         print("Trackfile is loaded.")
 
     def _dataframe2nparray(self,df):
+        """
+        Transfer dict or pd.DataFrame to np.array
+        """
         if isinstance(df,dict):
             print("df is a dict")
             for key in list(df.keys()):
@@ -151,9 +154,14 @@ class TrackFile(File):
             return {"df":df.values,"df_columns":list(df.columns)}
 
     def savepkl2mat(self,):
+        """
+        save pkl file as mat
+        """
         savematname = self.file_path.replace("h5","mat")
         spio.savemat(savematname,self._dataframe2nparray(self.behave_track))
         print("save mat as %s"%savematname)
+
+
 
     @staticmethod
     def _angle(dx1,dy1,dx2,dy2):
@@ -190,6 +198,9 @@ class TrackFile(File):
             speeds=gaussian_filter1d(speeds)
             print("speeds are filted by gaussian_filter1d with sigma 3")
         return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
+
+
+
 
 class Free2pFile(File):
     def __init__(self,file_path):

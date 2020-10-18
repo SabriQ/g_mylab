@@ -26,9 +26,10 @@ def concatenate_sessions(session1,session2):
     with open(session2,"rb") as f:
         s2 = pickle.load(f)
 
+
     if (s1["idx_accepted"]==s2["idx_accepted"]).all():
         s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
-        s1["dff"] = np.vstack((s1.get("dff"),s2.get("dff")))
+        s1["S_dff"] = np.vstack((s1.get("S_dff"),s2.get("S_dff")))
         s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
         s1["idx_accepted"] = s1["idx_accepted"]
 
@@ -83,6 +84,9 @@ class MiniResult():
             return 0 
 
     def save_session_pkl(self,orders=None):
+        """
+
+        """
         if os.path.exists(self.ms_mat_path):        
             logger.debug("loading %s"%self.ms_mat_path)
             ms = load_mat(self.ms_mat_path)
@@ -92,13 +96,13 @@ class MiniResult():
             ms = load_pkl(self.ms_mat_path2)
             logger.debug("loaded %s"%self.ms_mat_path2)
 
-        try:
-            # dff = ms['ms']['dff']
+        sigraw = ms['ms']['sigraw'] #默认为sigraw
+        try:            
             S_dff = ms['ms']['S_dff']
         except:            
-            logger.debug("save S_dff or dff problem")
-
-        sigraw = ms['ms']['sigraw'] #默认为sigraw
+            # read S_dff.pkl
+            logger.debug("saving S_dff problem")
+            sys.exit(0)
 
 
         idx_accepted = ms['ms']['idx_accepted']
@@ -107,9 +111,9 @@ class MiniResult():
         with open(self.ms_ts_path,'rb') as f:
             timestamps = pickle.load(f)
         [print(len(i)) for i in timestamps]
-        logger.info("session lenth:%s, timestamps length:%s, dff shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),dff.shape))
+        logger.info("session lenth:%s, timestamps length:%s, sigraw shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),sigraw.shape))
 
-
+        # 对不同session的分析先后顺序排序
         if not orders == None:
             timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
             [print(len(i)) for i in timestamps_order]
@@ -135,7 +139,6 @@ class MiniResult():
             name = "session"+str(i)+".pkl"
             result = {
                 "ms_ts":timestamps[i-1],
-                "dff":np.transpose(dff)[s[0]:s[1]],
                 "S_dff":np.transpose(S_dff)[s[0]:s[1]],
                 "sigraw":sigraw[s[0]:s[1]],
                 "idx_accepted":idx_accepted
@@ -146,57 +149,6 @@ class MiniResult():
             logger.debug("%s is saved"%name)
 
 
-    def save_session_pkl2(self):
-        if os.path.exists(self.ms_mat_path):        
-            logger.debug("loading %s"%self.ms_mat_path)
-            ms = load_mat(self.ms_mat_path)
-            logger.debug("loaded %s"%self.ms_mat_path)
-        else:
-            logger.debug("loading %s"%self.ms_mat_path2)
-            ms = load_pkl(self.ms_mat_path2)
-            logger.debug("loaded %s"%self.ms_mat_path2)
-
-        try:
-            dff = ms['ms']['dff']
-        except:
-            dff = ms['ms']['S_dff']
-            logger.debug("save S_dff as dff")
-        sigraw = ms['ms']['sigraw'] #默认为sigraw
-        idx_accepted = ms['ms']['idx_accepted']
-        idx_deleeted = ms['ms']['idx_deleted']
-
-        with open(self.ms_ts_path,'rb') as f:
-            timestamps = pickle.load(f)
-
-        logger.info("timestamps length:%s, dff shape:%s"%(sum([len(i) for i in timestamps]),dff.shape))
-
-        #根据timestamps将dff切成对应的session
-        slice = []
-        for i,timestamp in enumerate(timestamps):
-            if i == 0:
-                start = 0
-                stop = len(timestamp)
-                slice.append((start,stop))
-            else:
-                start = slice[i-1][1]
-                stop = start+len(timestamp)
-        #         if i == len(timestamps)-1:
-        #             stop = -1
-                slice.append((start,stop))
-        # print(slice)
-
-        for i,s in enumerate(slice,1):
-            name = "session"+str(i)+".pkl"
-            result = {
-                "ms_ts":timestamps[i-1],
-                "dff":np.transpose(dff)[s[0]:s[1]],
-                "sigraw":sigraw[s[0]:s[1]],
-                "idx_accepted":idx_accepted
-            }
-
-            with open(os.path.join(self.Result_dir,name),'wb') as f:
-                pickle.dump(result,f)
-            logger.debug("%s is saved"%name)
 
     def show_masks(self,behavevideo,aim="in_context"):
         mask, coord = Video(behavevideo).draw_rois(aim=aim)
@@ -224,6 +176,7 @@ class MiniResult():
         mark = starts_firstnp_stops(logfilepath)
 
         _,start,first_np,mark_point,stop = mark(behavevideo)
+
         # index log file
         behave_log =[i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*log*")) if key in i][0]
         log = pd.read_csv(behave_log,skiprows=3)
@@ -276,7 +229,7 @@ class MiniResult():
 
 
 
-    def save_alinged_session_pkl(self,session_tasks= ['hc','test','hc','test','train']):
+    def save_aligned_session_pkl(self,session_tasks= ['hc','test','hc','test','train']):
         """
         产生 corrected_ms_ts
         """
@@ -324,6 +277,7 @@ class MiniResult():
             task_ms_result["corrected_ms_ts"] = task_ms_result["ms_ts"]-delta_t*1000
             logger.info("'corrected_ms_ts' corrected 'ms_ts' when first_np as 0")
 
+            #jiang behave_result中的数据全部整合到 ms_session
             with open(task_ms_info,'wb') as f:
                 pickle.dump(dict(task_ms_result,**behave_result),f)
         

@@ -7,7 +7,7 @@ import json
 import scipy.io as spio
 import pickle
 import scipy.stats as stats
-from mylab.Cvideo import Video
+from mylab.Cvideo import *
 from mylab.Functions import *
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
@@ -19,7 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.DEBUG)
+sh.setLevel(logging.INFO)
 logger.addHandler(sh)
 
 class MiniAna():
@@ -27,14 +27,14 @@ class MiniAna():
         self.session_path=session_path
 
         self.logfile =self.session_path.replace('.pkl','_log.txt')
-        fh = logging.FileHandler(self.logfile,mode="w")
+        fh = logging.FileHandler(self.logfile,mode="a")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
         fh.setFormatter(formatter)
-        fh.setLevel(logging.INFO)
+        fh.setLevel(logging.DEBUG)
         logger.addHandler(fh)
 
         self._load_session()
-        self.align_behave_ms() # self.result["Trial_Num"], self.process
+        # self.align_behave_ms() # self.result["Trial_Num"], self.process
         logger.info("'sigraw' is taken as self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
         self.length = self.df.shape[0]
@@ -42,10 +42,10 @@ class MiniAna():
 
     def _load_session(self):
         logger.info("FUN:: _load_session")
-        logger.debug("loading %s"%self.session_path)
+        print("loading %s"%self.session_path)
         with open(self.session_path,"rb") as f:
             self.result = pickle.load(f)
-        if not "aligned_behave2ms" in self.result.keys():
+        if not "behavelog_info" in self.result.keys():
             self.exp = "hc"
         else:
             self.exp = "task"
@@ -60,13 +60,17 @@ class MiniAna():
                 if isinstance(df[key],pd.core.frame.DataFrame):
                     df[str(key)+"_column"]=np.array(df[key].columns)
                     df[key]=df[key].values                    
-                    print("%s has transferred to numpy array"%key)
+                    # print("%s has transferred to numpy array"%key)
+                if isinstance(df[key],pd.core.series.Series):
+                    df[key]=df[key].values
                 if isinstance(df[key],dict):
-                    return dataframe2nparray(df[key])
+                    return self._dataframe2nparray(df[key])
             return df
         elif isinstance(df,pd.core.frame.DataFrame):
             print("df is a DataFrame")
             return {"df":df.values,"df_columns":np.array(df.columns)}
+        else:
+            print("%s can not be transferred to nparray"%type(df))
 
     def savepkl2mat(self,):
         logger.info("FUN:: savepkl2mat")
@@ -79,10 +83,6 @@ class MiniAna():
             pickle.dump(self.result,f)
         logger.info("self.result is saved at %s"%self.session_path)
 
-    def detect_ca_transients(self,thresh,baseline,t_half=0.2,FR=30):
-        logger.debug("detecting calcium transients for each cell")
-        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
-        logger.info("calcium tansients are detected... ")
 
     def generate_timebin(self,timebin=1000):
         self.result["timebin"] = pd.Series([int(np.ceil(i/1000)) for i in self.result["ms_ts"]])
@@ -105,6 +105,7 @@ class MiniAna():
         frame_points=[find_close_fast(be_ts,i)+1+basicframe_num for i in event_points ]
         Video(miniscope_video_path).check_frames(*frame_points)
 
+
     def align_behave_ms(self,hc_trial_bin=5000):
         """
         产生 aligned_behave2ms
@@ -121,7 +122,7 @@ class MiniAna():
                 aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
                                                 ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
                 _,length = rlc(aligned_behave2ms["ms_behaveframe"])
-                print(length)
+                # print(length)
                 logger.info("for one miniscope frame, there are at most %s behavioral frames "%max(length))
 
                 if max(length)>10:
@@ -158,6 +159,207 @@ class MiniAna():
             self.result["Trial_Num"] = pd.Series(Trial_Num)
             self.result["process"] = pd.Series(process)
 
+    #%% add behavioral proverties to aligned_behave2ms
+
+    def add_is_in_context(self):
+        if self.exp == "task":
+            if not "is_in_context" in self.result.keys():
+                mask = self.result["in_context_mask"]
+                is_in_context=[]
+                for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                    if 255 in mask[int(y),int(x)]:
+                        is_in_context.append(0)
+                    else:
+                        is_in_context.append(1)
+                self.result["is_in_context"]=pd.Series(is_in_context)
+                logger.info("'is_in_context' has been added")
+            else:
+                logger.info("'is_in_context' has been there")
+        else:
+            logger.info("homecage session has no 'is_in_context'")
+
+    def add_is_in_lineartrack(self):
+        if self.exp == "task":
+            if not "is_in_lineartrack" in self.result.keys():
+                mask = self.result["in_lineartrack_mask"]
+                is_in_lineartrack=[]
+                for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                    if 255 in mask[int(y),int(x)]:
+                        is_in_lineartrack.append(0)
+                    else:
+                        is_in_lineartrack.append(1)
+                self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack)
+                logger.info("'is_in_lineartrack' has been added")
+            else:
+                logger.info("'is_in_lineartrack' has been there")
+        else:
+            logger.info("homecage session has no 'is_in_lineartrack'")
+
+    def add_Body_speed(self,scale=0.2339021309714166):
+        if self.exp == "task":
+            if not "Body_speed" in self.result.keys():
+                Body_speed,Body_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Body_x"]
+                                                        ,Y=self.result["aligned_behave2ms"]["Body_y"]
+                                                        ,T=self.result["aligned_behave2ms"]["be_ts"]
+                                                        ,s=scale)
+                logger.info("Body_speed is trimed by FUN: speed_optimize with 'gaussian_filter1d' with sigma=3")
+                self.result["Body_speed"]=speed_optimize(Body_speed,method="gaussian_filter1d",sigma=3)
+                self.result["Body_speed_angle"]=Body_speed_angle
+                logger.info("Body_speed and Body_speed_angle have been added")
+            else:
+                logger.info("Body_speed has been there")
+        else:
+            logger.info("homecage session has no 'Body_speed'")
+
+    def add_Head_speed(self,scale=0.2339021309714166):
+        if self.exp == "task":
+            if not "Head_speed" in self.result.keys():
+                Head_speed,Head_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Head_x"]
+                                                        ,Y=self.result["aligned_behave2ms"]["Head_y"]
+                                                        ,T=self.result["aligned_behave2ms"]["be_ts"]
+                                                        ,s=scale)
+                logger.info("Head_speed is trimed by FUN: speed_optimize with 'gaussian_filter1d' with sigma=3")
+                self.result["Head_speed"]=speed_optimize(Head_speed,method="gaussian_filter1d",sigma=3)
+                self.result["Head_speed_angle"]=Head_speed_angle
+                logger.info("Head_speed and Head_speed_angle have been added")
+            else:
+                logger.info("Head_speed has been there")
+        else:
+            logger.info("homecage session has no 'Head_speed'")
+
+
+    def add_in_context_running_direction_Body(self):
+        if self.exp == "task":
+            if not "in_context_running_direction_Body" in self.result.keys():
+                in_context_running_direction_Body=[]
+
+                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.result["Trial_Num"],self.result["is_in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
+                    if Trial == -1:
+                        in_context_running_direction_Body.append(-1)
+                    else:
+                        if in_context == 0:
+                            in_context_running_direction_Body.append(-1)
+                        else:
+                            if Body_speed_angle > 90 and Body_speed_angle < 280 :
+                                in_context_running_direction_Body.append(0)
+                            else:
+                                in_context_running_direction_Body.append(1)
+                self.result["in_context_running_direction_Body"]=pd.Series(in_context_running_direction_Body)
+                logger.info("in_context_running_direction_Body has been added")
+            else:
+                logger.info("'in_context_running_direction_Body' has been there")
+        else:
+            logger.info("homecage session has no 'in_context_running_direction_Body'")
+
+    def add_in_context_running_direction_Head(self):
+        if self.exp == "task":
+            if not "in_context_running_direction_Head" in self.result.keys():
+                in_context_running_direction_Head=[]
+
+                for Trial, in_context,Head_speed,Head_speed_angle in zip(self.result["Trial_Num"],self.result["is_in_context"],self.result["Head_speed"],self.result["Head_speed_angle"]):
+                    if Trial == -1:
+                        in_context_running_direction_Head.append(-1)
+                    else:
+                        if in_context == 0:
+                            in_context_running_direction_Head.append(-1)
+                        else:
+                            if Head_speed_angle > 90 and Head_speed_angle < 280 :
+                                in_context_running_direction_Head.append(0)
+                            else:
+                                in_context_running_direction_Head.append(1)
+                self.result["in_context_running_direction_Head"]=pd.Series(in_context_running_direction_Head)
+                logger.info("in_context_running_direction_Head has been added")
+            else:
+                logger.info("'in_context_running_direction_Head' has been there")
+        else:
+            logger.info("homecage session has no 'in_context_running_direction_Head'")
+
+
+    def add_alltrack_placebin_num(self,according = "Head",place_bin_nums=[4,4,40,4,4,4]):
+        if self.exp == "task":
+            if not "place_bin_No" in self.result.keys():
+
+                coords = LT_Videos(self.result["behavevideo"][0]).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
+                self.result["all_track_points"] = coords
+                lines = [(coords[i],coords[i+1]) for i in range(len(coords)-2)]
+                lines.append((coords[-3],coords[-1]))
+                place_bin_mids=[] # 每个placebin 的中点坐标
+                for line, place_bin_num in zip(lines,place_bin_nums):
+                    #计算每个placebin中点的坐标。
+                    #首先 计算每个placebin边界点的坐标
+                    xs = np.linspace(line[0][0],line[1][0],place_bin_num+1)
+                    ys = np.linspace(line[0][1],line[1][1],place_bin_num+1)
+                    #然后计算 每个placebin的中点坐标
+                    xs_mid = [np.mean([xs[i],xs[i+1]]) for i in range(len(xs)-1)]
+                    ys_mid = [np.mean([ys[i],ys[i+1]]) for i in range(len(ys)-1)]
+                    place_bin_mids.extend([(x,y) for x,y in zip(xs_mid,ys_mid)])
+
+                if according == "Head":
+                    X = self.result["aligned_behave2ms"]["Head_x"]
+                    Y = self.result["aligned_behave2ms"]["Head_y"]
+                elif according == "Body":
+                    X = self.result["aligned_behave2ms"]["Body_x"]
+                    Y = self.result["aligned_behave2ms"]["Body_y"]
+                else:
+                    sys.exit("no %s"%according)
+                    return self.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,40,4,4,4])
+
+                place_bin_No=[]
+                for x,y in zip(X,Y):
+                    distances=[]
+                    for place_bin_mid in place_bin_mids:
+                        distance = np.sqrt((x-place_bin_mid[0])**2+(y-place_bin_mid[1])**2)
+                        distances.append(distance)
+                    # print(distances)
+                    # sys.exit()  
+                    place_bin_No.append(np.argmin(distances))
+                self.result["place_bin_No"] = pd.Series(place_bin_No)
+                logger.info("'place_bin_No' has been added")
+            else:
+                logger.info("'place_bin_No' has been there")
+        else:
+            logger.info("homecage session has no 'place_bin_No'")
+
+    def add_incontext_placebin_num(self,according="Head",placebin_number=40):
+        if self.exp == "task":
+            if not "in_context_placebin_num" in self.result.keys():
+                Cx_min = np.min(np.array(self.result["in_context_coords"])[:,0])
+                Cx_max = np.max(np.array(self.result["in_context_coords"])[:,0])
+    
+                palcebinwidth=(Cx_max-Cx_min)/placebin_number
+                placebins = [] #从1开始 0留给所有‘其他区域’
+                for n in range(placebin_number):
+                    placebins.append([Cx_min+n*palcebinwidth,Cx_min+(n+1)*palcebinwidth])
+                in_context_placebin_num = []
+                if according=="Head":
+                    X = self.result["aligned_behave2ms"]['Head_x']
+                elif according == "Body":
+                    X = self.result["aligned_behave2ms"]['Body_x']
+                else:
+                    print("only ['Head','Bpdy'] are available")
+                for in_context,x in zip(self.result['is_in_context'],X):
+                    # x = int(x)
+                    if not in_context:
+                        in_context_placebin_num.append(0)
+                    else:   
+                        if x == placebins[0][0]:
+                            in_context_placebin_num.append(1)
+                        else:
+                            for i,placebin in enumerate(placebins,0):
+                                # print(x,placebin[0],placebin[1],end="|")
+                                if x>placebin[0] and x <= placebin[1]:
+                                    temp=i+1
+                                    break                                    
+                                else:
+                                    pass
+                            try:
+                                in_context_placebin_num.append(temp)
+                            except:
+                                logger.warning("%s is in context but not in any place bin"%x)
+
+                logger.info("in_context_placebin_num should start from 1, 0 means out of context")
+
+
     def add_zone2result(self,zone="in_lineartrack"):
         logger.info("FUN:: add_zone2result at zone %s"%zone)
         mask = zone+"_mask"
@@ -184,6 +386,9 @@ class MiniAna():
 
 
     def add_info2aligned_behave2ms(self,scale=0.2339021309714166,placebin_number=10):
+        """
+        which is about to discrete
+        """
         #     scale = 0.2339021309714166 #cm/pixel 40cm的台子，202016，202017.202019适用
         logger.info("FUN:: add_info2aligned_behave2ms scale: %scm/pixel ; placebin_number: %s"%(scale,placebin_number))
         update = 0
@@ -272,22 +477,6 @@ class MiniAna():
                                 logger.warning("%s is in context but not in any place bin"%x)
 
                 logger.info("in_context_placebin_num should start from 1, 0 means out of context")
-                        # for i in range(placebin_number):
-                        #     if i == 0 :
-                        #         if x<placebins[i][1]:
-                        #             in_context_placebin_num.append(i+1)
-                        #         else:
-                        #             pass
-                        #     elif not i == placebin_number-1:
-                        #         if x>=placebins[i][0] and x<placebins[i][1]:
-                        #             in_context_placebin_num.append(i+1)
-                        #         else:             
-                        #             pass
-                        #     else:
-                        #         if x>=placebins[i][0]:
-                        #             in_context_placebin_num.append(i+1)
-                        #         else:
-                        #             pass
                         
                 print(len(in_context_placebin_num),self.result["aligned_behave2ms"].shape)
                 self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num)
@@ -304,8 +493,10 @@ class MiniAna():
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
 
-
-
+    def detect_ca_transients(self,thresh,baseline,t_half=0.2,FR=30):
+        logger.debug("detecting calcium transients for each cell")
+        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
+        logger.info("calcium tansients are detected... ")
 
     def trim_df(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
         ,Trial_Num=None
