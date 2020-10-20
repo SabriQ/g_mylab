@@ -105,8 +105,54 @@ class MiniAna():
         frame_points=[find_close_fast(be_ts,i)+1+basicframe_num for i in event_points ]
         Video(miniscope_video_path).check_frames(*frame_points)
 
-
     def align_behave_ms(self,hc_trial_bin=5000):
+        """
+        产生 aligned_behave2ms
+        注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
+        hc_trial_bin: in ms, default 5000ms
+        """
+        logger.info("FUN:: aligned_behave2ms")
+        
+        if "behave_track" in self.result.keys():
+            if not "aligned_behave2ms" in self.result.keys():
+                # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
+                logger.debug("aligninging behavioral frame to each ms frame...")
+                logger.info("looking for behave frame for each corrected_ms_ts...")
+                aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
+                                                ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
+                _,length = rlc(aligned_behave2ms["ms_behaveframe"])
+                # print(length)
+                logger.info("for one miniscope frame, there are at most %s behavioral frames "%max(length))
+
+                if max(length)>10:
+                    logger.info("********ATTENTION when align_behave_ms**********")
+                    logger.info("miniscope video is longer than behavioral video, please check")
+                    logger.info("********ATTENTION when align_behave_ms**********")
+
+                aligned_behave2ms = aligned_behave2ms.join(self.result["behave_track"],on="ms_behaveframe")
+                
+                self.result["aligned_behave2ms"]=aligned_behave2ms
+                self.result["Trial_Num"] = self.result["aligned_behave2ms"]["Trial_Num"]
+                self.result["process"] = self.result["aligned_behave2ms"]["process"]
+                self.savesession()
+                logger.debug("aligned_behave2ms is saved %s" %self.session_path)
+            else:
+                logger.debug("behaveiroal timestamps were aligned to ms")
+
+
+        else:
+            logger.debug("this session was recorded in homecage")
+
+            Trial_Num = []
+            process = []
+            for ts in self.result["ms_ts"]:
+                Trial_Num.append(int(np.ceil(ts/hc_trial_bin)))
+                process.append(-1)
+            self.result["Trial_Num"] = pd.Series(Trial_Num,name="Trial_Num")
+            self.result["process"] = pd.Series(process,name="process")
+            self.savesession()
+
+    def align_behave_ms_2_del(self,hc_trial_bin=5000):
         """
         产生 aligned_behave2ms
         注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
@@ -171,7 +217,7 @@ class MiniAna():
                         is_in_context.append(0)
                     else:
                         is_in_context.append(1)
-                self.result["is_in_context"]=pd.Series(is_in_context)
+                self.result["is_in_context"]=pd.Series(is_in_context,name="is_in_context")
                 logger.info("'is_in_context' has been added")
             else:
                 logger.info("'is_in_context' has been there")
@@ -188,7 +234,7 @@ class MiniAna():
                         is_in_lineartrack.append(0)
                     else:
                         is_in_lineartrack.append(1)
-                self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack)
+                self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack,name="is_in_lineartrack")
                 logger.info("'is_in_lineartrack' has been added")
             else:
                 logger.info("'is_in_lineartrack' has been there")
@@ -244,7 +290,7 @@ class MiniAna():
                                 in_context_running_direction_Body.append(0)
                             else:
                                 in_context_running_direction_Body.append(1)
-                self.result["in_context_running_direction_Body"]=pd.Series(in_context_running_direction_Body)
+                self.result["in_context_running_direction_Body"]=pd.Series(in_context_running_direction_Body,name="in_context_running_direction_Body")
                 logger.info("in_context_running_direction_Body has been added")
             else:
                 logger.info("'in_context_running_direction_Body' has been there")
@@ -267,7 +313,7 @@ class MiniAna():
                                 in_context_running_direction_Head.append(0)
                             else:
                                 in_context_running_direction_Head.append(1)
-                self.result["in_context_running_direction_Head"]=pd.Series(in_context_running_direction_Head)
+                self.result["in_context_running_direction_Head"]=pd.Series(in_context_running_direction_Head,name="in_context_running_direction_Head")
                 logger.info("in_context_running_direction_Head has been added")
             else:
                 logger.info("'in_context_running_direction_Head' has been there")
@@ -275,12 +321,18 @@ class MiniAna():
             logger.info("homecage session has no 'in_context_running_direction_Head'")
 
 
-    def add_alltrack_placebin_num(self,according = "Head",place_bin_nums=[4,4,40,4,4,4]):
+    def add_alltrack_placebin_num(self,according = "Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None):
         if self.exp == "task":
             if not "place_bin_No" in self.result.keys():
 
-                coords = LT_Videos(self.result["behavevideo"][0]).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
-                self.result["all_track_points"] = coords
+                if "all_track_points" in self.result.keys():
+                    coords = self.result["all_track_points"]
+                else:
+                    behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
+                    coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
+                    self.result["all_track_points"] = coords
+                    self.savesession()
+
                 lines = [(coords[i],coords[i+1]) for i in range(len(coords)-2)]
                 lines.append((coords[-3],coords[-1]))
                 place_bin_mids=[] # 每个placebin 的中点坐标
@@ -313,7 +365,7 @@ class MiniAna():
                     # print(distances)
                     # sys.exit()  
                     place_bin_No.append(np.argmin(distances))
-                self.result["place_bin_No"] = pd.Series(place_bin_No)
+                self.result["place_bin_No"] = pd.Series(place_bin_No,name="place_bin_No")
                 logger.info("'place_bin_No' has been added")
             else:
                 logger.info("'place_bin_No' has been there")
@@ -403,7 +455,7 @@ class MiniAna():
                         in_context.append(0)
                     else:
                         in_context.append(1)
-                self.result["in_context"]=pd.Series(in_context)
+                self.result["in_context"]=pd.Series(in_context,name="in_context")
                 logger.info("'in_context' has been added")
                 update = 1
             else:
@@ -438,7 +490,7 @@ class MiniAna():
                                 in_context_running_direction.append(0)
                             else:
                                 in_context_running_direction.append(1)
-                self.result["in_context_running_direction"]=pd.Series(in_context_running_direction)
+                self.result["in_context_running_direction"]=pd.Series(in_context_running_direction,name="in_context_running_direction")
                 logger.info("in_context_running_direction has been added")
                 update = 1
             else:
@@ -479,7 +531,7 @@ class MiniAna():
                 logger.info("in_context_placebin_num should start from 1, 0 means out of context")
                         
                 print(len(in_context_placebin_num),self.result["aligned_behave2ms"].shape)
-                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num)
+                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num,name="in_context_placebin_num")
                 update = 1
             else:
                 print("'in_context_placebin_num' has been there")
