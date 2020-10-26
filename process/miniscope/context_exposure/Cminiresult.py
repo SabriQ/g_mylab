@@ -161,6 +161,7 @@ class MiniResult():
 
         ret,frame = cap.read()
 
+
         cv2.polylines(frame,coord,True,(0,0,255),2)
         plt.xticks([])
         plt.yticks([])
@@ -172,11 +173,24 @@ class MiniResult():
     def save_behave_pkl(self,behavevideo
         ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
         logger.info("FUN:: save_behave_pkl")
+
+
         key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
         mark = starts_firstnp_stops(logfilepath)
 
         _,start,first_np,mark_point,stop = mark(behavevideo)
 
+        #save a frame of behavioral video
+        cap = cv2.VideoCapture(behavevideo)
+        try:
+            cap.set(cv2.CAP_PROP_POS_FRAMES,1000-1)
+        except:
+            print("video is less than 100 frame")
+
+        ret,frame = cap.read()
+        cap.release()
+
+    
         # index log file
         behave_log =[i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*log*")) if key in i][0]
         log = pd.read_csv(behave_log,skiprows=3)
@@ -214,6 +228,7 @@ class MiniResult():
         in_lineartrack_mask,in_lineartrack_coords=Video(behavevideo).draw_rois(aim="in_lineartrack",count = 1)
 
         result = {"behavevideo":[behavevideo,key,start,first_np,mark_point,stop]
+                  ,"behavevideoframe":frame
                   ,"behavelog_time":behavelog_time
                   ,"behavelog_info":behavelog_info
                   ,"behave_track":behave_track

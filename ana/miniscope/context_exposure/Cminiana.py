@@ -19,7 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.INFO)
+sh.setLevel(logging.DEBUG)
 logger.addHandler(sh)
 
 class MiniAna():
@@ -30,15 +30,14 @@ class MiniAna():
         fh = logging.FileHandler(self.logfile,mode="a")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
         fh.setFormatter(formatter)
-        fh.setLevel(logging.DEBUG)
+        fh.setLevel(logging.INFO)
         logger.addHandler(fh)
 
         self._load_session()
         # self.align_behave_ms() # self.result["Trial_Num"], self.process
-        logger.info("'sigraw' is taken as self.df")
+        logger.info("'sigraw' is taken as original self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
-        self.length = self.df.shape[0]
-
+        self.shape = self.df.shape
 
     def _load_session(self):
         logger.info("FUN:: _load_session")
@@ -205,7 +204,57 @@ class MiniAna():
             self.result["Trial_Num"] = pd.Series(Trial_Num)
             self.result["process"] = pd.Series(process)
 
+    def show_behaveframe(self,tracking=True):
+        """
+        show all the tracking traectory in a behavioral video frame.
+        """
+        self.add_behavevideoframe()
+        plt.imshow(self.result["behavevideoframe"])
+        plt.xticks([])
+        plt.yticks([])
+        # plt.plot(s.result[])
+        plt.plot([i[0] for i in self.result["all_track_points"]],[i[1] for i in self.result["all_track_points"]],"ro",markersize=2)
+        if tracking :
+            plt.plot(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"],markersize=1)
+        plt.show()
+
+        
     #%% add behavioral proverties to aligned_behave2ms
+
+    def add_Context(self,context_map=None):
+        """
+        the same size as df.
+        """
+        if not "Context" in self.result.keys():
+            Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
+            logger.info("'Contex' came frome 'Enter_ctx'")
+            self.result["Context"] = pd.Series([int(i) for i in Context],name="Context")
+            logger.info("'Context' has been added")
+        else:
+            logger.debug("'Context' was there")
+        if not context_map == None:
+            self.result["Context"] = pd.Series([context_map[i] for i in self.Context],name="Context")
+            logger.info("'Context' was represented as A,B,C or ON")
+        else:
+            logger.info("'Context' was represented as 0,1,2 or -1")
+
+    def add_behavevideoframe(self,behavevideo=None,frame=999):
+        """
+        """
+        if not "behavevideoframe" in self.result.keys() and frame==999:
+            behavevideo = self.result["behavevideo"][0] if behavevideo==None else behavevideo
+            cap = cv2.VideoCapture(behavevideo)
+            try:
+                cap.set(cv2.CAP_PROP_POS_FRAMES,frame)
+            except:
+                print("video is less than 100 frame")
+
+            ret,frame = cap.read()
+            cap.release()
+            self.result["behavevideoframe"]=frame
+            logger.debug("behavevideoframe was saved")
+        else:
+            logger.debug("behavevideoframe has been there.")
 
     def add_is_in_context(self):
         if self.exp == "task":
@@ -354,7 +403,6 @@ class MiniAna():
                     Y = self.result["aligned_behave2ms"]["Body_y"]
                 else:
                     sys.exit("no %s"%according)
-                    return self.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,40,4,4,4])
 
                 place_bin_No=[]
                 for x,y in zip(X,Y):
@@ -364,8 +412,14 @@ class MiniAna():
                         distances.append(distance)
                     # print(distances)
                     # sys.exit()  
-                    place_bin_No.append(np.argmin(distances))
+                    #有一些 点会tracking到 很远的地方去，用像素点为15 作为距离来筛选错误的点，然后用上一个值替代这个值
+                    if np.min(distances) < 20:
+                        place_bin_No.append(np.argmin(distances))
+                    else:
+                        place_bin_No.append(place_bin_No[-1])
+
                 self.result["place_bin_No"] = pd.Series(place_bin_No,name="place_bin_No")
+
                 logger.info("'place_bin_No' has been added")
             else:
                 logger.info("'place_bin_No' has been there")
@@ -408,9 +462,12 @@ class MiniAna():
                                 in_context_placebin_num.append(temp)
                             except:
                                 logger.warning("%s is in context but not in any place bin"%x)
-
-                logger.info("in_context_placebin_num should start from 1, 0 means out of context")
-
+                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num,name="in_context_placebin_num")
+                logger.info("in_context_placebin_num has been added, which should start from 1, 0 means out of context")
+            else:
+                logger.info("'in_context_placebin_num' has been there")
+        else:
+            logger.info("homecage session has no 'in_context_placebin_num'")
 
     def add_zone2result(self,zone="in_lineartrack"):
         logger.info("FUN:: add_zone2result at zone %s"%zone)
@@ -545,23 +602,43 @@ class MiniAna():
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
 
-    def detect_ca_transients(self,thresh,baseline,t_half=0.2,FR=30):
+    def detect_ca_transients(self,thresh=1.5,baseline=0.8,t_half=0.2,FR=30):
+        """
+        return ca_transients,celldata_detect, single_cell_detected_transiend. 
+        celldata_detect have the same size with df
+        """
         logger.debug("detecting calcium transients for each cell")
         self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
         logger.info("calcium tansients are detected... ")
 
-    def trim_df(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
+    ## trim* ret
+
+    def trim_df(self,force_neg2zero=True,detect_ca_transient =False,Normalize=False,standarize=False):
+        if detect_ca_transient:
+            _,self.df,_= self.detect_ca_transients()
+
+    def trim_speed(self,min=None):
+        pass
+
+    def trim_Trial_Num(self,):
+        pass
+
+    def trim_process(self,):
+        pass
+
+
+    def trim_df2(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
         ,Trial_Num=None
         ,in_process=False,process=None
         ,in_context=False,in_lineartrack=False
         ,speed_min = False):
         """
+        is about to discrete
         process: list process, for example [0,1,2]
         """
         logger.info("FUN:: trim_df")
 
-        if df is None:
-            df = self.df
+        df = self.df if df == None else df
         if force_neg2zero:
             logger.info("negative values are forced to be zero")
             df[df<0]=0
@@ -590,16 +667,16 @@ class MiniAna():
 
         if in_context:
             try:
-                index["in_context"] = self.result["in_context"]
-                logger.info("interested zone are restricted 'in_context'")
+                index["in_context"] = self.result["is_in_context"]
+                logger.info("interested zone are restricted 'is_in_context'")
             except:
-                logger.warning("in_context does not exist")
+                logger.warning("is_in_context does not exist")
         if in_lineartrack:
             try:
-                index["in_lineartrack"] = self.result["in_lineartrack"]
-                logger.info("interested zone are restricted 'in_lineartrack'")
+                index["in_lineartrack"] = self.result["is_in_lineartrack"]
+                logger.info("interested zone are restricted 'is_in_lineartrack'")
             except:
-                logger.warning("in_lineartrack does not exist")
+                logger.warning("is_in_lineartrack does not exist")
 
         if speed_min:
             try:
@@ -621,14 +698,18 @@ class Cellid(MiniAna):
 
         # self.add_info2aligned_behave2ms(scale=0.2339021309714166,placebin_number=10) 
         # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
+        self.add_is_in_context()
+        self.add_Body_speed(scale=0.33)
+        self.add_in_context_running_direction_Body()
 
-        self.Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
+        self.add_Context()
+        self.add_incontext_placebin_num()
 
-        self.in_context_running_direction = self.result["in_context_running_direction"]
-
+        self.Context = self.result["Context"]
+        self.in_context_running_direction = self.result["in_context_running_direction_Body"]
         self.Body_speed = self.result["Body_speed"]
-
         self.in_context_placebin_num=self.result["in_context_placebin_num"]
+        self.process = self.result["process"]
 
     def cellids_HCTrack_Context(self,idx_accept,df):
         """
@@ -713,6 +794,7 @@ class Cellid(MiniAna):
 
     def cellids_Context(self,idxes,meanfr_df=None,Context=None,context_map=["A","B","C","N"]):
         """
+        which is about to discrete
         输入应该全是 in_context==1的数据
         idxes: the ids of all the cell that you're concerned.
         meanfr_df: meanfr in each trial only in context
@@ -726,7 +808,7 @@ class Cellid(MiniAna):
         #序列化in_context_list
         if meanfr_df is None:
             logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
-            df,index = self.trim_df(force_neg2zero=True
+            df,index = self.trim_df2(df = None,force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
             meanfr_df = df[index].groupby(self.result["Trial_Num"][index]).mean().reset_index(drop=False)
@@ -775,6 +857,7 @@ class Cellid(MiniAna):
     def cellids_RD_incontext(self,idxes,mean_df=None,Context=None,in_context_running_direction=None
         ,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
         """
+        which is about to discrete
         输入应该全是 in_context==1的数据. in_context_running_direction is -1 when out of context
         idxes: the ids of all the cell that you're concerned.
         meanfr_df: meanfr in each trial only in context
@@ -789,7 +872,7 @@ class Cellid(MiniAna):
 
         if mean_df is None:
             logger.info("Normalize=False,standarize=False,in_context=True")
-            df,index = self.trim_df(force_neg2zero=True
+            df,index = self.trim_df2(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
         if in_context_running_direction is None:
@@ -876,6 +959,7 @@ class Cellid(MiniAna):
         ,in_process=True,process=[0,1,2,3],scale=0.2339021309714166,placebin_number=10
         ,context_map=["A","B","C","N"],shuffle_times=1000):
         """
+        which is about to discrete
         df 必须具备 place_bin_num
         输入df包括分好的place bin 
         """
@@ -883,11 +967,11 @@ class Cellid(MiniAna):
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_placebin_num start from 1.")
 
-        self.add_info2aligned_behave2ms(scale=scale,place_bin_num=placebin_number)
+        # self.add_info2aligned_behave2ms(scale=scale,place_bin_num=placebin_number)
 
         if df is None:
             logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
-            df,index = self.trim_df(force_neg2zero=True,in_process=in_process,process=process
+            df,index = self.trim_df2(force_neg2zero=True,in_process=in_process,process=process
                 ,Normalize=False,standarize=False,in_context=True,speed_min=3)
             df=df[index]
         logger.info("indexed shape of df %s"%df.shape[0])
@@ -975,7 +1059,7 @@ class Cellid(MiniAna):
 
         if df is None:
             logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
-            df,index = self.trim_df(force_neg2zero=True,in_process=in_process,process=process
+            df,index = self.trim_df2(force_neg2zero=True,in_process=in_process,process=process
                 ,Normalize=False,standarize=False,in_context=True)
             df=df[index]
         logger.info("indexed shape of 'df' %s"%df.shape[0])
@@ -1052,26 +1136,26 @@ class Cellid(MiniAna):
             sorted_df_A = norm_df_A.loc[norm_df_A.idxmax(axis=1).sort_values().index,:]
             plt.imshow(sorted_df_A,aspect="auto",**kwargs)
             plt.yticks([])
-            plt.title("cells in Context A sorted in Context A")
+            plt.title("pc-cells in Context A sorted in Context A")
 
             plt.subplot(222)
             sorted_df_B = norm_df_B.loc[norm_df_A.idxmax(axis=1).sort_values().index,:]
             plt.imshow(sorted_df_B,aspect="auto",**kwargs)
             plt.yticks([])
-            plt.title("cells in Context B sorted in Context A")
+            plt.title("pc-cells in Context B sorted in Context A")
 
             plt.subplot(223)
             sorted_df_B = norm_df_B.loc[norm_df_B.idxmax(axis=1).sort_values().index,:]
             plt.imshow(sorted_df_B,aspect="auto",**kwargs)
             plt.yticks([])
-            plt.title("cells in Context B sorted in Context B")
+            plt.title("pc-cells in Context B sorted in Context B")
             plt.tight_layout() 
 
             plt.subplot(224)
             sorted_df_A = norm_df_A.loc[norm_df_B.idxmax(axis=1).sort_values().index,:]
             plt.imshow(sorted_df_A,aspect="auto",**kwargs)
             plt.yticks([])
-            plt.title("cells in Context A sorted in Context B")
+            plt.title("pc-cells in Context A sorted in Context B")
 
             plt.tight_layout() 
             plt.show()
@@ -1109,9 +1193,6 @@ class Cellid(MiniAna):
             plt.tight_layout() 
 
         return meanfr,plot_Meanfr_trace_along_Placebin,plot_Meanfr_heatmap_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
-
-
-
 
 
 
