@@ -31,9 +31,45 @@ def plot_trace_with_running_direction(Context_dataframe_info):
     """
     return internal functions for plotting trace of each trial with two colors means two direction
     """
-    Context_dataframe_info.keys()
-    pass
-    
+    def plot(idx,context):
+        """
+        return an inter function
+            That could plot trace along each trial which have "ms_ts" and "Body_speed_angle" Besides idxes 
+        """
+        
+
+        if context in Context_dataframe_info.keys():
+            trials = Context_dataframe_info[context]
+
+        else:
+            print("Context %s doesn't exist."%context)
+            return 
+
+        trial_lens = len(trials)
+
+        fig,axes = plt.subplots(trial_lens,1
+                                ,figsize=(8,0.5*trial_lens)
+                                ,subplot_kw = {"xticks":[],"yticks":[]}
+                                )
+
+        for i,ax in enumerate(axes):
+            if i==0:
+                ax.set_title("incontext(placebins) firing rate cellid:%s, context:%s"%(idx,context))
+            if i==len(axes)-1:
+                ax.set_xlabel("Trial Time(ctx enter > r-ctx_exit)")
+            ax.set_ylabel(i+1,rotation=0)
+#             ax.set_axis_off() 
+            ax.spines['top'].set_visible(False)
+#             ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            color=["red" if i>90 and i<280 else "green" for i in trials[i]["Body_speed_angle"]]
+            ax.scatter(x=trials[i]["ms_ts"]-np.min(trials[i]["ms_ts"]),y=trials[i][idx],c=color,s=1)
+        plt.show()
+
+
+    return plot
+
 def plot_MeanFr_along_Placebin(Context_Matrix_info):    
     """
     Context_Matrix_info: the output of FUNCTION: SingleCell_MeanFr_in_SingleTrial_along_Placebin

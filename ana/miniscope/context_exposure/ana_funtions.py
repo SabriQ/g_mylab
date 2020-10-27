@@ -225,7 +225,6 @@ def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxe
     s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None) # add "place_bin_No"
     s.add_Body_speed(scale=0.33) # Body_speed & Body_speed_angle are ready
 
-    
     df["Context"] = s.result["Context"]
     df["place_bin_No"] = s.result["place_bin_No"] # used only in screen data in context. actually s.add_is_in_context is alternative way to screen this.
     df["Trial_Num"] = s.result["Trial_Num"]
@@ -233,34 +232,37 @@ def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxe
     df["Body_speed_angle"] = s.result["Body_speed_angle"]
 
     #screen contexts
-    contexts = np.unique(s.result["Context"]) if contexts == None else contexts
-    if not contexts == None:
-        df = df.loc[df["Context"].isin(contexts)]
-        print("screen df according to given contexts")
+    contexts = np.unique(s.result["Context"]) if contexts == None else contexts  
+    df = df.loc[df["Context"].isin(contexts)]
+#     print(contexts)
+    print("screen df according to given contexts")
 
     #screen placebins
     placebins = np.unique(s.result["place_bin_No"]) if place_bins==None else place_bins
-    if not place_bins == None:
-        df = df.loc[df["place_bin_No"].isin(placebins)]
-        df.drop(columns="place_bin_No",inplace=True) 
-        print("screen df according to given place bins")
+    df = df.loc[df["place_bin_No"].isin(placebins)]
+    df.drop(columns="place_bin_No",inplace=True) 
+#     print(placebins)
+    print("screen df according to given place bins")
 
     #screen trials
-    tirals = np.unique(s.result["Trial_Num"]) if tirals == None else trials
-    if not trials == None:
-        df = df.loc[df["trials"].isin(trials)]
-        print("screen df according to given tirals")
-
+    trials = np.unique(s.result["Trial_Num"]) if trials == None else trials
+    df = df.loc[df["Trial_Num"].isin(trials)]
+#     print(trials)
+    print("screen df according to given tirals")
+    
 
     Context_dataframe_info=dict()
-    for context in contexts:
-        Trial_list_info = list()
-        for trial in trials:
-            try:
-                Trial_list_info.append(df.xs((context,trial),level=("Context","Trial_Num"))) #Besides idxes only "ms_ts" and "Body_speed_angle" left
-            except:
-                pass
-        Context_Matrix_info[context]=Trial_list_info
+    
+    for context in np.unique(df["Context"]):
+        if not context==-1:
+            Trial_list_info = list()
+            context_df = df[df["Context"]==context]
+            context_df.drop(columns="Context",inplace=True)
+            for trial in np.unique(context_df["Trial_Num"]):
+                temp = context_df[context_df["Trial_Num"]==trial]
+                temp.drop(columns="Trial_Num",inplace=True)
+                Trial_list_info.append(temp) #Besides idxes only "ms_ts" and "Body_speed_angle" left
+            Context_dataframe_info[context]=Trial_list_info
 
     return Context_dataframe_info
 
