@@ -234,20 +234,17 @@ def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxe
     #screen contexts
     contexts = np.unique(s.result["Context"]) if contexts == None else contexts  
     df = df.loc[df["Context"].isin(contexts)]
-#     print(contexts)
     print("screen df according to given contexts")
 
     #screen placebins
     placebins = np.unique(s.result["place_bin_No"]) if place_bins==None else place_bins
     df = df.loc[df["place_bin_No"].isin(placebins)]
     df.drop(columns="place_bin_No",inplace=True) 
-#     print(placebins)
     print("screen df according to given place bins")
 
     #screen trials
     trials = np.unique(s.result["Trial_Num"]) if trials == None else trials
     df = df.loc[df["Trial_Num"].isin(trials)]
-#     print(trials)
     print("screen df according to given tirals")
     
 
@@ -265,7 +262,6 @@ def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxe
             Context_dataframe_info[context]=Trial_list_info
 
     return Context_dataframe_info
-
 
 def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,df=None,contexts=None,place_bins=None,idxes = None,trials=None):    
     """
@@ -324,3 +320,8 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,df=None,contexts=None,plac
     return Context_Matrix_info
 
 
+def PCA(s):
+    pass
+
+def dPCA(s):
+    pass

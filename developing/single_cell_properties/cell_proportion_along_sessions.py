@@ -36,7 +36,6 @@ def plot_trace_with_running_direction(Context_dataframe_info):
         return an inter function
             That could plot trace along each trial which have "ms_ts" and "Body_speed_angle" Besides idxes 
         """
-        
 
         if context in Context_dataframe_info.keys():
             trials = Context_dataframe_info[context]
@@ -58,9 +57,10 @@ def plot_trace_with_running_direction(Context_dataframe_info):
             if i==len(axes)-1:
                 ax.set_xlabel("Trial Time(ctx enter > r-ctx_exit)")
             ax.set_ylabel(i+1,rotation=0)
-#             ax.set_axis_off() 
+            ax.set_aspect("auto")
+            #ax.set_axis_off() 
             ax.spines['top'].set_visible(False)
-#             ax.spines['bottom'].set_visible(False)
+            #ax.spines['bottom'].set_visible(False)
             ax.spines['left'].set_visible(False)
             ax.spines['right'].set_visible(False)
             color=["red" if i>90 and i<280 else "green" for i in trials[i]["Body_speed_angle"]]
