@@ -1,0 +1,15 @@
+behavior
+	basic behavior stats
+	logistic regression
+	funtions adapted to different part
+	
+single_cell_properties
+	cell_proportion_along_sessions.py (running direction cell, place cell, context cell)
+	meanfr in each day v.s. weight along days in logistic regression
+	svm decoding
+
+population analysis
+	PCA
+	dPCA
+	Graph analysis
+	

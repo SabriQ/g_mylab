@@ -1,15 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import os,sys,glob,csv
 import json
 import scipy.io as spio
 import pickle
 import scipy.stats as stats
-
+from mylab.Cvideo import *
+from mylab.Functions import *
 from mylab.process.miniscope.Mfunctions import *
-from mylab.ana.miniscope.Mfunctions import *
-
+from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
 from mylab.ana.miniscope.context_exposure.Mplacecells import *
 import logging 
 
@@ -26,30 +27,29 @@ class MiniAna():
         self.session_path=session_path
 
         self.logfile =self.session_path.replace('.pkl','_log.txt')
-        fh = logging.FileHandler(self.logfile,mode="w")
+        fh = logging.FileHandler(self.logfile,mode="a")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
         fh.setFormatter(formatter)
         fh.setLevel(logging.INFO)
         logger.addHandler(fh)
 
         self._load_session()
-        self.align_behave_ms() # self.Trial_Num, self.process
-        self.add_info2aligned_behave2ms() # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
-        logger.info("'sigraw' is taken as self.df")
+        # self.align_behave_ms() # self.result["Trial_Num"], self.process
+        logger.info("'sigraw' is taken as original self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
-        self.length = self.df.shape[0]
+        self.shape = self.df.shape
 
     def _load_session(self):
         logger.info("FUN:: _load_session")
-        logger.debug("loading %s"%self.session_path)
+        print("loading %s"%self.session_path)
         with open(self.session_path,"rb") as f:
             self.result = pickle.load(f)
-        if not "aligned_behave2ms" in self.result.keys():
+        if not "behavelog_info" in self.result.keys():
             self.exp = "hc"
         else:
             self.exp = "task"
-        logger.debug("loaded %s"%self.session_path)
-
+        logger.debug("loaded")
+        print(self.result.keys())
 
 
     def _dataframe2nparray(self,df):
@@ -59,13 +59,17 @@ class MiniAna():
                 if isinstance(df[key],pd.core.frame.DataFrame):
                     df[str(key)+"_column"]=np.array(df[key].columns)
                     df[key]=df[key].values                    
-                    print("%s has transferred to numpy array"%key)
+                    # print("%s has transferred to numpy array"%key)
+                if isinstance(df[key],pd.core.series.Series):
+                    df[key]=df[key].values
                 if isinstance(df[key],dict):
-                    return dataframe2nparray(df[key])
+                    return self._dataframe2nparray(df[key])
             return df
         elif isinstance(df,pd.core.frame.DataFrame):
             print("df is a DataFrame")
             return {"df":df.values,"df_columns":np.array(df.columns)}
+        else:
+            print("%s can not be transferred to nparray"%type(df))
 
     def savepkl2mat(self,):
         logger.info("FUN:: savepkl2mat")
@@ -73,6 +77,60 @@ class MiniAna():
         spio.savemat(savematname,self._dataframe2nparray(self.result))
         logger.info("saved %s"%savematname)
 
+    def savesession(self,*args):
+
+        with open(self.session_path,"wb") as f:
+            pickle.dump(self.result,f)
+        if len(args)==0:
+            logger.debug("%s self.result is saved at %s"%self.session_path)
+        else:
+            logger.info("%s is saved at %s"%(args,self.session_path))
+
+
+    def generate_timebin(self,timebin=1000):
+        self.result["timebin"] = pd.Series([int(np.ceil(i/1000)) for i in self.result["ms_ts"]])
+        logger.info("timebin is binned into %s ms"%timebin)
+        return self.result["timebin"]
+
+    def play_events_in_behavioral_video(self,):
+        """
+        we define 'nosepoke,ctx_enter,ctx_exit,choice,r_ctx_enter,r_ctx_exit' as event_points,
+        this function help us to quickly check the relative behavioral frame
+        """
+        if self.exp=="task":
+            event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
+            be_ts = self.result["behave_track"]["be_ts"].to_numpy()
+            frame_points=[find_close_fast(be_ts,i)+1 for i in event_points ]
+
+            Video(self.result["behavevideo"][0]).check_frames(*frame_points)
+        else:
+            print("homecage session doesn't have behaviral video")
+
+    def play_events_in_miniscope_video(self,miniscope_video_path,forwardframe_num=1):
+        """
+        miniscope_video_path: batter to te mp4
+        forwardframe_num:frames.num to play forward. default to be 1. because 'check_frames' play 1 frame backward
+        """
+        event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
+        be_ts = self.result["aligned_behave2ms"]["be_ts"].to_numpy()
+        frame_points=[find_close_fast(be_ts,i)+forwardframe_num for i in event_points ]
+        Video(miniscope_video_path).check_frames(*frame_points)
+
+    def show_behaveframe(self,tracking=True):
+        """
+        show all the tracking traectory in a behavioral video frame.
+        """
+        self.add_behavevideoframe()
+        plt.imshow(self.result["behavevideoframe"])
+        plt.xticks([])
+        plt.yticks([])
+        # plt.plot(s.result[])
+        plt.plot([i[0] for i in self.result["all_track_points"]],[i[1] for i in self.result["all_track_points"]],"ro",markersize=2)
+        if tracking :
+            plt.plot(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"],markersize=1)
+        plt.show()
+        
+#%% add behavioral proverties to aligned_behave2ms
 
     def align_behave_ms(self,hc_trial_bin=5000):
         """
@@ -80,17 +138,16 @@ class MiniAna():
         注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
         hc_trial_bin: in ms, default 5000ms
         """
-        logger.info("FUN:: aligned_behave2ms,hc_trial_bin=%s"%hc_trial_bin)
-        
-        if "behave_track" in self.result.keys():
+        logger.info("FUN:: aligned_behave2ms")
+        if self.exp=="task":
             if not "aligned_behave2ms" in self.result.keys():
                 # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
                 logger.debug("aligninging behavioral frame to each ms frame...")
                 logger.info("looking for behave frame for each corrected_ms_ts...")
                 aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
                                                 ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
-
                 _,length = rlc(aligned_behave2ms["ms_behaveframe"])
+                # print(length)
                 logger.info("for one miniscope frame, there are at most %s behavioral frames "%max(length))
 
                 if max(length)>10:
@@ -99,27 +156,290 @@ class MiniAna():
                     logger.info("********ATTENTION when align_behave_ms**********")
 
                 aligned_behave2ms = aligned_behave2ms.join(self.result["behave_track"],on="ms_behaveframe")
+                
                 self.result["aligned_behave2ms"]=aligned_behave2ms
-                with open(self.session_path,'wb') as f:
-                    pickle.dump(self.result,f)
-                logger.debug("aligned_behave2ms is saved %s" %self.session_path)
+
+                self.savesession("aligned_behave2ms")
+
             else:
                 logger.debug("behaveiroal timestamps were aligned to ms")
-
-
-            self.Trial_Num = self.result["aligned_behave2ms"]["Trial_Num"]
-            self.process = self.result["aligned_behave2ms"]["process"]
 
         else:
             logger.debug("this session was recorded in homecage")
 
+
+    def add_Trial_Num_Process(self):
+        """
+        in case some data was genereated by older verfion of function  "align_behave_ms", we need to regenereate "Trial_Num" and "Porcess" for each session
+        and save them in pkl file
+        """
+        logger.info("Fun:: add_Trial_Num_Process")
+
+        if self.exp=="hc":
+            logger.info("this session was recorded in homecage")
             Trial_Num = []
             process = []
             for ts in self.result["ms_ts"]:
                 Trial_Num.append(int(np.ceil(ts/hc_trial_bin)))
                 process.append(-1)
-            self.Trial_Num = pd.Series(Trial_Num)
-            self.process = pd.Series(process)
+            self.result["Trial_Num"] = pd.Series(Trial_Num,name="Trial_Num")
+            self.result["process"] = pd.Series(process,name="process")
+
+        else: # self.exp=="task"
+            if not "aligned_behave2ms" in self.result.keys():
+                self.aligned_behave2ms(hc_trial_bin=5000)
+            self.result["Trial_Num"] = self.result["aligned_behave2ms"]["Trial_Num"]
+            self.result["process"] = self.result["aligned_behave2ms"]["process"]
+
+        self.savesession("Trial_Num","process")
+
+    def add_Context(self,context_map=None):
+        """
+        the same size as df.
+        """
+        if not "Context" in self.result.keys():
+            Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
+            logger.info("'Contex' came frome 'Enter_ctx'")
+            self.result["Context"] = pd.Series([int(i) for i in Context],name="Context")
+            logger.info("'Context' has been added")
+        else:
+            logger.debug("'Context' was there")
+        if not context_map == None:
+            self.result["Context"] = pd.Series([context_map[i] for i in self.Context],name="Context")
+            logger.info("'Context' was represented as A,B,C or ON")
+        else:
+            logger.info("'Context' was represented as 0,1,2 or -1")
+
+    def add_behavevideoframe(self,behavevideo=None,frame=999):
+        """
+        """
+        if not "behavevideoframe" in self.result.keys() and frame==999:
+            behavevideo = self.result["behavevideo"][0] if behavevideo==None else behavevideo
+            cap = cv2.VideoCapture(behavevideo)
+            try:
+                cap.set(cv2.CAP_PROP_POS_FRAMES,frame)
+            except:
+                print("video is less than 100 frame")
+
+            ret,frame = cap.read()
+            cap.release()
+            self.result["behavevideoframe"]=frame
+            logger.debug("behavevideoframe was saved")
+        else:
+            logger.debug("behavevideoframe has been there.")
+
+    def add_is_in_context(self):
+        if self.exp == "task":
+            if not "is_in_context" in self.result.keys():
+                mask = self.result["in_context_mask"]
+                is_in_context=[]
+                for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                    if 255 in mask[int(y),int(x)]:
+                        is_in_context.append(0)
+                    else:
+                        is_in_context.append(1)
+                self.result["is_in_context"]=pd.Series(is_in_context,name="is_in_context")
+                logger.info("'is_in_context' has been added")
+            else:
+                logger.info("'is_in_context' has been there")
+        else:
+            logger.info("homecage session has no 'is_in_context'")
+
+    def add_is_in_lineartrack(self):
+        if self.exp == "task":
+            if not "is_in_lineartrack" in self.result.keys():
+                mask = self.result["in_lineartrack_mask"]
+                is_in_lineartrack=[]
+                for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                    if 255 in mask[int(y),int(x)]:
+                        is_in_lineartrack.append(0)
+                    else:
+                        is_in_lineartrack.append(1)
+                self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack,name="is_in_lineartrack")
+                logger.info("'is_in_lineartrack' has been added")
+            else:
+                logger.info("'is_in_lineartrack' has been there")
+        else:
+            logger.info("homecage session has no 'is_in_lineartrack'")
+
+    def add_Body_speed(self,scale=0.2339021309714166):
+        if self.exp == "task":
+            if not "Body_speed" in self.result.keys():
+                Body_speed,Body_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Body_x"]
+                                                        ,Y=self.result["aligned_behave2ms"]["Body_y"]
+                                                        ,T=self.result["aligned_behave2ms"]["be_ts"]
+                                                        ,s=scale)
+                logger.info("Body_speed is trimed by FUN: speed_optimize with 'gaussian_filter1d' with sigma=3")
+                self.result["Body_speed"]=speed_optimize(Body_speed,method="gaussian_filter1d",sigma=3)
+                self.result["Body_speed_angle"]=Body_speed_angle
+                logger.info("Body_speed and Body_speed_angle have been added")
+            else:
+                logger.info("Body_speed has been there")
+        else:
+            logger.info("homecage session has no 'Body_speed'")
+
+    def add_Head_speed(self,scale=0.2339021309714166):
+        if self.exp == "task":
+            if not "Head_speed" in self.result.keys():
+                Head_speed,Head_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Head_x"]
+                                                        ,Y=self.result["aligned_behave2ms"]["Head_y"]
+                                                        ,T=self.result["aligned_behave2ms"]["be_ts"]
+                                                        ,s=scale)
+                logger.info("Head_speed is trimed by FUN: speed_optimize with 'gaussian_filter1d' with sigma=3")
+                self.result["Head_speed"]=speed_optimize(Head_speed,method="gaussian_filter1d",sigma=3)
+                self.result["Head_speed_angle"]=Head_speed_angle
+                logger.info("Head_speed and Head_speed_angle have been added")
+            else:
+                logger.info("Head_speed has been there")
+        else:
+            logger.info("homecage session has no 'Head_speed'")
+
+
+    def add_in_context_running_direction_Body(self):
+        if self.exp == "task":
+            if not "in_context_running_direction_Body" in self.result.keys():
+                in_context_running_direction_Body=[]
+
+                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.result["Trial_Num"],self.result["is_in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
+                    if Trial == -1:
+                        in_context_running_direction_Body.append(-1)
+                    else:
+                        if in_context == 0:
+                            in_context_running_direction_Body.append(-1)
+                        else:
+                            if Body_speed_angle > 90 and Body_speed_angle < 280 :
+                                in_context_running_direction_Body.append(0)
+                            else:
+                                in_context_running_direction_Body.append(1)
+                self.result["in_context_running_direction_Body"]=pd.Series(in_context_running_direction_Body,name="in_context_running_direction_Body")
+                logger.info("in_context_running_direction_Body has been added")
+            else:
+                logger.info("'in_context_running_direction_Body' has been there")
+        else:
+            logger.info("homecage session has no 'in_context_running_direction_Body'")
+
+    def add_in_context_running_direction_Head(self):
+        if self.exp == "task":
+            if not "in_context_running_direction_Head" in self.result.keys():
+                in_context_running_direction_Head=[]
+
+                for Trial, in_context,Head_speed,Head_speed_angle in zip(self.result["Trial_Num"],self.result["is_in_context"],self.result["Head_speed"],self.result["Head_speed_angle"]):
+                    if Trial == -1:
+                        in_context_running_direction_Head.append(-1)
+                    else:
+                        if in_context == 0:
+                            in_context_running_direction_Head.append(-1)
+                        else:
+                            if Head_speed_angle > 90 and Head_speed_angle < 280 :
+                                in_context_running_direction_Head.append(0)
+                            else:
+                                in_context_running_direction_Head.append(1)
+                self.result["in_context_running_direction_Head"]=pd.Series(in_context_running_direction_Head,name="in_context_running_direction_Head")
+                logger.info("in_context_running_direction_Head has been added")
+            else:
+                logger.info("'in_context_running_direction_Head' has been there")
+        else:
+            logger.info("homecage session has no 'in_context_running_direction_Head'")
+
+
+    def add_alltrack_placebin_num(self,according = "Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None):
+        if self.exp == "task":
+            if not "place_bin_No" in self.result.keys():
+
+                if "all_track_points" in self.result.keys():
+                    coords = self.result["all_track_points"]
+                else:
+                    behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
+                    coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
+                    self.result["all_track_points"] = coords
+                    self.savesession("all_trak_points")
+
+                lines = [(coords[i],coords[i+1]) for i in range(len(coords)-2)]
+                lines.append((coords[-3],coords[-1]))
+                place_bin_mids=[] # 每个placebin 的中点坐标
+                for line, place_bin_num in zip(lines,place_bin_nums):
+                    #计算每个placebin中点的坐标。
+                    #首先 计算每个placebin边界点的坐标
+                    xs = np.linspace(line[0][0],line[1][0],place_bin_num+1)
+                    ys = np.linspace(line[0][1],line[1][1],place_bin_num+1)
+                    #然后计算 每个placebin的中点坐标
+                    xs_mid = [np.mean([xs[i],xs[i+1]]) for i in range(len(xs)-1)]
+                    ys_mid = [np.mean([ys[i],ys[i+1]]) for i in range(len(ys)-1)]
+                    place_bin_mids.extend([(x,y) for x,y in zip(xs_mid,ys_mid)])
+
+                if according == "Head":
+                    X = self.result["aligned_behave2ms"]["Head_x"]
+                    Y = self.result["aligned_behave2ms"]["Head_y"]
+                elif according == "Body":
+                    X = self.result["aligned_behave2ms"]["Body_x"]
+                    Y = self.result["aligned_behave2ms"]["Body_y"]
+                else:
+                    sys.exit("no %s"%according)
+
+                place_bin_No=[]
+                for x,y in zip(X,Y):
+                    distances=[]
+                    for place_bin_mid in place_bin_mids:
+                        distance = np.sqrt((x-place_bin_mid[0])**2+(y-place_bin_mid[1])**2)
+                        distances.append(distance)
+                    # print(distances)
+                    # sys.exit()  
+                    #有一些 点会tracking到 很远的地方去，用像素点为15 作为距离来筛选错误的点，然后用上一个值替代这个值
+                    if np.min(distances) < 20:
+                        place_bin_No.append(np.argmin(distances))
+                    else:
+                        place_bin_No.append(place_bin_No[-1])
+
+                self.result["place_bin_No"] = pd.Series(place_bin_No,name="place_bin_No")
+
+                logger.info("'place_bin_No' has been added")
+            else:
+                logger.info("'place_bin_No' has been there")
+        else:
+            logger.info("homecage session has no 'place_bin_No'")
+
+    def add_incontext_placebin_num(self,according="Head",placebin_number=40):
+        if self.exp == "task":
+            if not "in_context_placebin_num" in self.result.keys():
+                Cx_min = np.min(np.array(self.result["in_context_coords"])[:,0])
+                Cx_max = np.max(np.array(self.result["in_context_coords"])[:,0])
+    
+                palcebinwidth=(Cx_max-Cx_min)/placebin_number
+                placebins = [] #从1开始 0留给所有‘其他区域’
+                for n in range(placebin_number):
+                    placebins.append([Cx_min+n*palcebinwidth,Cx_min+(n+1)*palcebinwidth])
+                in_context_placebin_num = []
+                if according=="Head":
+                    X = self.result["aligned_behave2ms"]['Head_x']
+                elif according == "Body":
+                    X = self.result["aligned_behave2ms"]['Body_x']
+                else:
+                    print("only ['Head','Bpdy'] are available")
+                for in_context,x in zip(self.result['is_in_context'],X):
+                    # x = int(x)
+                    if not in_context:
+                        in_context_placebin_num.append(0)
+                    else:   
+                        if x == placebins[0][0]:
+                            in_context_placebin_num.append(1)
+                        else:
+                            for i,placebin in enumerate(placebins,0):
+                                # print(x,placebin[0],placebin[1],end="|")
+                                if x>placebin[0] and x <= placebin[1]:
+                                    temp=i+1
+                                    break                                    
+                                else:
+                                    pass
+                            try:
+                                in_context_placebin_num.append(temp)
+                            except:
+                                logger.warning("%s is in context but not in any place bin"%x)
+                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num,name="in_context_placebin_num")
+                logger.info("in_context_placebin_num has been added, which should start from 1, 0 means out of context")
+            else:
+                logger.info("'in_context_placebin_num' has been there")
+        else:
+            logger.info("homecage session has no 'in_context_placebin_num'")
 
     def add_zone2result(self,zone="in_lineartrack"):
         logger.info("FUN:: add_zone2result at zone %s"%zone)
@@ -147,6 +467,9 @@ class MiniAna():
 
 
     def add_info2aligned_behave2ms(self,scale=0.2339021309714166,placebin_number=10):
+        """
+        which is about to discrete
+        """
         #     scale = 0.2339021309714166 #cm/pixel 40cm的台子，202016，202017.202019适用
         logger.info("FUN:: add_info2aligned_behave2ms scale: %scm/pixel ; placebin_number: %s"%(scale,placebin_number))
         update = 0
@@ -161,7 +484,7 @@ class MiniAna():
                         in_context.append(0)
                     else:
                         in_context.append(1)
-                self.result["in_context"]=pd.Series(in_context)
+                self.result["in_context"]=pd.Series(in_context,name="in_context")
                 logger.info("'in_context' has been added")
                 update = 1
             else:
@@ -185,7 +508,7 @@ class MiniAna():
             if not "in_context_running_direction" in self.result.keys():
                 in_context_running_direction=[]
 
-                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.Trial_Num,self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
+                for Trial, in_context,Body_speed,Body_speed_angle in zip(self.result["Trial_Num"],self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
                     if Trial == -1:
                         in_context_running_direction.append(-1)
                     else:
@@ -196,7 +519,7 @@ class MiniAna():
                                 in_context_running_direction.append(0)
                             else:
                                 in_context_running_direction.append(1)
-                self.result["in_context_running_direction"]=pd.Series(in_context_running_direction)
+                self.result["in_context_running_direction"]=pd.Series(in_context_running_direction,name="in_context_running_direction")
                 logger.info("in_context_running_direction has been added")
                 update = 1
             else:
@@ -204,8 +527,9 @@ class MiniAna():
 
             #4 添加 in_context_placebin_num"
             if not "in_context_placebin_num" in self.result.keys():
-                Cx_min = np.min(self.result["in_context_coords"][:,0])
-                Cx_max = np.max(self.result["in_context_coords"][:,0])
+                # print(self.result["in_context_coords"])
+                Cx_min = np.min(np.array(self.result["in_context_coords"])[:,0])
+                Cx_max = np.max(np.array(self.result["in_context_coords"])[:,0])
     
                 palcebinwidth=(Cx_max-Cx_min)/placebin_number
                 placebins = [] #从1开始 0留给所有‘其他区域’
@@ -214,29 +538,29 @@ class MiniAna():
                 in_context_placebin_num = []
                 print(placebins)
                 for in_context,x in zip(self.result['in_context'],self.result["aligned_behave2ms"]['Body_x']):
-                    x = int(x)
+                    # x = int(x)
                     if not in_context:
                         in_context_placebin_num.append(0)
                     else:   
-                        for i in range(placebin_number):
-                            if i == 0 :
-                                if x<placebins[i][1]:
-                                    in_context_placebin_num.append(i+1)
+                        if x == placebins[0][0]:
+                            in_context_placebin_num.append(1)
+                        else:
+                            for i,placebin in enumerate(placebins,0):
+                                # print(x,placebin[0],placebin[1],end="|")
+                                if x>placebin[0] and x <= placebin[1]:
+                                    temp=i+1
+                                    break                                    
                                 else:
                                     pass
-                            elif not i == placebin_number-1:
-                                if x>=placebins[i][0] and x<placebins[i][1]:
-                                    in_context_placebin_num.append(i+1)
-                                else:             
-                                    pass
-                            else:
-                                if x>=placebins[i][0]:
-                                    in_context_placebin_num.append(i+1)
-                                else:
-                                    pass
+                            try:
+                                in_context_placebin_num.append(temp)
+                            except:
+                                logger.warning("%s is in context but not in any place bin"%x)
+
+                logger.info("in_context_placebin_num should start from 1, 0 means out of context")
                         
                 print(len(in_context_placebin_num),self.result["aligned_behave2ms"].shape)
-                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num)
+                self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num,name="in_context_placebin_num")
                 update = 1
             else:
                 print("'in_context_placebin_num' has been there")
@@ -250,21 +574,98 @@ class MiniAna():
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
 
+    def detect_ca_transients(self,thresh=1.5,baseline=0.8,t_half=0.2,FR=30):
+        """
+        return ca_transients,celldata_detect, single_cell_detected_transiend. 
+        celldata_detect have the same size with df
+        """
+        logger.debug("detecting calcium transients for each cell")
+        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
+        logger.info("calcium tansients are detected... ")
+
+    ## trim* ret
+
+    def trim_df(self,*args,**kwargs):
+        """
+        code is excuted along the order of inputted args and kwargs arguments. the order of kwargs generating a DataFrame of trimed_index doesn't affect the result, however the order of args does.
+        """
+        self.trim_index = pd.DataFrame()
+        self.trim_index["Trial_Num"] = self.result["Trial_Num"]>=0
+        logger.info("trim_index was initialed by Trial_Num>=0")
+
+        for key,value in kwargs:
+            if key == "Body_speed":
+                self._trim_Body_speed(min_speed=value)
+
+            if key == "Head_speed":
+                self._trim_Head_speed(min_speed=value)
+
+            if key == "process":
+                self._trim_process(process_list=value)
+
+            if key=="Trial":
+                self._trim_trial(trial_list=value)
+
+        for arg in args:
+            if arg =="S_dff":
+                try:
+                    self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+                    self.shape = self.df.shape
+                    logger.info("'S_dff' is taken as original self.df")
+                except:
+                    self.df = self.df
+                    logger.warning("S_dff doesn't exist, sigraw is used.")
+
+            if arg=="detect_ca_transient:"
+                _,self.df,_= self.detect_ca_transients()
+                logger.info("trim_df : calcium transients are detected and ")
+
+            if arg=="force_neg2zero:"                
+                self.df[self.df<0]=0
+                logger.info("trim_df : negative values are forced to be zero")
+
+            if arg == "Normalization":
+                pass
+
+            if arg== "Standarization":
+                pass
+
+        logger.info("trim_df : df was trimmed.")
+
+        return self.df,self.trim_index.all(axis=1)
 
 
 
-    def trim_df(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
+    def _trim_Body_speed(self,min_speed=3):
+        self.trim_index["Body_speed"] = self.result["Body_speed"]>min_speed
+        logger.info("trim_index : Body_speed>%s cm/s"%min_speed)
+
+    def _trim_Head_speed(self,min_speed=None):
+        self.trim_index["Head_speed"] = self.result["Head_speed"]>min_speed
+        logger.info("trim_index : Head_speed>%s cm/s"%min_speed)
+
+    def _trim_process(self,process_list):
+        self.trim_index["process"] = self.result["process"].isin(process_list)
+        logger.info("trim_index : process are limited in %s"%min_speed)
+
+    def _trim_trial(self,trial_list):
+        self.trim_index("Trial") = self.result["Trial_Num"].isin(trial_list)
+        logger.info("trim_index : trial are limited in %s"%trial_list)
+
+
+
+    def trim_df2(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
         ,Trial_Num=None
         ,in_process=False,process=None
         ,in_context=False,in_lineartrack=False
         ,speed_min = False):
         """
+        is about to discrete
         process: list process, for example [0,1,2]
         """
         logger.info("FUN:: trim_df")
 
-        if df == None:
-            df = self.df
+        df = self.df if df == None else df
         if force_neg2zero:
             logger.info("negative values are forced to be zero")
             df[df<0]=0
@@ -277,12 +678,12 @@ class MiniAna():
             logger.info("STANDARIZED sigraw trace")
 
         if Trial_Num==None:
-            Trial_Num = self.Trial_Num
+            Trial_Num = self.result["Trial_Num"]
 
 
         index=pd.DataFrame()
         index["Trial_Num"] = Trial_Num>=0
-        logger.info("Trial_Num start from 0")
+        logger.info("Trial_Num start from 1")
 
         if in_process:
             if not process ==None:
@@ -293,16 +694,16 @@ class MiniAna():
 
         if in_context:
             try:
-                index["in_context"] = self.result["in_context"]
-                logger.info("interested zone are restricted 'in_context'")
+                index["in_context"] = self.result["is_in_context"]
+                logger.info("interested zone are restricted 'is_in_context'")
             except:
-                logger.warning("in_context does not exist")
+                logger.warning("is_in_context does not exist")
         if in_lineartrack:
             try:
-                index["in_lineartrack"] = self.result["in_lineartrack"]
-                logger.info("interested zone are restricted 'in_lineartrack'")
+                index["in_lineartrack"] = self.result["is_in_lineartrack"]
+                logger.info("interested zone are restricted 'is_in_lineartrack'")
             except:
-                logger.warning("in_lineartrack does not exist")
+                logger.warning("is_in_lineartrack does not exist")
 
         if speed_min:
             try:
@@ -318,6 +719,24 @@ class MiniAna():
         
         return df, index.all(axis=1)
 
+class Cellid(MiniAna):
+    def __init__(self,session_path):
+        super().__init__(session_path)
+
+        # self.add_info2aligned_behave2ms(scale=0.2339021309714166,placebin_number=10) 
+        # self.result["in_context"],self.result["Body_speed"],self.result["Body_speed_angle"],self.result["“in_context_place_bin"]
+        self.add_is_in_context()
+        self.add_Body_speed(scale=0.33)
+        self.add_in_context_running_direction_Body()
+
+        self.add_Context()
+        self.add_incontext_placebin_num()
+
+        self.Context = self.result["Context"]
+        self.in_context_running_direction = self.result["in_context_running_direction_Body"]
+        self.Body_speed = self.result["Body_speed"]
+        self.in_context_placebin_num=self.result["in_context_placebin_num"]
+        self.process = self.result["process"]
 
     def cellids_HCTrack_Context(self,idx_accept,df):
         """
@@ -402,6 +821,7 @@ class MiniAna():
 
     def cellids_Context(self,idxes,meanfr_df=None,Context=None,context_map=["A","B","C","N"]):
         """
+        which is about to discrete
         输入应该全是 in_context==1的数据
         idxes: the ids of all the cell that you're concerned.
         meanfr_df: meanfr in each trial only in context
@@ -413,16 +833,16 @@ class MiniAna():
         logger.info("FUN:: cellids_Context")
         logger.info("Context 0,1,2,-1 means %s."%context_map)
         #序列化in_context_list
-        if meanfr_df == None:
+        if meanfr_df is None:
             logger.info("Default :: meanfr_df = self.meanfr_by_trial(Normalize=False,standarize=False,in_context=True) ")
-            df,index = self.trim_df(force_neg2zero=True
+            df,index = self.trim_df2(df = None,force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
-            meanfr_df = df[index].groupby(self.Trial_Num[index]).mean().reset_index(drop=False)
+            meanfr_df = df[index].groupby(self.result["Trial_Num"][index]).mean().reset_index(drop=False)
 
         try:
-            if Context == None:
-                logger.info("""Default:: pd.merge(self.Trial_Num[index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
+            if Context is None:
+                logger.info("""Default:: pd.merge(self.result["Trial_Num"][index],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])[Enter_ctx]""")
                 temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
                 Context = temp["Enter_ctx"]
             # 将0，1对应的context信息根据context_map置换成A B
@@ -464,6 +884,7 @@ class MiniAna():
     def cellids_RD_incontext(self,idxes,mean_df=None,Context=None,in_context_running_direction=None
         ,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
         """
+        which is about to discrete
         输入应该全是 in_context==1的数据. in_context_running_direction is -1 when out of context
         idxes: the ids of all the cell that you're concerned.
         meanfr_df: meanfr in each trial only in context
@@ -476,19 +897,19 @@ class MiniAna():
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_running_direction 0,1,-1 means%s."%rd_map)
 
-        if mean_df == None:
+        if mean_df is None:
             logger.info("Normalize=False,standarize=False,in_context=True")
-            df,index = self.trim_df(force_neg2zero=True
+            df,index = self.trim_df2(force_neg2zero=True
                 ,Normalize=False,standarize=False,in_context=True)
 
-        if in_context_running_direction == None:
+        if in_context_running_direction is None:
             in_context_running_direction=self.result["in_context_running_direction"]
         in_context_running_direction = pd.Series([rd_map[i] for i in in_context_running_direction])
 
-        meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
-        # meanfr_df = df[index].groupby([self.Trial_Num[index],in_context_running_direction[index]]).mean().reset_index(drop=False)
+        meanfr_df = df[index].groupby([self.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
+        # meanfr_df = df[index].groupby([self.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False)
         try:
-            if Context == None:
+            if Context is None:
                 temp = pd.merge(meanfr_df,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
                 Context = temp["Enter_ctx"]
             # 将0，1对应的context信息根据context_map置换成A B
@@ -562,8 +983,10 @@ class MiniAna():
         }
 
     def cellids_PC_incontext(self,idxes,df=None,Context=None,in_context_placebin_num=None
+        ,in_process=True,process=[0,1,2,3],scale=0.2339021309714166,placebin_number=10
         ,context_map=["A","B","C","N"],shuffle_times=1000):
         """
+        which is about to discrete
         df 必须具备 place_bin_num
         输入df包括分好的place bin 
         """
@@ -571,24 +994,25 @@ class MiniAna():
         logger.info("context 0,1,2,-1 means%s."%context_map)
         logger.info("in_context_placebin_num start from 1.")
 
-        if df == None:
-            logger.info("Normalize=False,standarize=False,in_context=True")
-            df,index = self.trim_df(force_neg2zero=True
+        # self.add_info2aligned_behave2ms(scale=scale,place_bin_num=placebin_number)
+
+        if df is None:
+            logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
+            df,index = self.trim_df2(force_neg2zero=True,in_process=in_process,process=process
                 ,Normalize=False,standarize=False,in_context=True,speed_min=3)
             df=df[index]
-        if in_context_placebin_num == None:
+        logger.info("indexed shape of df %s"%df.shape[0])
+
+        if in_context_placebin_num is None:
             in_context_placebin_num=self.result["in_context_placebin_num"]
         in_context_placebin_num = pd.Series(in_context_placebin_num)[index]
-
+        logger.info("indexed shape of in_context_placebin_num %s"%in_context_placebin_num.shape)
 
         if Context ==None:
-            Context = pd.merge(self.Trial_Num,self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]
-            Context = Context.fillna(-1) # 将NaN置换成-1
-            # print(self.Trial_Num)
-            # print(self.result["behavelog_info"][["Trial_Num","Enter_ctx"]])
-            Context = pd.Series([context_map[int(i)] for i in Context])[index]
-        # print(Context)
-        # print(df.shape)
+            Context = self.Context
+        Context = pd.Series([context_map[int(i)] for i in Context])[index]
+        logger.info("indexed shape of Context %s"%Context.shape)
+
 
         observed_SIs_A = Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
         shuffle_A = bootstrap_Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
@@ -599,15 +1023,17 @@ class MiniAna():
         shuffle_SIs_B=[]
         # print(observed_SIs_A)
         try:
-            observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
-            shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
-            shuffle_SIs_C=[]
-            C = True
+            if df[Context=="C"].shape[0] != 0:
+                observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+                shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+                shuffle_SIs_C=[]
+                C = True
+            else:
+                C = False
         except:
             logger.info("No context C")
             C = False
         logger.info("we shuffle mean firing rate in each place bin")
-        
         
         
         for i in range(shuffle_times):
@@ -652,8 +1078,149 @@ class MiniAna():
             "place_cells_B":place_cells_B
             }
         
+    def plot_in_context_placefield(self,df=None,Trial_Num=None,in_process=True,process=[0,1,2,3,4,5],
+        Context=None,in_context_placebin_num=None,context_map=["A","B","C","N"]):
+        logger.info("FUN:: plot_in_context_placefield")
+        logger.info("context 0,1,2,-1 means%s."%context_map)
+        logger.info("in_context_placebin_num start from 1.")
 
+        if df is None:
+            logger.info("force_neg2zero=True,Normalize=False,standarize=False,in_context=True,speed_min=3")
+            df,index = self.trim_df2(force_neg2zero=True,in_process=in_process,process=process
+                ,Normalize=False,standarize=False,in_context=True)
+            df=df[index]
+        logger.info("indexed shape of 'df' %s"%df.shape[0])
+
+        if Trial_Num is None:
+            Trial_Num=self.result["Trial_Num"].values
+        Trial_Num=pd.Series(Trial_Num)[index]
+        logger.info("indexed shape of 'Trial_Num' %s"%Trial_Num.shape)
+
+        if Context is None:
+            Context = self.Context
+        Context = pd.Series([context_map[int(i)] for i in Context])[index]
+        logger.info("indexed shape of 'Context' %s"%Context.shape)
+
+        if in_context_placebin_num is None:
+            in_context_placebin_num=self.result["in_context_placebin_num"]
+        in_context_placebin_num = pd.Series(in_context_placebin_num)[index]
+        logger.info("indexed shape of 'in_context_placebin_num' %s"%in_context_placebin_num.shape)
+
+
+
+        meanfr = df.groupby([Trial_Num,Context,in_context_placebin_num]).mean()
         
+        try:
+            meanfr = meanfr.drop(index=(0,-1),level=0)
+            logger.info("remove Trial_Num '0' or '-1'")
+        except:
+            logger.debug("Trial_Num doesn't contain '-1' or '0'")
+
+        try:
+            meanfr = meanfr.drop(index="N",level=1)
+            logger.info("remove Context 'N'")
+        except:
+            logger.debug("Context doesn't contain 'N'")
+
+        try:
+            meanfr = meanfr.drop(index=0,level=2)
+            logger.info("remove in_context_placebin_num '0'")
+        except:
+            logger.debug("in_context_placebin_num,does'n contain '0'")
+
+        meanfr.index.names=(["Trial_Num","Context","in_context_placebin_num"])
+
+        def plot_Meanfr_trace_along_Placebin(idx,legend=True):
+            mean = meanfr.groupby(["Context","in_context_placebin_num"]).mean()
+            sem = meanfr.groupby(["Context","in_context_placebin_num"]).sem()
+            x = meanfr.index.levels[2]
+
+            y_A = mean.xs("A")[idx].values
+            y_B = mean.xs("B")[idx].values
+            sem_A = sem.xs("A")[idx].values
+            sem_B = sem.xs("B")[idx].values
+            plt.plot(x,y_A,color="red")
+            plt.plot(x,y_B,color="green")
+            plt.fill_between(x,y_A-sem_A,y_A+sem_A,facecolor="red",alpha=.3)
+            plt.fill_between(x,y_B-sem_B,y_B+sem_B,alpha=.3,facecolor="green")
+            if legend:
+                plt.legend(["CtxA","CtxB"])
+            plt.yticks([])
+            plt.xlabel("place bin numbers")
+
+        def plot_Meanfr_heatmap_along_Placebin(idxes,figsize=(8,8),**kwargs):
+            plt.figure(figsize=figsize)
+            
+            df_A = meanfr.xs("A",level="Context").groupby(["in_context_placebin_num"]).mean()
+            norm_df_A = df_A.apply(lambda x:(x-np.mean(x))/np.std(x,ddof=1)).T
+            norm_df_A = norm_df_A.loc[idxes,:]
+
+            df_B = meanfr.xs("B",level="Context").groupby(["in_context_placebin_num"]).mean()
+            norm_df_B = df_B.apply(lambda x:(x-np.mean(x))/np.std(x,ddof=1)).T
+            norm_df_B = norm_df_B.loc[idxes,:]
+
+            plt.subplot(221)
+            sorted_df_A = norm_df_A.loc[norm_df_A.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_A,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("pc-cells in Context A sorted in Context A")
+
+            plt.subplot(222)
+            sorted_df_B = norm_df_B.loc[norm_df_A.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_B,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("pc-cells in Context B sorted in Context A")
+
+            plt.subplot(223)
+            sorted_df_B = norm_df_B.loc[norm_df_B.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_B,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("pc-cells in Context B sorted in Context B")
+            plt.tight_layout() 
+
+            plt.subplot(224)
+            sorted_df_A = norm_df_A.loc[norm_df_B.idxmax(axis=1).sort_values().index,:]
+            plt.imshow(sorted_df_A,aspect="auto",**kwargs)
+            plt.yticks([])
+            plt.title("pc-cells in Context A sorted in Context B")
+
+            plt.tight_layout() 
+            plt.show()
+
+        def plot_Fr_in_SingleTrial_along_Placebin(idx,norm=True,colorbar=True
+            ,xlabel=True,ylabel=True,**kwargs):            
+            try:
+                #将整个1d trace按照place_bin的个数变成一个2d 的matrix
+                heatmap_matrix_A = np.reshape(meanfr.xs(("A"),level=("Context"))[idx].values,(-1,max(meanfr.index.levels[2])))
+                heatmap_matrix_B = np.reshape(meanfr.xs(("B"),level=("Context"))[idx].values,(-1,max(meanfr.index.levels[2])))
+            except:
+                print("some trial didn't have %s place bins"%max(meanfr.index.levels[2]))
+            if norm:
+                heatmap_matrix_A = np.apply_along_axis(lambda x:(x-np.mean(x))/np.std(x,ddof=1),axis=1,arr=heatmap_matrix_A)
+                heatmap_matrix_B = np.apply_along_axis(lambda x:(x-np.mean(x))/np.std(x,ddof=1),axis=1,arr=heatmap_matrix_B)
+            plt.subplot(211)
+            plt.imshow(heatmap_matrix_A,aspect='auto',**kwargs)
+            plt.title("CtxA")
+            if colorbar:
+                plt.colorbar(shrink=1)
+            if ylabel:
+                plt.ylabel("Trials")
+            if xlabel:
+                plt.xlabel("Place bins")
+
+            plt.subplot(212)
+            plt.imshow(heatmap_matrix_B,aspect='auto',**kwargs)
+            plt.title("CtxB")
+            if colorbar:
+                plt.colorbar(shrink=1)
+            if ylabel:
+                plt.ylabel("Trials")
+            if xlabel:
+                plt.xlabel("Place bins")
+            plt.tight_layout() 
+
+        return meanfr,plot_Meanfr_trace_along_Placebin,plot_Meanfr_heatmap_along_Placebin,plot_Fr_in_SingleTrial_along_Placebin
+
 
 
 # if __name__ == "__main__":
@@ -662,6 +1229,8 @@ class MiniAna():
 #         S = MiniAna(session)
 #         S.savepkl2mat()
 if __name__ == "__main__":
-    s3 = MiniAna(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
-
+    s3 = Cellid(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
+    print("----")
+    print(s3.cellids_Context(s3.result["idx_accepted"]))
+    print(s3.cellids_RD_incontext(s3.result["idx_accepted"]))
     print(s3.cellids_PC_incontext(s3.result["idx_accepted"]))

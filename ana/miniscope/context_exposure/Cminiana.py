@@ -89,6 +89,10 @@ class MiniAna():
         return self.result["timebin"]
 
     def play_events_in_behavioral_video(self,):
+        """
+        we define 'nosepoke,ctx_enter,ctx_exit,choice,r_ctx_enter,r_ctx_exit' as event_points,
+        this function help us to quickly check the relative behavioral frame
+        """
         if self.exp=="task":
             event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
             be_ts = self.result["behave_track"]["be_ts"].to_numpy()
@@ -98,10 +102,14 @@ class MiniAna():
         else:
             print("homecage session doesn't have behaviral video")
 
-    def play_events_in_miniscope_video(self,miniscope_video_path,basicframe_num):
+    def play_events_in_miniscope_video(self,miniscope_video_path,forwardframe_num=1):
+        """
+        miniscope_video_path: batter to te mp4
+        forwardframe_num:frames.num to play forward. default to be 1. because 'check_frames' play 1 frame backward
+        """
         event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
         be_ts = self.result["aligned_behave2ms"]["be_ts"].to_numpy()
-        frame_points=[find_close_fast(be_ts,i)+1+basicframe_num for i in event_points ]
+        frame_points=[find_close_fast(be_ts,i)+forwardframe_num for i in event_points ]
         Video(miniscope_video_path).check_frames(*frame_points)
 
     def align_behave_ms(self,hc_trial_bin=5000):

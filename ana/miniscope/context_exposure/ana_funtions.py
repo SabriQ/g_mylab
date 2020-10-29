@@ -14,10 +14,7 @@ def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
     """
     # trim df, get the trimed df and index. 
     df,index = s.trim_df2(
-        df=None
-        ,force_neg2zero=True
-        ,Normalize=False
-        ,standarize=False
+        ,force_neg2zero
         ,in_context=True)
 
     meanfr_df = df[index].groupby(s.result["Trial_Num"][index]).mean().reset_index(drop=False)
