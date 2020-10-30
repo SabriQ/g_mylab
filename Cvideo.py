@@ -818,6 +818,14 @@ class CPP_Video(Video):
         self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
         self.track = TrackFile(self.video_track_path).extract_behave_track(parts=["Head","Body","Tail","led1","led2"])
 
+    @property
+    def tracked_coords(self):
+        tracked_coords=[]
+        for led_x1,led_y1,led2_x1,led2_y1 in zip(self.track["led1_x"],self.track["led1_y"],self.track["led2_x"],self.track["led2_y"]):
+            tracked_coords.append([(led_x1,led_y1),(led2_x1,led2_y1)])
+        return tracked_coords
+    
+
     def _led_brightness(self,tracked_coords):
         """
         output the mean pixel value of specified coords of led
