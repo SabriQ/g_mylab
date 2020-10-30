@@ -4,7 +4,7 @@ Created on Thu Oct 31 16:07:26 2019
 
 @author: Sabri
 """
-import os,re
+import os,re,sys
 import scipy.io as spio
 import glob
 import numpy as np
@@ -14,6 +14,7 @@ import datetime
 import warnings
 import csv
 from scipy.ndimage import gaussian_filter1d
+import matplotlib.pyplot as plt
 
 class File():
     def __init__ (self,file_path):
@@ -50,7 +51,6 @@ class File():
             print(f"Transfer {self.file_path} successfully")
         else:
             print("{self.file_path} does not exists.")
-            
 
 class TimestampsFile(File):
     def __init__(self,file_path,method="ffmpeg",camNum=0):
@@ -76,10 +76,11 @@ class TimestampsFile(File):
             data = pd.read_csv(self.file_path,sep=",")
             start = datetime.datetime.strptime(data["0"][0], '%Y-%m-%d %H:%M:%S.%f')
             data["0"]=data["0"].apply(self.datetime2minisceconds,args=[start,])
-            return data["0"]/1000
+            return pd.Series(data["0"]/1000,name="datetime_ms")
         if self.method  == "ffmpeg":
             try:
-                return pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["0"])
+                ts = pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["ffmpeg_ts"])
+                return ts
             except:
                 print("default method is ffmpeg, try 'datetime'")
                 sys.exit()
@@ -95,8 +96,93 @@ class TimestampsFile(File):
                 else:
                     temp['sysClock'][0]=value
 
-            ts = pd.DataFrame(temp['sysClock'].values)
+            ts = pd.Series(temp['sysClock'].values,name="miniscope_ts")
             return ts
+
+class CPPLedPixelValue(File):
+    def __init__(self,file_path):
+        super().__init__(file_path)
+
+        if not self.file_path.endswith("_ledvalue_ts.csv"):
+            pirnt("wrong file input")
+
+        self.df = pd.read_csv(self.file_path)
+    
+    def show_change_along_thresholds(self,v1,v2):
+        """
+        v1: specified the minimum threshold
+        v2: specified the maxmum threshold
+        """
+        threshods = np.arange(v1,v2)
+        points1=[]
+        points2=[]
+        for thre in threshods:
+            points1.append(sum([ 1 if i< thre  else 0 for i in self.df["1"]]))
+            points2.append(sum([ 1 if i< thre  else 0 for i in self.df["2"]]))
+
+        plt.plot(threshods,points1)
+        plt.plot(threshods,points2)
+        plt.xlabel("Threshod of ROI pixel value")
+        plt.ylabel("Numbers of led-off frames")
+        plt.title("For choosing threshold")
+        plt.legend(["led1","led2"])
+        # plt.axvline(x=930,color="green",linestyle="--")
+        plt.show()
+
+    def _led_off_epoch_detection(self,trace,thresh):
+        """
+        trace: any timeseries data. 
+        thresh: the minimum absolute deviation from baseline, which could be negtive.
+        """
+        trace = np.array(trace)
+        points = np.reshape(np.argwhere(trace<thresh),-1)
+        epoch_indexes = []
+        last_epoch_index=[]
+        for i in range(len(points)):
+            if i == 0:
+                last_epoch_index.append(points[i])
+            else:
+                if points[i]-points[i-1]==1:
+                    last_epoch_index.append(points[i])
+                else:
+                    epoch_indexes.append(last_epoch_index)
+                    last_epoch_index=[]
+                    last_epoch_index.append(points[i])        
+        return epoch_indexes
+
+    def lick_water(self,thresh,reference_trace,lick_trace,show=False):
+        reference_epoch_indexes = self._led_off_epoch_detection(reference_trace,thresh)
+        lick_epoch_indexes= self._led_off_epoch_detection(lick_trace,thresh)
+
+        lick_indexes = []
+        for i in lick_epoch_indexes:
+            for j in i:
+                lick_indexes.append(j)
+        water_delivery_indexes = [i[0] for i in reference_epoch_indexes ]
+
+        self.df["lick"]=0
+        self.df["lick"][lick_indexes]=1
+        self.df["water_delivery"]=0
+        self.df["water_delivery"][water_delivery_indexes]=1
+
+        if show:
+            plt.figure(figsize=(600,1))
+            plt.plot(self.df["ts"],lick_trace,color="blue")
+            for epochs_index in lick_epoch_indexes:
+                if len(epochs_index)==1:
+                    plt.scatter(self.df["ts"][epochs_index[0]],lick_trace[epochs_index[0]],s=20,marker="x",c="green")
+                else:
+                    plt.plot(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],lick_trace[epochs_index[0]:(epochs_index[-1]+1)],color="red")
+
+            plt.plot(self.df["ts"],reference_trace+1000,color="blue")
+            for epochs_index2 in reference_epoch_indexes:
+                if len(epochs_index2)==1:
+                    plt.scatter(self.df["ts"][epochs_index2[0]],reference_trace[epochs_index2[0]]+1000,s=20,marker="x",c="green")
+                else:
+                    plt.plot(self.df["ts"][epochs_index2[0]:(epochs_index2[-1]+1)],reference_trace[epochs_index2[0]:(epochs_index2[-1]+1)]+1000,color="red")
+
+        self.df.to_csv(self.file_path,index = False,sep = ',')
+        print("lick_water information has been added and saved.")
 
 class TrackFile(File):
     def __init__(self,file_path):
@@ -161,6 +247,27 @@ class TrackFile(File):
         spio.savemat(savematname,self._dataframe2nparray(self.behave_track))
         print("save mat as %s"%savematname)
 
+    def extract_behave_track(self,parts=["Head","Body","Tail"]):
+
+        track = pd.read_hdf(self.file_path)
+
+        ispart_available = pd.Series(parts)[~pd.Series(parts).isin(track.columns.get_level_values(1))]
+        if len(ispart_available)>0:
+            print("%s is not available"%list(ispart_available))
+        else:
+            print("%s are all available."%parts)
+
+        cols = track.columns.get_level_values(level=1).isin(parts)
+        new_columns=[]
+        for part in parts:
+            new_columns.append(part+"_x")
+            new_columns.append(part+"_y")
+            new_columns.append(part+"_lh")
+
+        self.behave_track=track.iloc[:,cols]
+        self.behave_track.columns=new_columns
+
+        return self.behave_track
 
 
     @staticmethod
@@ -201,19 +308,11 @@ class TrackFile(File):
 
 
 
+# from mylab.ana.miniscope.context_exposure.Cminiana import MiniAna as MA
 
-class Free2pFile(File):
-    def __init__(self,file_path):
-        super().__init__(file_path)
-
-class LinearTrackBehaviorFile(File):
+class LinearTrackBehavioralLogFile(File):
     def __init__(self,file_path,context_map=["B","A","C","N"]):
         super().__init__(file_path)
-
-        # self.behavevideo_path
-        # self.behavelogfile_path
-        #
-
 
         self.context_map = context_map
         # print("context map is %s"%self.context_map)
@@ -225,77 +324,6 @@ class LinearTrackBehaviorFile(File):
         self.Enter_Context = pd.Series ([self.context_map[i] for i in self.data["Enter_ctx"]])
         self.Exit_Context = pd.Series ([self.context_map[i] for i in self.data["Exit_ctx"]] )
 
-    def save_behave_pkl(self,behavevideo
-        ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
-        print("FUN:: save_behave_pkl")
-
-
-        key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
-        mark = starts_firstnp_stops(logfilepath)
-
-        _,start,first_np,mark_point,stop = mark(behavevideo)
-
-        #save a frame of behavioral video
-        cap = cv2.VideoCapture(behavevideo)
-        try:
-            cap.set(cv2.CAP_PROP_POS_FRAMES,1000-1)
-        except:
-            print("video is less than 100 frame")
-
-        ret,frame = cap.read()
-        cap.release()
-
-    
-        # index log file
-        behave_log =[i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*log*")) if key in i][0]
-        log = pd.read_csv(behave_log,skiprows=3)
-        behavelog_time = log.iloc[:,12:]-min(log["P_nose_poke"])
-        behavelog_info = log.iloc[:,:6]
-        print("correct 'behavelog_time' when the first_np as 0")
-
-        # index track file
-        behave_track = [i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*DLC*h5")) if key in i][0]    
-        track = pd.read_hdf(behave_track)
-        behave_track=pd.DataFrame(track[track.columns[0:9]].values,
-                     columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
-        
-        
-        # index timestamps file
-        behave_ts = [i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*_ts.txt*")) if key in i][0]
-        ts = pd.read_table(behave_ts,sep='\n',header=None,encoding='utf-16-le')
-        
-        # aligned log_time and behave video_time
-        if mark_point  == 1:
-            delta_t = ts[0][first_np-1]-behavelog_time["P_nose_poke"][0]
-        
-        ## 这里有时候因为first-np的灯刚好被手遮住，所以用第二个点的信号代替，即第一次enter_ctx的时间
-        if mark_point == 2:
-            delta_t = ts[0][first_np-1]-behavelog_time["P_enter"][0]
-
-        behave_track['be_ts']=ts[0]-delta_t
-
-        print("correct 'be_ts' when the first_np as 0")
-        # index in_context
-        print(behavevideo)
-        in_context_mask,in_context_coords=Video(behavevideo).draw_rois(aim="in_context",count = 1)
-
-        # index in_lineartrack
-        in_lineartrack_mask,in_lineartrack_coords=Video(behavevideo).draw_rois(aim="in_lineartrack",count = 1)
-
-        result = {"behavevideo":[behavevideo,key,start,first_np,mark_point,stop]
-                  ,"behavevideoframe":frame
-                  ,"behavelog_time":behavelog_time
-                  ,"behavelog_info":behavelog_info
-                  ,"behave_track":behave_track
-                  ,"in_context_mask":in_context_mask[0]
-                  ,"in_context_coords":in_context_coords[0]
-                 ,"in_lineartrack_mask":in_lineartrack_mask[0]
-                 ,"in_lineartrack_coords":in_lineartrack_coords[0]}
-
-        savename = os.path.join(self.Result_dir,"behave_"+str(key)+".pkl")
-        with open(savename,'wb') as f:
-            pickle.dump(result,f)
-        print("%s get saved"%savename)
     @property
     def choice(self):
     

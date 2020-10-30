@@ -26,7 +26,8 @@ class Video():
         try:
             self.video_track_path = glob.glob(self.abs_prefix+"*.h5")[0]
         except:
-            print("video havenp't been tracked")
+            self.video_track_path = 0
+            print("video haven't been tracked")
 
         self.videosize = os.path.getsize(self.video_path)/1073741824 # video size is quantified by GB
 
@@ -812,19 +813,19 @@ class CPP_Video(Video):
         super().__init__(video_path)
         self.led_xy = self.abs_prefix + '_led_xy.txt' # 这个数据结构和self.xy不一样，这个
         self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
-    def _led_brightness(self):
 
-        if not os.path.exists(self.led_xy):
-            self.draw_led_location()
-            # read led locations
-        f = open(self.led_xy)
-        led_coords = f.read()
-        f.close
-        led_coords = eval(led_coords)
+        self.generate_ts_txt()
+        self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
+        self.track = TrackFile(self.video_track_path).extract_behave_track(parts=["Head","Body","Tail","led1","led2"])
 
+    def _led_brightness(self,tracked_coords):
+        """
+        output the mean pixel value of specified coords of led
+        tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1)],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn)]]
+        """
         cap = cv2.VideoCapture(self.video_path)
         total_frame = cap.get(7)
-        frame_No = 1
+        frame_No = 0
         while True:
             # key = cv2.waitKey(10) & 0xFF
             ret,frame = cap.read()
@@ -833,42 +834,42 @@ class CPP_Video(Video):
                 
                 # if key == ord('q'):
                 #     break
-                led_pixel_values = []
-                for x,y in led_coords:
-                    cv2.rectangle(frame,(x-5,y-5),(x+5,y+5),(255,255,255),2)
-                    #注意cv2中的image 中的x，y是反的
-                    led_location = gray[(y-5):(y+5),(x-5):(x+5)]
-                    led_pixel_values.append(sum(sum(led_location)))
-                # print("\r %s/%s"%(frame_No,int(total_frame)))
+            
+                coords=tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
                 frame_No = frame_No +1
-                yield led_pixel_values
-                # cv2.imshow("crop_frame",led_location)
+                led_pixel_values = []
+                for coord in coords: 
+                    #注意cv2中的image 中的x，y是反的
+                    x,y=coord
+                    x= int(x)
+                    y= int(y)
+                    led_zone = gray[(y-2):(y+2),(x-2):(x+2)]
+                    led_pixel_values.append(sum(sum(led_zone)))
+                    # print("\r %s/%s"%(frame_No,int(total_frame)))
+                    
+                yield led_pixel_values # [led1_value,led2_value]
+                # cv2.imshow("crop_frame",led_zone)
             else:
                 break
 
         cap.release()
-        cv2.destroyAllWindows()
 
-    def led_pixel_value(self):
-        if not os.path.exists(self.videots_path):
-            self.generate_ts_txt()
-        # read timestamps
-        if os.path.exists(self.led_value_ts):
-            print("%s is already there"%self.led_value_ts)
-        else:
-            ts= pd.read_table(self.videots_path,sep='\n',header=None,encoding='utf-16-le')
-            ts = list(ts[0])
-            miniscope=[]
-            event=[]
-            lick=[]
-            for m,e,l in self._led_brightness():
-                miniscope.append(m)
-                event.append(e)
-                lick.append(l)
 
-            df= pd.DataFrame({'ts':ts,'miniscope':miniscope,'event':event,'lick':lick})
-            df.to_csv(self.led_value_ts,index = False,sep = ',')
-            print("%s is saved"%self.led_value_ts)
+    def leds_pixel_value(self,tracked_coords):
+        """
+        generate *_ledvalue_ts.csv
+        """
+        leds_pixel=[]
+        print("calculating frame by frame...")
+        for led_pixel_value in self._led_brightness(tracked_coords):
+            leds_pixel.append(led_pixel_value)
+
+        df= pd.DataFrame(np.array(leds_pixel),columns=np.arange(len(led_pixel_value))+1)
+        df["ts"]=self.ts
+        df.to_csv(self.led_value_ts,index = False,sep = ',')  
+        print("%s is saved"%self.led_value_ts)
+        # return df
+        
 
     def draw_leds_location(self,count=2,frame_No=10000):
 

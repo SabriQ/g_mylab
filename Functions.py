@@ -1,8 +1,10 @@
 import json
 import numpy as np
+import scipy.signal as signal
 import scipy.stats as stats
 import pandas as pd
 import os,sys
+
 def load_txt(path):
     with open(path,'r',encoding="utf-8") as f:
         js = f.read()
@@ -129,6 +131,60 @@ def find_close_fast2(arr,e):
     locations = np.where(np.abs(np.add(arr,e*-1))==min_value)
     return locations[0][0]
 #    return arr[idx],idx, use_time.seconds * 1000 + use_time.microseconds / 1000
+
+def epoch_detection(trace,tracetime,baseline,thresh,minduration,min_peak_distance=150,show=False):
+    """
+    trace: any timeseries data. 
+    tracetime: time info, which is the same length of trace. 
+    baseline: the start or stop of an transient-like epoch
+    thresh: the minimum absolute deviation from baseline, which could be negtive.
+    minduration: the minimum duration of one epoch, in the same scale with tracetime
+    min_peak_distance: in seconds
+    show: to show the detected epoch in red while the trace in black
+    """
+    trace = np.array(trace)
+    tracetime = np.array(tracetime)
+    if baseline > thresh:
+        trace = trace*-1
+        baseline=-1*baseline
+        thresh = -1*thresh
+        print("detecting valley")
+    else:
+        print("detecting crest")
+
+   
+
+    points = np.reshape(np.argwhere(trace>baseline),-1)
+    starts=[];starts.append(points[0])
+    ends=[];ends.append(points[-1])
+    for i in range(len(points)-1):
+        if not i == 0:
+            if points[i-1]-points[i]<-1:
+                starts.append(points[i])
+        if points[i+1]-points[i]>1:
+            ends.append(points[i])
+
+    print(len(starts),len(ends))
+
+    epochs_indexes=[]
+    area_under_curves=[]
+    for start,end in zip(starts,ends):
+        if tracetime[end+1]-tracetime[start]>minduration:
+            epochs_indexes.append((start,end+1))
+            area_under_curves.append(np.trapz(trace[start,end+1]))
+        # calculate area under curve
+
+    # find peaks
+    timeconsuming_of_eachframe= (np.max(tracetime)-np.min(tracetime))/len(tracetime)
+    peak_indexes=signal(trace,height=thresh,distance=int(min_peak_distance/timeconsuming_of_eachframe))
+    
+
+    return epochs_indexes,area_under_curves,peak_indexes
+
+
+
+
+
 def var_test(rvs1,rvs2):
     """
     两独立样本t检验-ttest_ind
