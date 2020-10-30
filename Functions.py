@@ -134,6 +134,7 @@ def find_close_fast2(arr,e):
 
 def epoch_detection(trace,tracetime,baseline,thresh,minduration,min_peak_distance=150,show=False):
     """
+    which is not ready for process now
     trace: any timeseries data. 
     tracetime: time info, which is the same length of trace. 
     baseline: the start or stop of an transient-like epoch
@@ -182,61 +183,6 @@ def epoch_detection(trace,tracetime,baseline,thresh,minduration,min_peak_distanc
     return epochs_indexes,area_under_curves,peak_indexes
 
 
-
-
-
-def var_test(rvs1,rvs2):
-    """
-    两独立样本t检验-ttest_ind
-    方差齐次性检验
-    LeveneResult(statistic=1.0117186648494396, pvalue=0.31473525853990908)
-    p值远大于0.05，认为两总体具有方差齐性
-    """
-    return stats.levene(rvs1, rvs2)
-
-def ttest_ind(rvs1, rvs2):
-    """
-    如果具备方差齐性，equal_var = True
-    如果不具备方差齐性，equal_var = False
-    """
-    normalizations = []
-    normalization_1 = normalized_distribution_test(rvs1)[1]
-    normalization_2 = normalized_distribution_test(rvs2)[1]
-    if normalization_1 > 0.05:
-        normalizations.append(1)
-    else:
-        normalizations.append(0)
-
-    if normalization_1 > 0.05:
-        normalizations.append(1)
-    else:
-        normalizations.append(0)
-
-    if all(normalizations):
-        print("数据均符合正太分布")
-    else:
-        print("数据至少有一个不符合正太分布%s"%normalizations)
-        print("请使用Wilcoxon_ranksumstest")
-        sys.exit()
-
-
-    if var_test(rvs1,rvs2)[1]>0.05:
-        equal_var = True
-        print("数据具备方差齐性")
-    else:
-        equal_var = False
-        print("数据不具备方差齐性")
-
-    return stats.ttest_ind(rvs1,rvs2, equal_var = equal_var)
-
-def Wilcoxon_ranksumstest(data1,data2):
-    """
-    for two independent samples
-    result is something like this
-    WilcoxonResult(statistic=2.0, pvalue=0.01471359242280415)
-    """
-    return stats.ranksums(data1,data2)
-
 def corr(rsv1,rsv2):
     normalizations = []
     normalization_1 = normalized_distribution_test(rvs1)[1]
@@ -259,12 +205,5 @@ def corr(rsv1,rsv2):
         return stats.spearmanr(rsv1,rsv2)
         # return stats.kendalltau(rvs1,rsv2)
 
-def Wilcoxon_signed_ranktest(paired_data1):
-    """
-    for one sample and two paired samples 
-    result is something like this
-    WilcoxonResult(statistic=2.0, pvalue=0.01471359242280415)
-    """
-    return stats.wilcoxon(paired_data1,y=None, zero_method='wilcox', correction=False, alternative='two-sided')
 if __name__ == "__main__":
     result = Wilcoxon_ranksumstest([1,2,4,6,8],[3,5,7,1])

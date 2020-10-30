@@ -31,13 +31,6 @@ class Video():
 
         self.videosize = os.path.getsize(self.video_path)/1073741824 # video size is quantified by GB
 
-    @property
-    def timestamps(self):
-        if not os.path.exists(self.videots_path):
-            print("generating TimestampsFile by ffmpeg")
-            self.generate_ts_txt()
-        else:
-            return TimestampsFile(self.videots_path,method="ffmpeg").ts
 
     def play(self):
         """
@@ -134,7 +127,6 @@ class Video():
             print("%s was cropped."%video)
 
 
-    
     def contrastbrightness(self,):
         print(self.video_path)
         command=[
@@ -146,7 +138,7 @@ class Video():
         print("%s is adjusting contrast and brightness" % self.video_path)
         child = subprocess.Popen(command,stdout = subprocess.PIPE,stderr=subprocess.PIPE)
         out = child.communicate()[1].decode('utf-8')
-    #     print(out)
+        #print(out)
         child.wait()
         print("%s done"%self.video_path)
     
@@ -764,9 +756,9 @@ class LT_Videos(Video):
                 pass        
         cv2.destroyAllWindows()
 
-    def placebin_according_to_midline(self,Ctrack,place_bin_nums=[3,3,20,3,3,3]):
+    def generate_placebin_according_to_midline(self,place_bin_nums=[3,3,20,3,3,3]):
         """
-        Ctrack: class of tracking file, which is needed to generate the mouse coords of every frame.
+        generating a list of placebins of the same size as the behavioral video
         """
         # generate the midline_of_track_coords: in our track,
         # there are 7 points in the midline, returned by 'self.draw_midline_of_whole_track_for_each_day'
@@ -790,8 +782,8 @@ class LT_Videos(Video):
             ys_mid = [np.mean([ys[i],ys[i+1]]) for i in range(len(ys)-1)]
             place_bin_mids.extend([(x,y) for x,y in zip(xs_mid,ys_mid)])
 
-        X = Ctrack.behave_track["Head_x"]
-        Y = Ctrack.behave_track["Head_y"]
+        X = TrackFile(self.video_track_path).behave_track["Head_x"]
+        Y = TrackFile(self.video_track_path).behave_track["Head_y"]
 
         place_bin_No=[]
         for x,y in zip(X,Y):
@@ -805,18 +797,20 @@ class LT_Videos(Video):
         print(np.unique(place_bin_No))
         return place_bin_No
 
-
-
-
 class CPP_Video(Video):
     def __init__(self,video_path):
         super().__init__(video_path)
         self.led_xy = self.abs_prefix + '_led_xy.txt' # 这个数据结构和self.xy不一样，这个
         self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
 
+    @property
+    def ts(self):
         self.generate_ts_txt()
-        self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
-        self.track = TrackFile(self.video_track_path).extract_behave_track(parts=["Head","Body","Tail","led1","led2"])
+        return self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
+
+    @property
+    def track(self):
+        return TrackFile(self.video_track_path).extract_behave_track(parts=["Head","Body","Tail","led1","led2"])
 
     @property
     def tracked_coords(self):
@@ -826,10 +820,22 @@ class CPP_Video(Video):
         return tracked_coords
     
 
+    def show_behaveframe_anotations(self,frame_No=10000):
+
+        cap = cv2.VideoCapture(self.video_path)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+        ret,frame = cap.read()
+        cap.release()
+        plt.imshow(frame)
+        plt.xticks()
+        plt.yticks()
+        
+    
+
     def _led_brightness(self,tracked_coords):
         """
         output the mean pixel value of specified coords of led
-        tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1)],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn)]]
+        tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
         """
         cap = cv2.VideoCapture(self.video_path)
         total_frame = cap.get(7)
@@ -870,6 +876,7 @@ class CPP_Video(Video):
     def leds_pixel_value(self,tracked_coords):
         """
         generate *_ledvalue_ts.csv
+        tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
         """
         leds_pixel=[]
         print("calculating frame by frame...")
@@ -1034,9 +1041,6 @@ class Videos():
 if __name__ == "__main__":
 
     video = r"C:\Users\qiushou\Desktop\Results_test\test\CDC-test-201033-20200901-194548.mp4"
-    track_file = r"C:\Users\qiushou\Desktop\Results_test\test\CDC-test-201033-20200901-194548DLC_resnet50_LinearTrackJun9shuffle1_1000000.h5"
-    print(video)
-    track = TrackFile(track_file)
-    LT_Videos(video).placebin_according_to_midline(Ctrack = track,place_bin_nums=[3,3,20,3,3,3])
+    LT_Videos(video).generate_placebin_according_to_midline(place_bin_nums=[3,3,20,3,3,3])
     # CPP_Video(video).draw_leds_location()
     # LT_Videos(video).show_midline_of_whole_track()

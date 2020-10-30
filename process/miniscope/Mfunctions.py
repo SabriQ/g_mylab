@@ -9,6 +9,7 @@ import datetime
 import math
 from mylab.Cvideo import Video
 import seaborn as sns
+from scipy.ndimage import gaussian_filter1d
 
 def save_pkl(result,result_path):
     with open(result_path,'wb') as f:
@@ -66,10 +67,10 @@ def load_hdf5_cnmf(hdf5_Path):
     return cnm
 
 
-
-
-
-def generate_tsFileList(dateDir=r"X:\miniscope\20191028\191172"):    
+def generate_tsFileList(dateDir=r"X:\miniscope\20191028\191172"):
+    """
+    for a specified miniscope data directory, generate a sorted list of timestamp file name
+    """
     tsFileList = glob.glob(os.path.join(dateDir,"H*/timestamp.dat"))
     #tsFileList = [i for i in tsFileList if "2019111" not in i]
     def sort_key(s):     
@@ -100,6 +101,9 @@ def generate_tsFileList(dateDir=r"X:\miniscope\20191028\191172"):
     return tsFileList
 
 def generate_ms_ts(tsFileList,save_path,temporal_downsampling=3):
+    """
+    concatenate several timestamp files as one ms_ts.pkl
+    """
     if not os.path.exists(save_path):
         ts_sessions=[]       
         for tsFile in tsFileList:
@@ -170,15 +174,29 @@ def speed(X,Y,T,s):
     speed_angles=[0]
     for delta_x,delta_y,delta_t in zip(np.diff(X),np.diff(Y),np.diff(T)):
         distance = np.sqrt(delta_x**2+delta_y**2)
-
-        # speeds.append(distance*s/delta_t)
-
         if not delta_t==0:
             speeds.append(distance*s/delta_t)
         else:
             speeds.append(0)
         speed_angles.append(angle(1,0,delta_x,delta_y))
     return pd.Series(speeds),pd.Series(speed_angles) # in cm/s
+
+def speed_optimize(speeds,method="gaussian_filter1d",sigma=3,length=12):
+    """speeds: an iterable items
+    """
+    if method == "gaussian_filter1d": # default
+        speeds = gaussian_filter1d(speeds,sigma)
+        print("speed filter sigma is default to be 3")
+    elif method == "slider":
+        print("Slider length default to be 12. About 0.4s in 30fps behavioral video")
+    elif method == "temporal_bin":
+        print("bin_length default to be 12, meaning 12 frames in each temporal_bin")
+    else:
+        print("This is a warning because method is only available in ['gaussian_filter1d','slider','temporal_bin'].",
+              " Here default to return gaussian_filter1d with sigma =3")
+        return speed_optimize(X,Y,T,s,method="gaussian_filter1d",sigma=3)
+        
+    return speeds # in cm/s
 
 def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
     headdirections=[] # head_c - body_c

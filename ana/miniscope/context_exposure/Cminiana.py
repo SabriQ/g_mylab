@@ -301,7 +301,7 @@ class MiniAna():
     def add_Body_speed(self,scale=0.2339021309714166):
         if self.exp == "task":
             if not "Body_speed" in self.result.keys():
-                Body_speed,Body_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Body_x"]
+                Body_speed,Body_speed_angle = speed(X=self.result["aligned_behave2ms"]["Body_x"]
                                                         ,Y=self.result["aligned_behave2ms"]["Body_y"]
                                                         ,T=self.result["aligned_behave2ms"]["be_ts"]
                                                         ,s=scale)
@@ -317,7 +317,7 @@ class MiniAna():
     def add_Head_speed(self,scale=0.2339021309714166):
         if self.exp == "task":
             if not "Head_speed" in self.result.keys():
-                Head_speed,Head_speed_angle = Video.speed(X=self.result["aligned_behave2ms"]["Head_x"]
+                Head_speed,Head_speed_angle = speed(X=self.result["aligned_behave2ms"]["Head_x"]
                                                         ,Y=self.result["aligned_behave2ms"]["Head_y"]
                                                         ,T=self.result["aligned_behave2ms"]["be_ts"]
                                                         ,s=scale)

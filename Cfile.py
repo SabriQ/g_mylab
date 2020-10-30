@@ -198,6 +198,9 @@ class CPPLedPixelValue(File):
         print("lick_water information has been added and saved.")
 
 class TrackFile(File):
+    """
+    Cminiresult 因为内容高度保守，并没有用到 TrackFile 这个类
+    """
     def __init__(self,file_path):
         super().__init__(file_path)
 
@@ -222,17 +225,33 @@ class TrackFile(File):
             return 0
     
     def _load_file(self):
-        track = pd.read_hdf(self.file_path)
-        # print(track.columns)
-        try:
-            self.behave_track=pd.DataFrame(track[track.columns[0:9]].values,
-                         columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
-        except:
-            print("you might not mark 'Tail'")
-            self.behave_track=pd.DataFrame(track[track.columns[0:6]].values,
-                         columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh'])
+
+        self.behave_track = self.extract_behave_track(parts=["Head","Body","Tail"])
 
         print("Trackfile is loaded.")
+
+
+    def extract_behave_track(self,parts=["Head","Body","Tail"]):
+
+        track = pd.read_hdf(self.file_path)
+
+        ispart_available = pd.Series(parts)[~pd.Series(parts).isin(track.columns.get_level_values(1))]
+        if len(ispart_available)>0:
+            print("%s is not available"%list(ispart_available))
+        else:
+            print("%s are all available."%parts)
+
+        cols = track.columns.get_level_values(level=1).isin(parts)
+        new_columns=[]
+        for part in parts:
+            new_columns.append(part+"_x")
+            new_columns.append(part+"_y")
+            new_columns.append(part+"_lh")
+
+        behave_track=track.iloc[:,cols]
+        behave_track.columns=new_columns
+
+        return behave_track
 
     def _dataframe2nparray(self,df):
         """
@@ -260,27 +279,7 @@ class TrackFile(File):
         spio.savemat(savematname,self._dataframe2nparray(self.behave_track))
         print("save mat as %s"%savematname)
 
-    def extract_behave_track(self,parts=["Head","Body","Tail"]):
 
-        track = pd.read_hdf(self.file_path)
-
-        ispart_available = pd.Series(parts)[~pd.Series(parts).isin(track.columns.get_level_values(1))]
-        if len(ispart_available)>0:
-            print("%s is not available"%list(ispart_available))
-        else:
-            print("%s are all available."%parts)
-
-        cols = track.columns.get_level_values(level=1).isin(parts)
-        new_columns=[]
-        for part in parts:
-            new_columns.append(part+"_x")
-            new_columns.append(part+"_y")
-            new_columns.append(part+"_lh")
-
-        self.behave_track=track.iloc[:,cols]
-        self.behave_track.columns=new_columns
-
-        return self.behave_track
 
 
     @staticmethod

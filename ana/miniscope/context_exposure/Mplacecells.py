@@ -1,28 +1,14 @@
 import pandas as pd
 import numpy as np
 import scipy.stats
-from scipy.ndimage import gaussian_filter1d
+
 
 def shuffle(df,times=1000):
     for i in range(times):
         new_df = df.sample(frac=1).reset_index(drop=True)
         yield new_df
         
-def speed_optimize(speeds,method="gaussian_filter1d",sigma=3,length=12):
 
-    if method == "gaussian_filter1d": # default
-        speeds = gaussian_filter1d(speeds,sigma)
-        print("speed filter sigma is default to be 3")
-    elif method == "slider":
-        print("Slider length default to be 12. About 0.4s in 30fps behavioral video")
-    elif method == "temporal_bin":
-        print("bin_length default to be 12, meaning 12 frames in each temporal_bin")
-    else:
-        print("This is a warning because method is only available in ['gaussian_filter1d','slider','temporal_bin'].",
-              " Here default to return gaussian_filter1d with sigma =3")
-        return speed_optimize(X,Y,T,s,method="gaussian_filter1d",sigma=3)
-        
-    return speeds # in cm/s
 
 
 def Cal_SIs(df,in_context_placebin_num):
