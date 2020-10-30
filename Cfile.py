@@ -154,29 +154,29 @@ class CPPLedPixelValue(File):
         led1_indexes = self._led_off_epoch_detection(led1_trace,thresh)
         led2_indexes= self._led_off_epoch_detection(led2_trace,thresh)
 
-        led1_on = []
-        led1_onset = []
+        led1_off = []
+        led1_offset = []
         for i in led1_indexes:
-            led1_onset.append(i[0])
+            led1_offset.append(i[0])
             for j in i:
-                led1_on.append(j)
+                led1_off.append(j)
 
-        led2_on = []
-        led2_onset = []
+        led2_off = []
+        led2_offset = []
         for i in led2_indexes:
-            led2_onset.append(i[0])
+            led2_offset.append(i[0])
             for j in i:
-                led2_on.append(j)
+                led2_off.append(j)
 
-        self.df["led1_on"]=0
-        self.df["led1_on"][led1_on]=1
-        self.df["led1_onset"]=0
-        self.df["led1_onset"][led1_onset]=1
+        self.df["led1_off"]=0
+        self.df["led1_off"][led1_off]=1
+        self.df["led1_offset"]=0
+        self.df["led1_offset"][led1_offset]=1
 
-        self.df["led2_on"]=0
-        self.df["led2_on"][led2_on]=1
-        self.df["led2_onset"]=0
-        self.df["led2_onset"][led2_onset]=1
+        self.df["led2_off"]=0
+        self.df["led2_off"][led2_off]=1
+        self.df["led2_offset"]=0
+        self.df["led2_offset"][led2_offset]=1
 
         if show:
             plt.figure(figsize=(600,1))

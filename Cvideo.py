@@ -851,8 +851,12 @@ class CPP_Video(Video):
                     x,y=coord
                     x= int(x)
                     y= int(y)
-                    led_zone = gray[(y-2):(y+2),(x-2):(x+2)]
-                    led_pixel_values.append(sum(sum(led_zone)))
+                    try:
+                        led_zone = gray[(y-2):(y+2),(x-2):(x+2)]
+                        led_pixel_values.append(sum(sum(led_zone)))
+                    except:
+                        led_pixel_values.append(led_pixel_values[-1])
+                        print(frame_No-1,x,y)
                     # print("\r %s/%s"%(frame_No,int(total_frame)))
                     
                 yield led_pixel_values # [led1_value,led2_value]
