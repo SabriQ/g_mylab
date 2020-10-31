@@ -77,10 +77,14 @@ class MiniAna():
         spio.savemat(savematname,self._dataframe2nparray(self.result))
         logger.info("saved %s"%savematname)
 
-    def savesession(self,):
+    def savesession(self,*args):
+
         with open(self.session_path,"wb") as f:
             pickle.dump(self.result,f)
-        logger.info("self.result is saved at %s"%self.session_path)
+        if len(args)==0:
+            logger.debug("%s self.result is saved at %s"%self.session_path)
+        else:
+            logger.info("%s is saved at %s"%(args,self.session_path))
 
 
     def generate_timebin(self,timebin=1000):
@@ -112,6 +116,21 @@ class MiniAna():
         frame_points=[find_close_fast(be_ts,i)+forwardframe_num for i in event_points ]
         Video(miniscope_video_path).check_frames(*frame_points)
 
+
+    def show_behaveframe(self,tracking=True):
+        """
+        show all the tracking traectory in a behavioral video frame.
+        """
+        self.add_behavevideoframe()
+        plt.imshow(self.result["behavevideoframe"])
+        plt.xticks([])
+        plt.yticks([])
+        # plt.plot(s.result[])
+        plt.plot([i[0] for i in self.result["all_track_points"]],[i[1] for i in self.result["all_track_points"]],"ro",markersize=2)
+        if tracking :
+            plt.plot(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"],markersize=1)
+        plt.show()
+
     def align_behave_ms(self,hc_trial_bin=5000):
         """
         产生 aligned_behave2ms
@@ -119,8 +138,7 @@ class MiniAna():
         hc_trial_bin: in ms, default 5000ms
         """
         logger.info("FUN:: aligned_behave2ms")
-        
-        if "behave_track" in self.result.keys():
+        if self.exp=="task":
             if not "aligned_behave2ms" in self.result.keys():
                 # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
                 logger.debug("aligninging behavioral frame to each ms frame...")
@@ -139,42 +157,15 @@ class MiniAna():
                 aligned_behave2ms = aligned_behave2ms.join(self.result["behave_track"],on="ms_behaveframe")
                 
                 self.result["aligned_behave2ms"]=aligned_behave2ms
-                self.result["Trial_Num"] = self.result["aligned_behave2ms"]["Trial_Num"]
-                self.result["process"] = self.result["aligned_behave2ms"]["process"]
-                self.savesession()
-                logger.debug("aligned_behave2ms is saved %s" %self.session_path)
+
+                self.savesession("aligned_behave2ms")
+
             else:
                 logger.debug("behaveiroal timestamps were aligned to ms")
-
 
         else:
             logger.debug("this session was recorded in homecage")
 
-            Trial_Num = []
-            process = []
-            for ts in self.result["ms_ts"]:
-                Trial_Num.append(int(np.ceil(ts/hc_trial_bin)))
-                process.append(-1)
-            self.result["Trial_Num"] = pd.Series(Trial_Num,name="Trial_Num")
-            self.result["process"] = pd.Series(process,name="process")
-            self.savesession()
-
-    def show_behaveframe(self,tracking=True):
-        """
-        show all the tracking traectory in a behavioral video frame.
-        """
-        self.add_behavevideoframe()
-        plt.imshow(self.result["behavevideoframe"])
-        plt.xticks([])
-        plt.yticks([])
-        # plt.plot(s.result[])
-        plt.plot([i[0] for i in self.result["all_track_points"]],[i[1] for i in self.result["all_track_points"]],"ro",markersize=2)
-        if tracking :
-            plt.plot(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"],markersize=1)
-        plt.show()
-
-        
-    #%% add behavioral proverties to aligned_behave2ms
 
     def detect_ca_transients(self,thresh=1.5,baseline=0.8,t_half=0.2,FR=30):
         """
@@ -185,20 +176,73 @@ class MiniAna():
         self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
         logger.info("calcium tansients are detected... ")
 
-    ## trim* ret
 
-    def trim_df(self,force_neg2zero=True,detect_ca_transient =False,Normalize=False,standarize=False):
-        if detect_ca_transient:
-            _,self.df,_= self.detect_ca_transients()
+    def trim_df(self,*args,**kwargs):
+        """
+        code is excuted along the order of inputted args and kwargs arguments. the order of kwargs generating a DataFrame of trimed_index doesn't affect the result, however the order of args does.
+        """
+        self.trim_index = pd.DataFrame()
+        self.trim_index["Trial_Num"] = self.result["Trial_Num"]>=0
+        logger.info("trim_index was initialed by Trial_Num>=0")
 
-    def trim_speed(self,min=None):
-        pass
+        for key,value in kwargs:
+            if key == "Body_speed":
+                self._trim_Body_speed(min_speed=value)
 
-    def trim_Trial_Num(self,):
-        pass
+            if key == "Head_speed":
+                self._trim_Head_speed(min_speed=value)
 
-    def trim_process(self,):
-        pass
+            if key == "process":
+                self._trim_process(process_list=value)
+
+            if key=="Trial":
+                self._trim_trial(trial_list=value)
+
+        for arg in args:
+            if arg =="S_dff":
+                try:
+                    self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+                    self.shape = self.df.shape
+                    logger.info("'S_dff' is taken as original self.df")
+                except:
+                    self.df = self.df
+                    logger.warning("S_dff doesn't exist, sigraw is used.")
+
+            if arg=="detect_ca_transient:"
+                _,self.df,_= self.detect_ca_transients()
+                logger.info("trim_df : calcium transients are detected and ")
+
+            if arg=="force_neg2zero:"                
+                self.df[self.df<0]=0
+                logger.info("trim_df : negative values are forced to be zero")
+
+            if arg == "Normalization":
+                pass
+
+            if arg== "Standarization":
+                pass
+
+        logger.info("trim_df : df was trimmed.")
+
+        return self.df,self.trim_index.all(axis=1)
+
+
+
+    def _trim_Body_speed(self,min_speed=3):
+        self.trim_index["Body_speed"] = self.result["Body_speed"]>min_speed
+        logger.info("trim_index : Body_speed>%s cm/s"%min_speed)
+
+    def _trim_Head_speed(self,min_speed=None):
+        self.trim_index["Head_speed"] = self.result["Head_speed"]>min_speed
+        logger.info("trim_index : Head_speed>%s cm/s"%min_speed)
+
+    def _trim_process(self,process_list):
+        self.trim_index["process"] = self.result["process"].isin(process_list)
+        logger.info("trim_index : process are limited in %s"%min_speed)
+
+    def _trim_trial(self,trial_list):
+        self.trim_index("Trial") = self.result["Trial_Num"].isin(trial_list)
+        logger.info("trim_index : trial are limited in %s"%trial_list)
 
 
     def trim_df2(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
