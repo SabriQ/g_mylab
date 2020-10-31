@@ -6,7 +6,7 @@ import networkx as nx
 import pandas as pd
 from networkx.algorithms.approximation import clique
 from matplotlib.pylab import plt
-from mylab.ana.miniscope.Mquality import *
+from mylab.ana.miniscope.Mquality import * # for shuffle
 
 class Minimatrix():
     def __init__(self,df):

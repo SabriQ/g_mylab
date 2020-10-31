@@ -2,7 +2,7 @@ from mylab.Cvideo import Video
 import os,sys,glob
 import cv2
 from mylab.Cfile import TimestampsFile 
-from mylab.Cfile import FreezingFile as FF
+from mylab.process.CFC.Ccfcfile import FreezingFile as FF
 import pandas as pd
 from mylab.Cdecs import *
 import csv

@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mylab.Cdecs import *
 import csv
+
 class EPMvideo(Video):
     def __init__(self,video_path):  
         super().__init__(video_path)

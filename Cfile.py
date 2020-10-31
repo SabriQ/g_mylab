@@ -18,12 +18,14 @@ import matplotlib.pyplot as plt
 
 class File():
     def __init__ (self,file_path):
+        
         self.file_path = file_path
         self.file_name = os.path.basename(self.file_path)
         self.file_name_noextension = self.file_name.split(".")[0]
         self.extension = os.path.splitext(self.file_path)[-1]
         self.abs_prefix = os.path.splitext(self.file_path)[-2]
         self.dirname = os.path.dirname(self.file_path)
+
     def add_prefixAsuffix(self,prefix = "prefix", suffix = "suffix",keep_origin=True):
         '''
         会在suffix前或者prefix后自动添加“——”
@@ -99,115 +101,18 @@ class TimestampsFile(File):
             ts = pd.Series(temp['sysClock'].values,name="miniscope_ts")
             return ts
 
-class CPPLedPixelValue(File):
-    def __init__(self,file_path):
-        super().__init__(file_path)
 
-        if not self.file_path.endswith("_ledvalue_ts.csv"):
-            pirnt("wrong file input")
-
-        self.df = pd.read_csv(self.file_path)
-    
-    def show_change_along_thresholds(self,v1,v2):
-        """
-        v1: specified the minimum threshold
-        v2: specified the maxmum threshold
-        """
-        threshods = np.arange(v1,v2)
-        points1=[]
-        points2=[]
-        for thre in threshods:
-            points1.append(sum([ 1 if i< thre  else 0 for i in self.df["1"]]))
-            points2.append(sum([ 1 if i< thre  else 0 for i in self.df["2"]]))
-
-        plt.plot(threshods,points1)
-        plt.plot(threshods,points2)
-        plt.xlabel("Threshod of ROI pixel value")
-        plt.ylabel("Numbers of led-off frames")
-        plt.title("For choosing threshold")
-        plt.legend(["led1","led2"])
-        # plt.axvline(x=930,color="green",linestyle="--")
-        plt.show()
-
-    def _led_off_epoch_detection(self,trace,thresh):
-        """
-        trace: any timeseries data. 
-        thresh: the minimum absolute deviation from baseline, which could be negtive.
-        """
-        trace = np.array(trace)
-        points = np.reshape(np.argwhere(trace<thresh),-1)
-        epoch_indexes = []
-        last_epoch_index=[]
-        for i in range(len(points)):
-            if i == 0:
-                last_epoch_index.append(points[i])
-            else:
-                if points[i]-points[i-1]==1:
-                    last_epoch_index.append(points[i])
-                else:
-                    epoch_indexes.append(last_epoch_index)
-                    last_epoch_index=[]
-                    last_epoch_index.append(points[i])        
-        return epoch_indexes
-
-    def lick_water(self,thresh,led1_trace,led2_trace,show=False):
-        led1_indexes = self._led_off_epoch_detection(led1_trace,thresh)
-        led2_indexes= self._led_off_epoch_detection(led2_trace,thresh)
-
-        led1_off = []
-        led1_offset = []
-        for i in led1_indexes:
-            led1_offset.append(i[0])
-            for j in i:
-                led1_off.append(j)
-
-        led2_off = []
-        led2_offset = []
-        for i in led2_indexes:
-            led2_offset.append(i[0])
-            for j in i:
-                led2_off.append(j)
-
-        self.df["led1_off"]=0
-        self.df["led1_off"][led1_off]=1
-        self.df["led1_offset"]=0
-        self.df["led1_offset"][led1_offset]=1
-
-        self.df["led2_off"]=0
-        self.df["led2_off"][led2_off]=1
-        self.df["led2_offset"]=0
-        self.df["led2_offset"][led2_offset]=1
-
-        if show:
-            plt.figure(figsize=(600,1))
-            plt.plot(self.df["ts"],led1_trace,color="orange")
-            for epochs_index in led1_indexes:
-                if len(epochs_index)==1:
-                    plt.scatter(self.df["ts"][epochs_index[0]],led1_trace[epochs_index[0]],s=20,marker="x",c="green")
-                else:
-                    plt.plot(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],led1_trace[epochs_index[0]:(epochs_index[-1]+1)],color="red")
-
-            plt.plot(self.df["ts"],led2_trace+1000,color="blue")
-            for epochs_index2 in led2_indexes:
-                if len(epochs_index2)==1:
-                    plt.scatter(self.df["ts"][epochs_index2[0]],led2_trace[epochs_index2[0]]+1000,s=20,marker="x",c="green")
-                else:
-                    plt.plot(self.df["ts"][epochs_index2[0]:(epochs_index2[-1]+1)],led2_trace[epochs_index2[0]:(epochs_index2[-1]+1)]+1000,color="red")
-
-        self.df.to_csv(self.file_path,index = False,sep = ',')
-        print("lick_water information has been added and saved.")
 
 class TrackFile(File):
     """
     Cminiresult 因为内容高度保守，并没有用到 TrackFile 这个类
     """
-    def __init__(self,file_path):
+    def __init__(self,file_path,parts=None):
         super().__init__(file_path)
 
-        if not self.file_path.endswith(".h5"):
-            print("track file is not end with h5")
-        else:
-            self._load_file()
+        self.parts = parts
+
+        self._load_file()
 
     @property
     def key_PLX(self):
@@ -226,14 +131,12 @@ class TrackFile(File):
     
     def _load_file(self):
 
-        self.behave_track = self.extract_behave_track(parts=["Head","Body","Tail"])
+        if not self.file_path.endswith(".h5"):
+            print("track file is not end with h5")
+        else:
+            track = pd.read_hdf(self.file_path)
 
-        print("Trackfile is loaded.")
-
-
-    def extract_behave_track(self,parts=["Head","Body","Tail"]):
-
-        track = pd.read_hdf(self.file_path)
+        parts = ["Head","Body","Tail"] if self.parts == None else self.parts
 
         ispart_available = pd.Series(parts)[~pd.Series(parts).isin(track.columns.get_level_values(1))]
         if len(ispart_available)>0:
@@ -248,10 +151,11 @@ class TrackFile(File):
             new_columns.append(part+"_y")
             new_columns.append(part+"_lh")
 
-        behave_track=track.iloc[:,cols]
-        behave_track.columns=new_columns
+        self.behave_track=track.iloc[:,cols]
+        self.behave_track.columns=new_columns
 
-        return behave_track
+        print("track file is loaded")
+
 
     def _dataframe2nparray(self,df):
         """
@@ -411,97 +315,7 @@ class LinearTrackBehavioralLogFile(File):
         return sum(self.data["Choice_class"][self.Enter_Context=="B"])/len(self.data["Choice_class"][self.Enter_Context=="B"])
     
 
-class FreezingFile(File):
-    def __init__(self,file_path):
-        super().__init__(file_path)
-        self.freezingEpochPath = os.path.join(self.dirname,'behave_video_'+self.file_name_noextension+'_epoch.csv')
-    def _rlc(self,x):
-        name=[]
-        length=[]
-        for i,c in enumerate(x,0):
-            if i ==0:
-                name.append(x[0])
-                count=1
-            elif i>0 and x[i] == name[-1]:
-                count += 1
-            elif i>0 and x[i] != name[-1]:
-                name.append(x[i])
-                length.append(count)
-                count = 1
-        length.append(count)
-        return name,length
 
-    def freezing_percentage(self,threshold = 0.005, start = 0, stop = 300,show_detail=False,percent =True,save_epoch=True): 
-        data = pd.read_csv(self.file_path)
-        print(len(data['0']),"time points ;",len(data['Frame_No']),"frames")
-
-        data = data.dropna(axis=0)             
-        #print(f"{self.file_path}")
-        data = data.reset_index()
-        # slice (start->stop)
-        
-        #start_index
-        if start>stop:
-            start,stop = stop,start
-            warning.warn("start time is later than stop time")
-        if start >=max(data['0']):
-            warnings.warn("the selected period start is later than the end of experiment")
-            sys.exit()
-        elif start <=min(data['0']):            
-            start_index = 0
-        else:
-            start_index = [i for i in range(len(data['0'])) if data['0'][i]<=start and  data['0'][i+1]>start][0]+1
-
-        #stop_index
-        if stop >= max(data['0']):
-            stop_index = len(data['0'])-1
-            warnings.warn("the selected period exceed the record time, automatically change to the end time.")
-        elif stop <=min(data['0']):
-            warnings.warn("the selected period stop is earlier than the start of experiment")
-            sys.exit()
-        else:            
-            stop_index = [i for i in range(len(data['0'])) if data['0'][i]<=stop and  data['0'][i+1]>stop][0]
-
-        selected_data = data.iloc[start_index:stop_index+1]
-
-        values,lengthes = self._rlc(np.int64(np.array(selected_data['percentage'].tolist())<=threshold))
-
-
-        
-        sum_freezing_time = 0
-        if save_epoch:
-            with open(self.freezingEpochPath,'w+',newline="") as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(["start","stop"])
-        for i,value in enumerate(values,0):
-            if value ==1:              
-                begin = sum(lengthes[0:i])
-                end = sum(lengthes[0:i+1])
-                if end > len(selected_data['0'])-1:
-                    end = len(selected_data['0'])-1
-                condition = selected_data['0'].iat[end]-selected_data['0'].iat[begin]
-                if condition >=1:
-                    if show_detail:
-                        print(f"{round(selected_data['0'].iat[begin],1)}s--{round(selected_data['0'].iat[end],1)}s,duration is {round(condition,1)}s".rjust(35,'-'))
-                    if save_epoch:
-                        with open(self.freezingEpochPath,'a+',newline="") as csv_file:
-                            writer = csv.writer(csv_file)
-                            writer.writerow([selected_data['0'].iat[begin],selected_data['0'].iat[end]])
-                    sum_freezing_time = sum_freezing_time + condition
-                else:
-                    sum_freezing_time = sum_freezing_time
-        print(f'the freezing percentage during [{start}s --> {stop}s] is {round(sum_freezing_time*100/(stop-start),2)}% ')
-        if save_epoch:
-            with open(self.freezingEpochPath,'a+',newline="") as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(["","",f"{round(sum_freezing_time*100/(stop-start),2)}%"])
-        if  percent:
-            return sum_freezing_time*100/(stop-start)
-        else:
-            return sum_freezing_time/(stop-start)
-
-class EpmFile(File):
-    pass
     
 if __name__ == "__main__":
     file = r"C:\Users\Sabri\Desktop\new_method_to_record\behave\LickWater-test-201033-20200825-130238_log.csv"
