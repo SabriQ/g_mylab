@@ -141,6 +141,104 @@ def add_ms_ts2mat(ms_ts_path,mat_path):
     del ms_mat
     del ms_ts
 
+
+def divide_matrix_into_session_pkl(
+    ms_mat_path
+    ,ms_ts_path
+    ,Result_dir
+    ,orders=None):
+    """
+    ms_mat_path: the path of "ms.mat" 
+    ms_ts_path: the path of "ms_ts.pkl"
+    Result_dir: the path of CNMFe result directory
+    orders, lists of the session or in CNMFe analyzing
+    """
+    if os.path.exists(ms_mat_path):        
+        print("loading %s"%ms_mat_path)
+        ms = load_mat(ms_mat_path)
+        print("loaded %s"%ms_mat_path)
+    else:
+        print("loading %s"%ms_mat_path2)
+        ms = load_pkl(ms_mat_path2)
+        print("loaded %s"%ms_mat_path2)
+
+    try:
+        sigraw = ms['ms']['sigraw'] #默认为sigraw
+        S_dff = ms['ms']['S_dff']
+    except:            
+        print("saving sigraw or S_dff problem")
+        sys.exit(0)
+
+
+    idx_accepted = ms['ms']['idx_accepted']
+    idx_deleeted = ms['ms']['idx_deleted']
+
+    with open(ms_ts_path,'rb') as f:
+        timestamps = pickle.load(f)
+    [print(len(i)) for i in timestamps]
+    print("session lenth:%s, timestamps length:%s, dff shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),dff.shape))
+
+    # 对不同session的分析先后顺序排序
+    if not orders == None:
+        timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
+        [print(len(i)) for i in timestamps_order]
+        print("timestamps are sorted by %s"%orders)
+
+
+    #根据timestamps将dff切成对应的session
+    slice = []
+    for i,timestamp in enumerate(timestamps_order):
+        if i == 0:
+            start = 0
+            stop = len(timestamp)
+            slice.append((start,stop))
+        else:
+            start = slice[i-1][1]
+            stop = start+len(timestamp)
+    #         if i == len(timestamps)-1:
+    #             stop = -1
+            slice.append((start,stop))
+    # print(slice)
+
+    for s,i in zip(slice,orders):
+        name = "session"+str(i)+".pkl"
+        result = {
+            "ms_ts":timestamps[i-1],
+            "dff":np.transpose(dff)[s[0]:s[1]],
+            "S_dff":np.transpose(S_dff)[s[0]:s[1]],
+            "sigraw":sigraw[s[0]:s[1]],
+            "idx_accepted":idx_accepted
+        }
+
+        with open(os.path.join(Result_dir,name),'wb') as f:
+            pickle.dump(result,f)
+        print("%s is saved"%name)
+
+
+def concatenate_sessions(session1,session2):
+    """
+    仅限于记录时有多个sessions但是只有一个behavioral video的情况
+    """
+    with open(session1,"rb") as f:
+        s1 = pickle.load(f)
+    with open(session2,"rb") as f:
+        s2 = pickle.load(f)
+
+    if (s1["idx_accepted"]==s2["idx_accepted"]).all():
+        s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
+        s1["dff"] = np.vstack((s1.get("dff"),s2.get("dff")))
+        s1["S_dff"] = np.vstack((s1.get("S_dff"),s2.get("S_dff")))
+        s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
+        s1["idx_accepted"] = s1["idx_accepted"]
+
+        with open(session1,"wb") as f:
+            pickle.dump(s1,f)
+        print("%s has been merged in %s"%(session2,session1))
+        print("you should remove %s"%session2)
+    else:
+        print("%s is not connected to %s"%(session2,session1))
+
+
 def angle(dx1,dy1,dx2,dy2):
 #def angle(v1,v2)    #v1 = [0,1,1,1] v2 = [x1,y1,x2,y2]
 #    dx1 = v1[2]-v1[0]
@@ -217,66 +315,8 @@ def direction(Head_X,Head_Y,Body_X,Body_Y,Tail_X,Tail_Y):
         arch_angles.append(arch_angle)
     return pd.Series(headdirections), pd.Series(taildirections), pd.Series(arch_angles)
     
-def rlc(x):
-    name=[]
-    length=[]
-    
-    for i,c in enumerate(x,0):
-        if i ==0:
-            name.append(x[0])
-            count=1
-        elif i>0 and x[i] == name[-1]:
-            count += 1
-        elif i>0 and x[i] != name[-1]:
-            name.append(x[i])
-            length.append(count)
-            count = 1
-    length.append(count)
-    return name,length   
 
-def rlc2(X):
-    name=[]
-    length=[]
-    idx_min=[]
-    idx_max=[]
-    for i,x in enumerate(X,0):
-        if i == 0:
-            name.append(x)
-            idx_min.append(i)
-            count =1
-        elif i>0 and x==name[-1]:
-            count = count +1
-        elif i>0 and x!=name[-1]:
-            idx_max.append(i)
-            idx_min.append(i)
-            name.append(x)
-            length.append(count)
-            count=1
-    length.append(count)
-    idx_max.append(i)
-    df = {"name":name,"length":length,"idx_min":idx_min,"idx_max":idx_max}
-    return pd.DataFrame(df)         
-    
-def Standarization(df):
-    """
-    对matrix中的所有值一块进行standarization
-    """
-    temp_mean = np.mean(np.reshape(df.values,(1,-1))[0])
-    temp_std = np.std(np.reshape(df.values,(1,-1))[0],ddof=1)
-    Standarized_df = (df-temp_mean)/temp_std
-    print("mean and std", temp_mean,temp_std)
-    return Standarized_df,temp_mean,temp_std
 
-def Normalization(df):
-    """
-    对matrix中的所有值一块进行 normalization
-    """
-    residual = np.max(np.reshape(df.values,(1,-1))[0])-np.min(np.reshape(df.values,(1,-1))[0])
-#     residual = df.max().max()-df.min().min()
-    minimum = np.min(np.reshape(df.values,(1,-1))[0])
-    normalized_df = (df-minimum)/residual
-    print("residual and minimum", residual,minimum)
-    return normalized_df,residual,minimum
 
 if __name__ == "__main__":
     print("done")

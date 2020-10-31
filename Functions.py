@@ -205,5 +205,46 @@ def corr(rsv1,rsv2):
         return stats.spearmanr(rsv1,rsv2)
         # return stats.kendalltau(rvs1,rsv2)
 
+def rlc(x):
+    name=[]
+    length=[]
+    
+    for i,c in enumerate(x,0):
+        if i ==0:
+            name.append(x[0])
+            count=1
+        elif i>0 and x[i] == name[-1]:
+            count += 1
+        elif i>0 and x[i] != name[-1]:
+            name.append(x[i])
+            length.append(count)
+            count = 1
+    length.append(count)
+    return name,length   
+
+def rlc2(X):
+    name=[]
+    length=[]
+    idx_min=[]
+    idx_max=[]
+    for i,x in enumerate(X,0):
+        if i == 0:
+            name.append(x)
+            idx_min.append(i)
+            count =1
+        elif i>0 and x==name[-1]:
+            count = count +1
+        elif i>0 and x!=name[-1]:
+            idx_max.append(i)
+            idx_min.append(i)
+            name.append(x)
+            length.append(count)
+            count=1
+    length.append(count)
+    idx_max.append(i)
+    df = {"name":name,"length":length,"idx_min":idx_min,"idx_max":idx_max}
+    return pd.DataFrame(df)
+    
+
 if __name__ == "__main__":
     result = Wilcoxon_ranksumstest([1,2,4,6,8],[3,5,7,1])
