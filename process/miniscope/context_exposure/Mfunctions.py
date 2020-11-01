@@ -36,8 +36,8 @@ def starts_firstnp_stops(logfilepath):
 
 def save_behave_pkl(
     behavevideo
-    ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"
     ,Result_dir
+    ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"
     ):
     """
     behavebideo

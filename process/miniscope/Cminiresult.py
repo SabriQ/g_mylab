@@ -37,6 +37,7 @@ class MiniResult():
         self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl"))
         self.sessions.sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
         self.ms_mc_path = os.path.join(self.Result_dir,"ms_mc.mp4")
+        self.S_dff_path = os.path.join(self.Result_dir,"S_dff.pkl")
 
         fh = logging.FileHandler(self.logfile,mode="a")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
@@ -79,9 +80,12 @@ class MiniResult():
         try:            
             S_dff = ms['ms']['S_dff']
         except:            
+            try:
             # read S_dff.pkl
-            logger.debug("saving S_dff problem")
-            sys.exit(0)
+                S_dff = load_pkl(self.S_dff_path)
+            except:
+                logger.debug("saving S_dff problem,is there S_dff.pkl in directory?")
+
 
 
         idx_accepted = ms['ms']['idx_accepted']
