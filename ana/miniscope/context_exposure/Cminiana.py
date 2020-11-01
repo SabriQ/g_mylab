@@ -445,10 +445,10 @@ class MiniAna(MA):
         code is excuted along the order of inputted args and kwargs arguments. the order of kwargs generating a DataFrame of trimed_index doesn't affect the result, however the order of args does.
         """
         self.trim_index = pd.DataFrame()
-        self.trim_index["Trial_Num"] = self.result["Trial_Num"]>=0
+        self.trim_index["Trial_Num"] = self.result["Trial_Num"]>0
         logger.info("trim_index was initialed by Trial_Num>=0")
 
-        for key,value in kwargs:
+        for key,value in kwargs.items():
             if key == "Body_speed":
                 self._trim_Body_speed(min_speed=value)
 
@@ -461,6 +461,9 @@ class MiniAna(MA):
             if key=="Trial":
                 self._trim_trial(trial_list=value)
 
+            if key == "placebin":
+                self._trim_placebin(placebin_list=value)
+
         for arg in args:
             if arg =="S_dff":
                 try:
@@ -470,6 +473,11 @@ class MiniAna(MA):
                 except:
                     self.df = self.df
                     logger.warning("S_dff doesn't exist, sigraw is used.")
+
+            if arg == "sigraw":
+                self.df = pd.DataFrame(self.result["sigraw"],columns=self.result["idx_accepted"])
+                self.shape = self.df.shape
+                logger.info("'sigraw' is taken as original self.df")
 
             if arg=="detect_ca_transient":
                 _,self.df,_= self.detect_ca_transients()
@@ -489,6 +497,25 @@ class MiniAna(MA):
 
         return self.df,self.trim_index.all(axis=1)
 
+    def _trim_Body_speed(self,min_speed=3):
+        self.trim_index["Body_speed"] = self.result["Body_speed"]>min_speed
+        logger.info("trim_index : Body_speed>%s cm/s"%min_speed)
+
+    def _trim_Head_speed(self,min_speed=None):
+        self.trim_index["Head_speed"] = self.result["Head_speed"]>min_speed
+        logger.info("trim_index : Head_speed>%s cm/s"%min_speed)
+
+    def _trim_process(self,process_list):
+        self.trim_index["process"] = self.result["process"].isin(process_list)
+        logger.info("trim_index : process are limited in %s"%min_speed)
+
+    def _trim_trial(self,trial_list):
+        self.trim_index["Trial"] = self.result["Trial_Num"].isin(trial_list)
+        logger.info("trim_index : trial are limited in %s"%trial_list)
+
+    def _trim_placebin(self,placebin_list):
+        self.trim_index["placebin"] = self.result["place_bin_No"].isin(placebin_list)
+        logger.info("trim_index : trial are limited in %s"%placebin_list)
 
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
