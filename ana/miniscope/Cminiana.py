@@ -11,7 +11,7 @@ from mylab.Cvideo import *
 from mylab.Functions import *
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
-from mylab.ana.miniscope.context_exposure.Mplacecells import *
+from mylab.ana.miniscope.Mplacecells import *
 import logging 
 
 
@@ -208,11 +208,11 @@ class MiniAna():
                     self.df = self.df
                     logger.warning("S_dff doesn't exist, sigraw is used.")
 
-            if arg=="detect_ca_transient:"
+            if arg=="detect_ca_transient":
                 _,self.df,_= self.detect_ca_transients()
                 logger.info("trim_df : calcium transients are detected and ")
 
-            if arg=="force_neg2zero:"                
+            if arg=="force_neg2zero":                
                 self.df[self.df<0]=0
                 logger.info("trim_df : negative values are forced to be zero")
 
@@ -241,7 +241,7 @@ class MiniAna():
         logger.info("trim_index : process are limited in %s"%min_speed)
 
     def _trim_trial(self,trial_list):
-        self.trim_index("Trial") = self.result["Trial_Num"].isin(trial_list)
+        self.trim_index["Trial"] = self.result["Trial_Num"].isin(trial_list)
         logger.info("trim_index : trial are limited in %s"%trial_list)
 
 

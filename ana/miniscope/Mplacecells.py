@@ -11,42 +11,49 @@ def shuffle(df,times=1000):
 
 
 
-def Cal_SIs(df,in_context_placebin_num):
+def Cal_SIs(df,placebins):
+    """
+    placebins: pd.Series, the same length with df.
+    """
+
     # p(x) the probability for the mouse being at location x for each trial 
     print("call Cal_SIs")
     p_xs = []
     total_frame = df.shape[0]
 
-    for place_bin in set(in_context_placebin_num):
-        p_x = (in_context_placebin_num==place_bin).sum()/total_frame
+    for place_bin in set(placebins):
+        p_x = (placebins==place_bin).sum()/total_frame
         p_xs.append(p_x)
         # print("probability in place_bin %s is %s"%(place_bin,p_x))
 
     # λ(x) the average firing rate for mouse being at location x for each trial
-    Afr_xs = df.groupby(in_context_placebin_num).mean()
+    Afr_xs = df.groupby(placebins).mean()
     # λ
-    Afr_all = df[in_context_placebin_num>0].mean()
+    Afr_all = df[placebins>0].mean()
     # Afr_all = Afr_xs.mean() #20200914矫正
     # si
     SIs = ((((Afr_xs.T)*p_xs).T)*(Afr_xs/Afr_all.values).apply(np.log2)).sum()
     return SIs
 
 
-def bootstrap_Cal_SIs(df,in_context_placebin_num):
+def bootstrap_Cal_SIs(df,placebins):
+    """
+    placebins: pd.Series, the same length with df
+    """
     # p(x) the probability for the mouse being at location x for each trial 
     print("call bootstrap_Cal_SIs")
     p_xs = []
     total_frame = df.shape[0]
 
-    for place_bin in set(in_context_placebin_num):
-        p_x = (in_context_placebin_num==place_bin).sum()/total_frame
+    for place_bin in set(placebins):
+        p_x = (placebins==place_bin).sum()/total_frame
         p_xs.append(p_x)
         # print("probability in place_bin %s is %s"%(place_bin,p_x))
 
     #λ(x) the average firing rate for mouse being at location x for each trial
-    Afr_xs = df.groupby(in_context_placebin_num).mean()
+    Afr_xs = df.groupby(placebins).mean()
     # λ
-    Afr_all = df[in_context_placebin_num>0].mean()
+    Afr_all = df[placebins>0].mean()
     # Afr_all = Afr_xs.mean() 20200914矫正
     def shuffle():
         shuffle_Afr_xs = Afr_xs.sample(frac=1).reset_index(drop=True)

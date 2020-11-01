@@ -6,8 +6,10 @@ import os,sys,glob
 import scipy.io as spio
 import pickle
 import scipy.stats as stats
-from mylab.ana.miniscope.context_exposure.Mplacecells import *
+from mylab.ana.miniscope.Mplacecells import *
 
+
+#%% for single cell analysis
 def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
     """
 
@@ -317,7 +319,19 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,df=None,contexts=None,plac
     return Context_Matrix_info
 
 
-def PCA(s):
+
+from sklearn.decomposition import PCA
+#%% for population analysis
+#累计可解释方差贡献率曲线
+def cumulative_contribution_curve():
+	pca_line = PCA().fit(X)
+	plt.plot([1,2,3,4],np.cumsum(pca_line.explained_variance_ratio_))
+	plt.xticks([1,2,3,4]) #这是为了限制坐标轴显示为整数
+	plt.xlabel("number of components after dimension reduction")
+	plt.ylabel("cumulative explained variance ratio")
+	plt.show()
+
+def PCA(s,):
     pass
 
 def dPCA(s):

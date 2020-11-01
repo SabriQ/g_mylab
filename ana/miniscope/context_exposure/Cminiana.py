@@ -12,7 +12,7 @@ from mylab.Functions import *
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Cminiana import MiniAna as MA
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
-from mylab.ana.miniscope.context_exposure.Mplacecells import *
+from mylab.ana.miniscope.Mplacecells import *
 import logging 
 
 
@@ -440,10 +440,54 @@ class MiniAna(MA):
                 pickle.dump(self.result,f)
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
+    def trim_df(self,*args,**kwargs):
+        """
+        code is excuted along the order of inputted args and kwargs arguments. the order of kwargs generating a DataFrame of trimed_index doesn't affect the result, however the order of args does.
+        """
+        self.trim_index = pd.DataFrame()
+        self.trim_index["Trial_Num"] = self.result["Trial_Num"]>=0
+        logger.info("trim_index was initialed by Trial_Num>=0")
 
+        for key,value in kwargs:
+            if key == "Body_speed":
+                self._trim_Body_speed(min_speed=value)
 
+            if key == "Head_speed":
+                self._trim_Head_speed(min_speed=value)
 
+            if key == "process":
+                self._trim_process(process_list=value)
 
+            if key=="Trial":
+                self._trim_trial(trial_list=value)
+
+        for arg in args:
+            if arg =="S_dff":
+                try:
+                    self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+                    self.shape = self.df.shape
+                    logger.info("'S_dff' is taken as original self.df")
+                except:
+                    self.df = self.df
+                    logger.warning("S_dff doesn't exist, sigraw is used.")
+
+            if arg=="detect_ca_transient":
+                _,self.df,_= self.detect_ca_transients()
+                logger.info("trim_df : calcium transients are detected and ")
+
+            if arg=="force_neg2zero":                
+                self.df[self.df<0]=0
+                logger.info("trim_df : negative values are forced to be zero")
+
+            if arg == "Normalization":
+                pass
+
+            if arg== "Standarization":
+                pass
+
+        logger.info("trim_df : df was trimmed.")
+
+        return self.df,self.trim_index.all(axis=1)
 
 
 # if __name__ == "__main__":
