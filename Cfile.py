@@ -82,10 +82,13 @@ class TimestampsFile(File):
         if self.method  == "ffmpeg":
             try:
                 ts = pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["ffmpeg_ts"])
-                return ts
-            except:
-                print("default method is ffmpeg, try 'datetime'")
-                sys.exit()
+            except :
+                try:
+                    ts = pd.read_csv(self.file_path,header=None,sep=" ",names=["ffmpeg_ts"])
+                except:
+                    print("default method is ffmpeg, try 'datetime'")
+                    sys.exit()
+            return ts
         if self.method == "miniscope":
             temp=pd.read_csv(self.file_path,sep = "\t", header = 0)
             temp = temp[temp["camNum"]==self.camNum] ## wjn的 case 是1， 其他的scope是0
