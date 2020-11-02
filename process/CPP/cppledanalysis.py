@@ -15,11 +15,11 @@ def cpp_led_value_of_lickwater(video,thresh=900,show=False):
     # generate ***_led_value_ts.csv
     if not os.path.exists(v.led_value_ts):
         v.leds_pixel_value(v.tracked_coords)
+        # add led1,led2 off/offset in csv
+        f = CPPLedPixelValue(v.led_value_ts)    
+        f.lick_water(thresh=thresh,led1_trace=f.df["1"],led2_trace=f.df["2"],show=show)
     else:
         print("***_ledvalue_ts.csv file has been generated")
-    # add led1,led2 off/offset in csv
-    f = CPPLedPixelValue(v.led_value_ts)    
-    f.lick_water(thresh=thresh,led1_trace=f.df["1"],led2_trace=f.df["2"],show=show)
 
 
 
