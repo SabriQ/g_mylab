@@ -220,7 +220,7 @@ class MiniAna(MA):
                     behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
                     coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
                     self.result["all_track_points"] = coords
-                    self.savesession()
+                    self.savesession("all_track_points")
 
                 lines = [(coords[i],coords[i+1]) for i in range(len(coords)-2)]
                 lines.append((coords[-3],coords[-1]))
