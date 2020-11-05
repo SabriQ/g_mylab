@@ -7,7 +7,7 @@ import scipy.io as spio
 import pickle
 import scipy.stats as stats
 from mylab.ana.miniscope.Mplacecells import *
-
+from mylab.ana.miniscope.Mpca import *
 
 #%% for single cell analysis
 def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
@@ -320,19 +320,27 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,df=None,contexts=None,plac
 
 
 
-from sklearn.decomposition import PCA
 #%% for population analysis
-#累计可解释方差贡献率曲线
-def cumulative_contribution_curve():
-	pca_line = PCA().fit(X)
-	plt.plot([1,2,3,4],np.cumsum(pca_line.explained_variance_ratio_))
-	plt.xticks([1,2,3,4]) #这是为了限制坐标轴显示为整数
-	plt.xlabel("number of components after dimension reduction")
-	plt.ylabel("cumulative explained variance ratio")
-	plt.show()
 
-def PCA(s,):
-    pass
+
+def PCA(s,**kwargs):
+    """
+    return a fig and x_dr
+    """
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num()
+    s.add_Context()
+    s.trim_df("S_dff",placebin = np.arange(0,56))
+    index = s.trim_index.all(axis=1)
+
+    sigraw = s.df[index]
+    placebins = s.result["place_bin_No"][index]
+    context = s.result["Context"][index]
+    x = sigraw.groupby([context,placebins]).mean()
+
+    result = pca(x,**kwargs)
+
+    return result
 
 def dPCA(s):
     pass
