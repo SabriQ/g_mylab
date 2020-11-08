@@ -37,7 +37,8 @@ class MiniAna(MA):
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self):
         """
-        in case some data was genereated by older verfion of function  "align_behave_ms", we need to regenereate "Trial_Num" and "Porcess" for each session
+        in case some data was genereated by older verfion of function "align_behave_ms"
+        , we need to regenereate "Trial_Num" and "Porcess" for each session
         and save them in pkl file
         """
         logger.info("Fun:: add_Trial_Num_Process")
@@ -58,6 +59,7 @@ class MiniAna(MA):
             self.result["Trial_Num"] = self.result["aligned_behave2ms"]["Trial_Num"]
             self.result["process"] = self.result["aligned_behave2ms"]["process"]
 
+        logger.info("'Trial_Num' and 'process' were added")
         self.savesession("Trial_Num","process")
         
 
@@ -256,7 +258,10 @@ class MiniAna(MA):
                     if np.min(distances) < 20:
                         place_bin_No.append(np.argmin(distances))
                     else:
-                        place_bin_No.append(place_bin_No[-1])
+                        if len(place_bin_No)>1:
+                            place_bin_No.append(place_bin_No[-1])
+                        else:
+                            place_bin_No.append(0) # 如果是第一帧就tracking出错，那么默认就是 第0 个placebin
 
                 self.result["place_bin_No"] = pd.Series(place_bin_No,name="place_bin_No")
 
@@ -439,6 +444,29 @@ class MiniAna(MA):
             with open(self.session_path,'wb') as f:
                 pickle.dump(self.result,f)
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
+
+
+    def add_behave_choice_side(self,):
+        behave_choice_side = []
+        if self.result["behavelog_info"]["Left_choice"][0]>self.result["behavelog_info"]["Right_choice"][0]:
+            behave_choice_side.append("left")
+        else:
+            behave_choice_side.append("right")
+
+        for i in np.diff(self.result["behavelog_info"]["Left_choice"]):
+            if i == 0:
+                behave_choice_side.append("right")
+            else:
+                behave_choice_side.append("left")
+
+        self.result["behave_choice_side"] = pd.Series(behave_choice_side,name="behave_choice_side")
+        logger.info("'behave_choice_side' was added.")
+
+
+    def add_behave_context(self,according="Enter_ctx"):
+        self.result["behave_context"] = self.result["behavelog_info"][according]
+        logger.info("'behave_context' was added according to %s."%according)
+
 
     def trim_df(self,*args,**kwargs):
         """

@@ -1,4 +1,5 @@
 from sklearn.decomposition import PCA
+from dPCA import dPCA
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -20,8 +21,9 @@ def pca(x,**kargws):
     """
     x: dataframe with "context" and "placebins" as two of the multi-indexes
     """
-    x_arr = x.values
 
+    x_arr = x.values
+    
     context_0_index = x.index.get_level_values(level="Context")==0
     context_1_index = x.index.get_level_values(level="Context")==1
     context_2_index = x.index.get_level_values(level="Context")==2
@@ -58,4 +60,24 @@ def pca(x,**kargws):
     "context_2_index":context_2_index
     }
 
+    return result
+
+def demixed_pca(R,trialR,**kwargs):
+    """
+    R
+    trialR
+    """
+
+    dpca = dPCA.dPCA(labels='cdp',regularizer='auto',n_components=100,**kwargs) 
+    dpca.protect = ['p']
+
+    dpca = dpca.fit(R,trialR)
+    Z = dpca.transform(R,marginalization=None)
+    significance_masks = dpca.significance_analysis(X = R,trialX=trialR ,n_shuffles=20, n_splits=10, n_consecutive=10)
+    
+    result = {
+    "dpca":dpca,
+    "Z":Z,
+    "significance_masks":significance_masks
+    }
     return result
