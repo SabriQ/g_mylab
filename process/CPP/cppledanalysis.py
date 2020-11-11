@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
 
     for video in videos:
-        pool.apply_async(cpp_led_value,args=(video,))
-
+        pool.apply_async(cpp_led_value,args=(video,)) # 非阻塞 apply
+        # pool.apply(cpp_led_value,args=(video,)) # 阻塞
     pool.close()
     pool.join()

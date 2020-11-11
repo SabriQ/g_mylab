@@ -135,8 +135,8 @@ class CPP_Video(Video):
 
         for led_pixel_value in self._led_brightness(half_diameter=half_diameter,according=according,binarize=binarize):
             leds_pixel.append(led_pixel_value)
-            if i%100 == 0:
-                print(i)
+            # if i%100 == 0:
+            #     print(i)
             i = i+1
 
 

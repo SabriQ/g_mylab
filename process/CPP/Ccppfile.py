@@ -68,7 +68,7 @@ class CPPLedPixelValue(File):
 
         return epoch_indexes
 
-    def lick_water(self,baseline=(900,900),threshold=None,led1_trace=None,led2_trace=None,save=True,show=False):
+    def lick_water(self,baseline=(900,900),threshold=None,led1_trace=None,led2_trace=None,save=False,show=False):
         """
         Arguments:
             baseline: (led1_thresh,led2_thresh)
