@@ -15,7 +15,7 @@ class CPPLedPixelValue(File):
 
         self.df = pd.read_csv(self.file_path)
     
-    def show_change_along_thresholds(self,v1,v2):
+    def show_change_along_thresholds(self,v1=800,v2=980):
         """
         v1: specified the minimum threshold
         v2: specified the maxmum threshold
@@ -57,9 +57,19 @@ class CPPLedPixelValue(File):
                     last_epoch_index.append(points[i])        
         return epoch_indexes
 
-    def lick_water(self,thresh,led1_trace,led2_trace,show=False):
-        led1_indexes = self._led_off_epoch_detection(led1_trace,thresh)
-        led2_indexes= self._led_off_epoch_detection(led2_trace,thresh)
+    def lick_water(self,thresh=(900,900),led1_trace=None,led2_trace=None,save=True,show=False):
+        """
+        Arguments:
+            thresh: (led1_thresh,led2_thresh)
+            led1_trace
+            led2_trace
+        """
+        
+        led1_trace = self.df["1"] if led1_trace == None else led1_trace
+        led2_trace = self.df["2"] if led2_trace == None else led2_trace
+
+        led1_indexes = self._led_off_epoch_detection(led1_trace,thresh[0])
+        led2_indexes= self._led_off_epoch_detection(led2_trace,thresh[1])
 
         led1_off = []
         led1_offset = []
@@ -96,6 +106,8 @@ class CPPLedPixelValue(File):
                     plt.scatter(self.df["ts"][epochs_index[0]],led2_trace[epochs_index[0]]+1000,s=20,marker="x",c="green")
                 else:
                     plt.plot(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],led2_trace[epochs_index[0]:(epochs_index[-1]+1)]+1000,color="red")
-
-        self.df.to_csv(self.file_path,index = False,sep = ',')
-        print("lick_water information has been added and saved.")
+        if save:
+            self.df.to_csv(self.file_path,index = False,sep = ',')
+            print("lick_water information has been added and saved.")
+        else:
+            return self.df
