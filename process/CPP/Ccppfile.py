@@ -15,14 +15,15 @@ class CPPLedPixelValue(File):
 
         self.df = pd.read_csv(self.file_path)
     
-    def show_change_along_thresholds(self,v1=800,v2=980):
+    def show_ledoff_point_num_along_thresholds(self,start=800,stop=980):
         """
-        v1: specified the minimum threshold
-        v2: specified the maxmum threshold
+        start: specified the minimum threshold
+        stop: specified the maxmum threshold
         """
-        threshods = np.arange(v1,v2)
+        threshods = np.arange(start,stop)
         points1=[]
         points2=[]
+
         for thre in threshods:
             points1.append(sum([ 1 if i< thre  else 0 for i in self.df["1"]]))
             points2.append(sum([ 1 if i< thre  else 0 for i in self.df["2"]]))
@@ -36,13 +37,19 @@ class CPPLedPixelValue(File):
         # plt.axvline(x=930,color="green",linestyle="--")
         plt.show()
 
-    def _led_off_epoch_detection(self,trace,thresh):
+    def _led_off_epoch_detection(self,trace,baseline,threshold=None):
         """
-        trace: any timeseries data. 
-        thresh: the minimum absolute deviation from baseline, which could be negtive.
+        Argument:
+            trace: any timeseries data. 
+            baseline: the maximum led value which could be defined as led off
+            threshold: the minimus led value which should larger than the threshold.
+            Given baseline and threshold, the part less than baseline part and  the minimum value of which is less than threshold 
+        will be selected as the led_off epoch
+        Returns
+            epoch_indexes: return a list of epoches in which led value is less than baseline
         """
         trace = np.array(trace)
-        points = np.reshape(np.argwhere(trace<thresh),-1)
+        points = np.reshape(np.argwhere(trace<baseline),-1)
         epoch_indexes = []
         last_epoch_index=[]
         for i in range(len(points)):
@@ -52,15 +59,19 @@ class CPPLedPixelValue(File):
                 if points[i]-points[i-1]==1:
                     last_epoch_index.append(points[i])
                 else:
-                    epoch_indexes.append(last_epoch_index)
-                    last_epoch_index=[]
-                    last_epoch_index.append(points[i])        
+                    if not threshold is None:
+                        if np.minimum(trace[last_epoch_index]<=threshold):
+                            epoch_indexes.append(last_epoch_index)
+                            last_epoch_index.append(points[i])
+                        else:
+                            last_epoch_index=[]
+
         return epoch_indexes
 
-    def lick_water(self,thresh=(900,900),led1_trace=None,led2_trace=None,save=True,show=False):
+    def lick_water(self,baseline=(900,900),threshold=None,led1_trace=None,led2_trace=None,save=True,show=False):
         """
         Arguments:
-            thresh: (led1_thresh,led2_thresh)
+            baseline: (led1_thresh,led2_thresh)
             led1_trace
             led2_trace
         """
@@ -68,8 +79,9 @@ class CPPLedPixelValue(File):
         led1_trace = self.df["1"] if led1_trace == None else led1_trace
         led2_trace = self.df["2"] if led2_trace == None else led2_trace
 
-        led1_indexes = self._led_off_epoch_detection(led1_trace,thresh[0])
-        led2_indexes= self._led_off_epoch_detection(led2_trace,thresh[1])
+        threshold = baseline if threshold == None else threshold
+        led1_indexes = self._led_off_epoch_detection(led1_trace,baseline[0],threshold[0])
+        led2_indexes= self._led_off_epoch_detection(led2_trace,baseline[1],threshold[0])
 
         led1_off = []
         led1_offset = []

@@ -25,7 +25,7 @@ class CPP_Video(Video):
         return tracked_coords
     
 
-    def show_behaveframe_anotations(self,coords=None,half_diameter=13,frame_No=10000,color=(255,255,255)):
+    def show_behaveframe_anotations(self,coords=None,half_diameter=13,frame_No=10000,color=(255,255,255),binarize=True):
         """
         Arguments:
             coords: [(x1,y1),(x2,y2)]
@@ -42,8 +42,8 @@ class CPP_Video(Video):
 
                 cv2.rectangle(frame, (x-half_diameter, y-half_diameter), (x+half_diameter, y+half_diameter), color, 2)
 
-
-        _,frame = cv2.threshold(frame,250,255,cv2.THRESH_BINARY)
+        if binarize:
+            _,frame = cv2.threshold(frame,250,255,cv2.THRESH_BINARY)
         # led_zone = frame[(y-half_diameter):(y+half_diameter),(x-half_diameter):(x+half_diameter)]
         while True:
             cv2.imshow("led_location",frame)
@@ -59,7 +59,7 @@ class CPP_Video(Video):
         
     
 
-    def _led_brightness(self,half_diameter=15,according="each_frame"):
+    def _led_brightness(self,half_diameter=8,according="each_frame",binarize=True):
         """
         output the mean pixel value of specified coords of led
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
@@ -72,24 +72,28 @@ class CPP_Video(Video):
         cap = cv2.VideoCapture(self.video_path)
         total_frame = cap.get(7)
         frame_No = 0
-        median_coords = np.median(self.tracked_coords,axis=0)
+        tracked_coords = self.tracked_coords
+        median_coords = np.median(tracked_coords,axis=0)
+
         while True:
             # key = cv2.waitKey(10) & 0xFF
             ret,frame = cap.read()
             if ret:
                 gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-                _,gray = cv2.threshold(gray,250,255,cv2.THRESH_BINARY)
+
+                if binarize:
+                    _,gray = cv2.threshold(gray,250,255,cv2.THRESH_BINARY)
                 # if key == ord('q'):
                 #     break
                 if according == "each_frame":
-                    coords=self.tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
-                    frame_No = frame_No +1
+                    coords=tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
                 elif according == "median":
                     coords = median_coords
                 else:
                     print("according could only be chosed from ['each_frame','median']")
                     sys.exit()
 
+                frame_No = frame_No +1
                 led_pixel_values = []
                 for coord in coords: 
                     #注意cv2中的image 中的x，y是反的
@@ -117,7 +121,7 @@ class CPP_Video(Video):
         cap.release()
 
 
-    def leds_pixel_value(self,half_diameter=15,according="each_frame"):
+    def leds_pixel_value(self,half_diameter=15,according="each_frame",binarize=True):
         """
         generate *_ledvalue_ts.csv
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
@@ -128,9 +132,11 @@ class CPP_Video(Video):
         leds_pixel=[]
         print("calculating frame by frame...")
         i = 1
-        for led_pixel_value in self._led_brightness(half_diameter=half_diameter,according=according):
+
+        for led_pixel_value in self._led_brightness(half_diameter=half_diameter,according=according,binarize=binarize):
             leds_pixel.append(led_pixel_value)
-            # print(i)
+            if i%100 == 0:
+                print(i)
             i = i+1
 
 
