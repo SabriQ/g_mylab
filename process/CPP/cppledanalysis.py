@@ -22,7 +22,7 @@ def cpp_led_value_of_lickwater_c(video,thresh=900,show=False):
     else:
         print("***_ledvalue_ts.csv file has been generated")
 
-def cpp_led_value_of_lickwater(video,thresh=900,show=False):
+def cpp_led_value_of_lickwater(video,thresh=200,show=False):
     """
     video: video path
     thresh: define led off when pixel value is lesh than thresh
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
 
     for video in videos:
-        pool.apply_async(cpp_led_value_of_lickwater, args=(900,False))
+        pool.apply_async(cpp_led_value_of_lickwater, args=(200,False))
 
     pool.close()
     pool.join()

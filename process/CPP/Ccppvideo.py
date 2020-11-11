@@ -42,6 +42,9 @@ class CPP_Video(Video):
 
                 cv2.rectangle(frame, (x-half_diameter, y-half_diameter), (x+half_diameter, y+half_diameter), color, 2)
 
+
+        _,frame = cv2.threshold(frame,250,255,cv2.THRESH_BINARY)
+        # led_zone = frame[(y-half_diameter):(y+half_diameter),(x-half_diameter):(x+half_diameter)]
         while True:
             cv2.imshow("led_location",frame)
             key = cv2.waitKey(10) & 0xFF
@@ -56,11 +59,11 @@ class CPP_Video(Video):
         
     
 
-    def _led_brightness(self,half_diamter=15,according="each_frame"):
+    def _led_brightness(self,half_diameter=15,according="each_frame"):
         """
         output the mean pixel value of specified coords of led
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
-        half_diameter: led gray value in roi defined by (x-half_diamter,x+half_diameter,y-half_diamter,y+half_diameter) was summarzied. 
+        half_diameter: led gray value in roi defined by (x-half_diameter,x+half_diameter,y-half_diameter,y+half_diameter) was summarzied. 
         according, chose from ["each frame","median"]. led locations were tracked in each frames. 
                     "each _frame" suggest led_location of each frame was used
                     "median" suggest the median of all tracked led location was used.
@@ -75,7 +78,7 @@ class CPP_Video(Video):
             ret,frame = cap.read()
             if ret:
                 gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-                
+                _,gray = cv2.threshold(gray,250,255,cv2.THRESH_BINARY)
                 # if key == ord('q'):
                 #     break
                 if according == "each_frame":
@@ -94,8 +97,9 @@ class CPP_Video(Video):
                     x= int(x)
                     y= int(y)
                     try:
-                        led_zone = gray[(y-half_diamter):(y+half_diamter),(x-half_diamter):(x+half_diamter)]
-                        led_pixel_values.append(sum(sum(led_zone))/(4*(half_diamter**2)))
+                        led_zone = gray[(y-half_diameter):(y+half_diameter),(x-half_diameter):(x+half_diameter)]
+                        # print(np.mean(led_zone))
+                        led_pixel_values.append(np.mean(led_zone))
                     except:
                         try:
                             led_pixel_values.append(led_pixel_values[-1])
@@ -103,7 +107,7 @@ class CPP_Video(Video):
                             led_pixel_values.append(np.nan)
                             print("%sth frame: wrong track of  (%s,%s), which is recognized at the border of videw"%(frame_No,x,y))
                     # print("\r %s/%s"%(frame_No,int(total_frame)))
-                    
+                # print(led_pixel_values)
                 yield led_pixel_values # [led1_value,led2_value]
                 # cv2.imshow("crop_frame",led_zone)
 
@@ -113,7 +117,7 @@ class CPP_Video(Video):
         cap.release()
 
 
-    def leds_pixel_value(self,half_diamter=15,according="each_frame"):
+    def leds_pixel_value(self,half_diameter=15,according="each_frame"):
         """
         generate *_ledvalue_ts.csv
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
@@ -124,7 +128,7 @@ class CPP_Video(Video):
         leds_pixel=[]
         print("calculating frame by frame...")
         i = 1
-        for led_pixel_value in self._led_brightness(half_diamter=half_diamter,according=according):
+        for led_pixel_value in self._led_brightness(half_diameter=half_diameter,according=according):
             leds_pixel.append(led_pixel_value)
             # print(i)
             i = i+1
