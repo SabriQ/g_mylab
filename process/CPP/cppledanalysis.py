@@ -14,7 +14,7 @@ def cpp_led_value_of_lickwater_c(video,thresh=900,show=False):
     v = CPP_Video(video)
     # generate ***_led_value_ts.csv
     if not os.path.exists(v.led_value_ts):
-        v.leds_pixel_value(half_diameter=15,according="each_frame")
+        v.leds_pixel_value(half_diameter=8,according="each_frame")
         # add led1,led2 off/offset in csv
         f = CPPLedPixelValue(v.led_value_ts)    
         f.lick_water(thresh=thresh,led1_trace=f.df["1"],led2_trace=f.df["2"],show=show)
@@ -22,7 +22,7 @@ def cpp_led_value_of_lickwater_c(video,thresh=900,show=False):
     else:
         print("***_ledvalue_ts.csv file has been generated")
 
-def cpp_led_value_of_lickwater(video,thresh=200,show=False):
+def cpp_led_value(video):
     """
     video: video path
     thresh: define led off when pixel value is lesh than thresh
@@ -30,21 +30,19 @@ def cpp_led_value_of_lickwater(video,thresh=200,show=False):
     """
     v = CPP_Video(video)
 
-    v.leds_pixel_value(half_diameter=15,according="each_frame")
+    v.leds_pixel_value(half_diameter=8,according="each_frame")
     # add led1,led2 off/offset in csv
-    f = CPPLedPixelValue(v.led_value_ts)    
-    f.lick_water(thresh=thresh,led1_trace=f.df["1"],led2_trace=f.df["2"],show=show)
     print("***_ledvalue_ts.csv file is generated")
 
 
 if __name__ == "__main__":
-    videos = glob.glob(r"C:\Users\Sabri\Desktop\LED_CPP_demo\*.AVI")
-
-    pool = Pool(processes=4)
+    videos = glob.glob(r"/run/user/1000/gvfs/smb-share:server=10.10.46.135,share=share/ChenHaoshan/cpp_led/*/*/*.AVI")
+    [print(i) for i in videos]
+    pool = Pool(processes=8)
 
 
     for video in videos:
-        pool.apply_async(cpp_led_value_of_lickwater, args=(200,False))
+        pool.apply_async(cpp_led_value,args=(video,))
 
     pool.close()
     pool.join()
