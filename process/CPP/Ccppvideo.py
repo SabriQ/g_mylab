@@ -56,7 +56,7 @@ class CPP_Video(Video):
         
     
 
-    def _led_brightness(self,tracked_coords,half_diamter=15,according="each_frame"):
+    def _led_brightness(self,half_diamter=15,according="each_frame"):
         """
         output the mean pixel value of specified coords of led
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
@@ -69,7 +69,7 @@ class CPP_Video(Video):
         cap = cv2.VideoCapture(self.video_path)
         total_frame = cap.get(7)
         frame_No = 0
-        median_coords = np.median(tracked_coords,axis=0)
+        median_coords = np.median(self.tracked_coords,axis=0)
         while True:
             # key = cv2.waitKey(10) & 0xFF
             ret,frame = cap.read()
@@ -79,7 +79,7 @@ class CPP_Video(Video):
                 # if key == ord('q'):
                 #     break
                 if according == "each_frame":
-                    coords=tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
+                    coords=self.tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
                     frame_No = frame_No +1
                 elif according == "median":
                     coords = median_coords
@@ -95,7 +95,7 @@ class CPP_Video(Video):
                     y= int(y)
                     try:
                         led_zone = gray[(y-half_diamter):(y+half_diamter),(x-half_diamter):(x+half_diamter)]
-                        led_pixel_values.append(sum(sum(led_zone)))
+                        led_pixel_values.append(sum(sum(led_zone))/(4*(half_diamter**2)))
                     except:
                         try:
                             led_pixel_values.append(led_pixel_values[-1])
@@ -113,7 +113,7 @@ class CPP_Video(Video):
         cap.release()
 
 
-    def leds_pixel_value(self,tracked_coords):
+    def leds_pixel_value(self,half_diamter=15,according="each_frame"):
         """
         generate *_ledvalue_ts.csv
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
@@ -123,8 +123,12 @@ class CPP_Video(Video):
         """
         leds_pixel=[]
         print("calculating frame by frame...")
-        for led_pixel_value in self._led_brightness(tracked_coords):
+        i = 1
+        for led_pixel_value in self._led_brightness(half_diamter=half_diamter,according=according):
             leds_pixel.append(led_pixel_value)
+            # print(i)
+            i = i+1
+
 
         df= pd.DataFrame(np.array(leds_pixel),columns=np.arange(len(led_pixel_value))+1)
         df["ts"]=self.ts
