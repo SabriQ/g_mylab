@@ -25,15 +25,34 @@ class CPP_Video(Video):
         return tracked_coords
     
 
-    def show_behaveframe_anotations(self,frame_No=10000):
+    def show_behaveframe_anotations(self,coords=None,half_diameter=13,frame_No=10000,color=(255,255,255)):
+        """
+        Arguments:
+            coords: [(x1,y1),(x2,y2)]
+        """
 
         cap = cv2.VideoCapture(self.video_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
         ret,frame = cap.read()
+
+        if not coords is None:
+            for coord in coords:
+                x= int(coord[0])
+                y=int(coord[1])
+
+                cv2.rectangle(frame, (x-half_diameter, y-half_diameter), (x+half_diameter, y+half_diameter), color, 2)
+
+        while True:
+            cv2.imshow("led_location",frame)
+            key = cv2.waitKey(10) & 0xFF
+            if key == ord('q'):
+                break
+            if key == 27:
+                break
+
         cap.release()
-        plt.imshow(frame)
-        plt.xticks()
-        plt.yticks()
+        cv2.destroyAllWindows()
+
         
     
 
