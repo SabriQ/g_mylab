@@ -99,7 +99,7 @@ class CPPLedPixelValue(File):
         led1_indexes = self._led_off_epoch_detection(led1_trace,baseline[0],threshold[0])
         led2_indexes= self._led_off_epoch_detection(led2_trace,baseline[1],threshold[1])
 
-        print(len(led1_indexes),len(led2_indexes))
+        print("led off epoch length:",len(led1_indexes),len(led2_indexes))
         # sys.exit()
 
         length = len(self.df)
@@ -111,7 +111,7 @@ class CPPLedPixelValue(File):
             for j in i:
                 led1_off.append(j)
 
-        print(len(led1_off),len(led1_offset))
+        print("led1 off length",len(led1_off),len(led1_offset))
 
         self.df["led1_off"]=[1 if i in led1_off else 0 for i in range(length)]
         self.df["led1_offset"] = [1 if i in led1_offset else 0 for i in range(length)]
@@ -123,7 +123,7 @@ class CPPLedPixelValue(File):
             for j in i:
                 led2_off.append(j)
 
-        print(len(led2_off),len(led2_offset))
+        print("led2 off length",len(led2_off),len(led2_offset))
 
         self.df["led2_off"]=[1 if i in led2_off else 0 for i in range(length)]
         self.df["led2_offset"] = [1 if i in led2_offset else 0 for i in range(length)]
