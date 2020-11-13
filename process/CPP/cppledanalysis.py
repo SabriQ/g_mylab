@@ -47,7 +47,7 @@ def add_led_offset(video):
 
 
 if __name__ == "__main__":
-    videos = glob.glob(r"/run/user/1000/gvfs/smb-share:server=10.10.46.135,share=share/ChenHaoshan/cpp_led/*/*/*.AVI")
+    videos = glob.glob(r"/run/user/1000/gvfs/smb-share:server=10.10.46.135,share=lab_members/XuChun/Lab Projects/03_IBIST/chenhaoshan/IBIST_behavior/*/CPP/*/*/*.AVI")
     [print(i) for i in videos]
     pool = Pool(processes=8)
 
