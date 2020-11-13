@@ -22,7 +22,7 @@ def cpp_led_value_of_lickwater_c(video,thresh=900,show=False):
     else:
         print("***_ledvalue_ts.csv file has been generated")
 
-def cpp_led_value(video):
+def add_led_value(video):
     """
     video: video path
     thresh: define led off when pixel value is lesh than thresh
@@ -43,15 +43,23 @@ def add_led_offset(video):
         f.lick_water(baseline=(30,5),threshold=None,led1_trace=None,led2_trace=None,save=True,show=False)
     else:
         cpp_led_value(video)
+        add_led_offset(video)
 
-
+def add_both(video):
+    print("=======%s========"%os.path.basename(video))
+    # add led_value
+    v = CPP_Video(video)
+    v.leds_pixel_value(half_diameter=8,according="median",binarize=True)
+    # add led off/offset
+    f = CPPLedPixelValue(v.led_value_ts)
+    f.lick_water(baseline=(30,5),threshold=None,led1_trace=None,led2_trace=None,save=True,show=False)
 
 if __name__ == "__main__":
     videos = glob.glob(r"/run/user/1000/gvfs/smb-share:server=10.10.46.135,share=lab_members/XuChun/Lab Projects/03_IBIST/chenhaoshan/IBIST_behavior/*/CPP/*/*/*.AVI")
     [print(i) for i in videos]
     pool = Pool(processes=8)
 
-    pool.map(add_led_offset,videos)
+    pool.map(add_both,videos)
     # for video in videos:
     #     pool.apply_async(add_led_offset,args=(video,)) # 非阻塞 apply
     #     # pool.apply(cpp_led_value,args=(video,)) # 阻塞
