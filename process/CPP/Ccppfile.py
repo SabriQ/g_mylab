@@ -12,6 +12,7 @@ class CPPLedPixelValue(File):
 
         if not self.file_path.endswith("_ledvalue_ts.csv"):
             pirnt("wrong file input")
+            sys.exit()
 
         self.df = pd.read_csv(self.file_path)
     

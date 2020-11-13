@@ -12,8 +12,9 @@ class CPP_Video(Video):
         super().__init__(video_path)
         self.led_xy = self.abs_prefix + '_led_xy.txt' # 这个数据结构和self.xy不一样，这个
         self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
-        self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
 
+        # timestamps files and track files should be ready first.
+        self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
         self.track = TrackFile(self.video_track_path,parts=["Head","Body","Tail","led1","led2"]).behave_track
 
     @property
