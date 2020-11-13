@@ -34,6 +34,20 @@ def cpp_led_value(video):
     # add led1,led2 off/offset in csv
     print("***_ledvalue_ts.csv file is generated")
 
+def add_led_offset(video):
+    """
+    """
+    v = CPP_Video(video)
+    if os.path.exists(v.led_value_ts):
+        f = CPPLedPixelValue(v.led_value_ts)
+        if "led1_off" in f.df.columns:
+            f.lick_water(baseline=(30,5),threshold=None,led1_trace=None,led2_trace=None,save=True,show=False)
+        else:
+            print("video have detected led offsets")
+    else:
+        cpp_led_value(video)
+
+
 
 if __name__ == "__main__":
     videos = glob.glob(r"/run/user/1000/gvfs/smb-share:server=10.10.46.135,share=share/ChenHaoshan/cpp_led/*/*/*.AVI")
@@ -42,7 +56,7 @@ if __name__ == "__main__":
 
 
     for video in videos:
-        pool.apply_async(cpp_led_value,args=(video,)) # 非阻塞 apply
+        pool.apply_async(add_led_offset,args=(video,)) # 非阻塞 apply
         # pool.apply(cpp_led_value,args=(video,)) # 阻塞
     pool.close()
     pool.join()

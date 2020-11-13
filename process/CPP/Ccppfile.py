@@ -59,14 +59,29 @@ class CPPLedPixelValue(File):
                 if points[i]-points[i-1]==1:
                     last_epoch_index.append(points[i])
                 else:
-                    if not threshold is None:
-                        if np.minimum(trace[last_epoch_index]<=threshold):
-                            epoch_indexes.append(last_epoch_index)
-                            last_epoch_index.append(points[i])
-                        else:
-                            last_epoch_index=[]
+                    epoch_indexes.append(last_epoch_index)
+                    last_epoch_index = []
+                    last_epoch_index.append(points[i])
+                    # if not threshold is None:
+                    #     print(last_epoch_index)
+                    #     if np.min(trace[last_epoch_index])<=threshold:
+                    #         epoch_indexes.append(last_epoch_index)
+                    #         last_epoch_index.append(points[i])
+                    #     else:
+                    #         last_epoch_index=[]
+        if len(last_epoch_index) > 0:
+            epoch_indexes.append(last_epoch_index)
 
-        return epoch_indexes
+        if not threshold  is None:
+            accepted_epoch_index=[]
+            for epoch_index in epoch_indexes:
+                if len(epoch_index)>0:
+                    if np.min(trace[epoch_index]<=threshold):
+                        accepted_epoch_index.append(epoch_index)
+
+            return accepted_epoch_index 
+        else:
+            return epoch_indexes
 
     def lick_water(self,baseline=(900,900),threshold=None,led1_trace=None,led2_trace=None,save=False,show=False):
         """
@@ -76,12 +91,17 @@ class CPPLedPixelValue(File):
             led2_trace
         """
         
-        led1_trace = self.df["1"] if led1_trace == None else led1_trace
-        led2_trace = self.df["2"] if led2_trace == None else led2_trace
+        led1_trace = np.array(self.df["1"]) if led1_trace == None else led1_trace
+        led2_trace = np.array(self.df["2"]) if led2_trace == None else led2_trace
 
         threshold = baseline if threshold == None else threshold
         led1_indexes = self._led_off_epoch_detection(led1_trace,baseline[0],threshold[0])
-        led2_indexes= self._led_off_epoch_detection(led2_trace,baseline[1],threshold[0])
+        led2_indexes= self._led_off_epoch_detection(led2_trace,baseline[1],threshold[1])
+
+        print(len(led1_indexes),len(led2_indexes))
+        # sys.exit()
+
+        length = len(self.df)
 
         led1_off = []
         led1_offset = []
@@ -90,8 +110,10 @@ class CPPLedPixelValue(File):
             for j in i:
                 led1_off.append(j)
 
-        self.df["led1_off"]=[1 if i in led1_off else 0 for i in range(len(self.df))]
-        self.df["led1_offset"] = [1 if i in led1_offset else 0 for i in range(len(self.df))]
+        print(len(led1_off),len(led1_offset))
+
+        self.df["led1_off"]=[1 if i in led1_off else 0 for i in range(length)]
+        self.df["led1_offset"] = [1 if i in led1_offset else 0 for i in range(length)]
 
         led2_off = []
         led2_offset = []
@@ -100,24 +122,26 @@ class CPPLedPixelValue(File):
             for j in i:
                 led2_off.append(j)
 
-        self.df["led2_off"]=[1 if i in led2_off else 0 for i in range(len(self.df))]
-        self.df["led2_offset"] = [1 if i in led2_offset else 0 for i in range(len(self.df))]
+        print(len(led2_off),len(led2_offset))
+
+        self.df["led2_off"]=[1 if i in led2_off else 0 for i in range(length)]
+        self.df["led2_offset"] = [1 if i in led2_offset else 0 for i in range(length)]
 
         if show:
             plt.figure(figsize=(600,1))
-            plt.plot(self.df["ts"],led1_trace,color="orange")
+            plt.plot(self.df["ts"],led1_trace,color="blue")
             for epochs_index in led1_indexes:
                 if len(epochs_index)==1:
                     plt.scatter(self.df["ts"][epochs_index[0]],led1_trace[epochs_index[0]],s=20,marker="x",c="green")
                 else:
-                    plt.plot(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],led1_trace[epochs_index[0]:(epochs_index[-1]+1)],color="red")
+                    plt.scatter(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],led1_trace[epochs_index[0]:(epochs_index[-1]+1)],c="red",s=10)
 
-            plt.plot(self.df["ts"],led2_trace+1000,color="blue")
+            plt.plot(self.df["ts"],led2_trace+100,color="orange")
             for epochs_index in led2_indexes:
                 if len(epochs_index)==1:
-                    plt.scatter(self.df["ts"][epochs_index[0]],led2_trace[epochs_index[0]]+1000,s=20,marker="x",c="green")
+                    plt.scatter(self.df["ts"][epochs_index[0]],led2_trace[epochs_index[0]]+100,s=20,marker="x",c="green")
                 else:
-                    plt.plot(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],led2_trace[epochs_index[0]:(epochs_index[-1]+1)]+1000,color="red")
+                    plt.scatter(self.df["ts"][epochs_index[0]:(epochs_index[-1]+1)],led2_trace[epochs_index[0]:(epochs_index[-1]+1)]+100,c="red",s=10)
         if save:
             self.df.to_csv(self.file_path,index = False,sep = ',')
             print("lick_water information has been added and saved.")
