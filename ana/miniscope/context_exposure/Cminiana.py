@@ -37,7 +37,8 @@ class MiniAna(MA):
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self):
         """
-        in case some data was genereated by older verfion of function  "align_behave_ms", we need to regenereate "Trial_Num" and "Porcess" for each session
+        in case some data was genereated by older verfion of function "align_behave_ms"
+        , we need to regenereate "Trial_Num" and "Porcess" for each session
         and save them in pkl file
         """
         logger.info("Fun:: add_Trial_Num_Process")
@@ -58,6 +59,7 @@ class MiniAna(MA):
             self.result["Trial_Num"] = self.result["aligned_behave2ms"]["Trial_Num"]
             self.result["process"] = self.result["aligned_behave2ms"]["process"]
 
+        logger.info("'Trial_Num' and 'process' were added")
         self.savesession("Trial_Num","process")
         
 
@@ -256,7 +258,10 @@ class MiniAna(MA):
                     if np.min(distances) < 20:
                         place_bin_No.append(np.argmin(distances))
                     else:
-                        place_bin_No.append(place_bin_No[-1])
+                        if len(place_bin_No)>1:
+                            place_bin_No.append(place_bin_No[-1])
+                        else:
+                            place_bin_No.append(0) # 如果是第一帧就tracking出错，那么默认就是 第0 个placebin
 
                 self.result["place_bin_No"] = pd.Series(place_bin_No,name="place_bin_No")
 
@@ -440,6 +445,29 @@ class MiniAna(MA):
                 pickle.dump(self.result,f)
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
+
+    def add_behave_choice_side(self,):
+        behave_choice_side = []
+        if self.result["behavelog_info"]["Left_choice"][0]>self.result["behavelog_info"]["Right_choice"][0]:
+            behave_choice_side.append("left")
+        else:
+            behave_choice_side.append("right")
+
+        for i in np.diff(self.result["behavelog_info"]["Left_choice"]):
+            if i == 0:
+                behave_choice_side.append("right")
+            else:
+                behave_choice_side.append("left")
+
+        self.result["behave_choice_side"] = pd.Series(behave_choice_side,name="behave_choice_side")
+        logger.info("'behave_choice_side' was added.")
+
+
+    def add_behave_context(self,according="Enter_ctx"):
+        self.result["behave_context"] = self.result["behavelog_info"][according]
+        logger.info("'behave_context' was added according to %s."%according)
+
+
     def trim_df(self,*args,**kwargs):
         """
         code is excuted along the order of inputted args and kwargs arguments. the order of kwargs generating a DataFrame of trimed_index doesn't affect the result, however the order of args does.
@@ -517,6 +545,8 @@ class MiniAna(MA):
         self.trim_index["placebin"] = self.result["place_bin_No"].isin(placebin_list)
         logger.info("trim_index : trial are limited in %s"%placebin_list)
 
+    def play_behave_gif(self):
+        pass
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
 #     for session in sessions:

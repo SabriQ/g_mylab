@@ -20,6 +20,9 @@ class File():
     def __init__ (self,file_path):
         
         self.file_path = file_path
+        if not os.path.exists(self.file_path):
+            print("%s does not exist."%self.file_path)
+            sys.exit()
         self.file_name = os.path.basename(self.file_path)
         self.file_name_noextension = self.file_name.split(".")[0]
         self.extension = os.path.splitext(self.file_path)[-1]

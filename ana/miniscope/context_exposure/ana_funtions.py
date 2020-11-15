@@ -342,5 +342,87 @@ def PCA(s,**kwargs):
 
     return result
 
-def dPCA(s):
-    pass
+def dPCA(s,**kwargs):
+    """
+    """
+    s.add_Trial_Num_Process()
+    del s.result["place_bin_No"]
+    s.add_alltrack_placebin_num(according="Body",place_bin_nums=[4,4,30,4,4,4])
+
+    s.trim_df("S_dff")
+    index = s.trim_index.all(axis=1)
+
+    df = s.df[index]
+    Trial_Num = s.result["Trial_Num"][index]
+    placebins = s.result["place_bin_No"][index]
+
+    dpca_matrix = pd.DataFrame(df).groupby([Trial_Num,placebins]).mean()
+    try:
+        dpca_matrix = dpca_matrix.drop(index=(-1))
+        print("Trial -1 was deleted")
+    except:
+        pass
+
+    s.add_behave_choice_side()
+    choice_side = pd.Series([0 if i =="left" else 1 for i in s.result["behave_choice_side"]],name="behave_choice_side")
+    s.add_behave_context(according="Enter_ctx")
+    context = s.result["behave_context"]
+
+
+    
+    ctx0_choice0_trial = s.result["behavelog_info"]["Trial_Num"][(context==0)&(choice_side==0)]
+    ctx0_choice1_trial = s.result["behavelog_info"]["Trial_Num"][(context==0)&(choice_side==1)]
+
+    ctx1_choice0_trial = s.result["behavelog_info"]["Trial_Num"][(context==1)&(choice_side==0)]
+    ctx1_choice1_trial = s.result["behavelog_info"]["Trial_Num"][(context==1)&(choice_side==1)]
+
+    # 判断以下变量的size
+    # max trial num in each condition(contexts)
+    max_Trial_Num = max(ctx0_choice0_trial.shape[0],ctx0_choice1_trial.shape[0],ctx1_choice0_trial.shape[0],ctx1_choice1_trial.shape[0])
+    neurons = dpca_matrix.shape[1]
+    placebin = len(set(s.result["place_bin_No"]))
+    context=2
+    decision=2
+    print("max_Trial_Num:%s,neurons:%s,context:%s,decision:%s,placebin:%s."%(max_Trial_Num,neurons,context,decision,placebin))
+    #构建 空的np.array
+    trialR = np.full((max_Trial_Num,neurons,context,decision,placebin),np.nan)
+    # 填充矩阵，其中没有值的地方都是np.nan
+    for i,trial in enumerate(ctx0_choice0_trial,0):
+        temp_trial_matrix = dpca_matrix.loc[trial]
+        for p in np.arange(0,placebin):
+            try:
+                trialR[i,:,0,0,p]=temp_trial_matrix.loc[p]
+            except:
+                trialR[i,:,0,0,p]=0 # 将np.nan替换为0
+        
+    for i,trial in enumerate(ctx0_choice1_trial,0):
+        temp_trial_matrix = dpca_matrix.loc[trial]
+        for p in np.arange(0,placebin):
+            try:
+                trialR[i,:,0,1,p]=temp_trial_matrix.loc[p]
+            except:
+                trialR[i,:,0,1,p]=0 # 将np.nan替换为0
+                
+    for i,trial in enumerate(ctx1_choice0_trial,0):
+        temp_trial_matrix = dpca_matrix.loc[trial]
+        for p in np.arange(0,placebin):
+            try:
+                trialR[i,:,1,0,p]=temp_trial_matrix.loc[p]
+            except:
+                trialR[i,:,1,0,p]=0 # 将np.nan替换为0
+                
+    for i,trial in enumerate(ctx1_choice1_trial,0):
+        temp_trial_matrix = dpca_matrix.loc[trial]
+        for p in np.arange(0,placebin):
+            try:
+                trialR[i,:,1,1,p]=temp_trial_matrix.loc[p]
+            except:
+                trialR[i,:,1,1,p]=0 # 将np.nan替换为0
+
+    #先求没有np.nan的均值，然后再将np.nan替换为0
+    R = np.nanmean(trialR,axis=0)
+    # trialR[np.isnan(trialR)]=0
+
+    result = demixed_pca(R,trialR,**kwargs)
+
+    return result

@@ -18,28 +18,6 @@ sh = logging.StreamHandler(sys.stdout) #stream handler
 sh.setLevel(logging.DEBUG)
 logger.addHandler(sh)
 
-def concatenate_sessions(session1,session2):
-    """
-    仅限于记录时有多个sessions但是只有一个behavioral video的情况
-    """
-    with open(session1,"rb") as f:
-        s1 = pickle.load(f)
-    with open(session2,"rb") as f:
-        s2 = pickle.load(f)
-
-
-    if (s1["idx_accepted"]==s2["idx_accepted"]).all():
-        s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
-        s1["S_dff"] = np.vstack((s1.get("S_dff"),s2.get("S_dff")))
-        s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
-        s1["idx_accepted"] = s1["idx_accepted"]
-
-        with open(session1,"wb") as f:
-            pickle.dump(s1,f)
-        print("%s has been merged in %s"%(session2,session1))
-        print("you should remove %s"%session2)
-    else:
-        print("%s is not connected to %s"%(session2,session1))
 
 
 class MiniResult(MiniResult):
@@ -60,9 +38,14 @@ class MiniResult(MiniResult):
 
 
 
-    def save_behave_pkl(self,behavevideo
+    def save_behave_session(self,behavevideo
         ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
-        logger.info("FUN:: save_behave_pkl")
+        """
+        save log, track, timestamp as behavesession according to behavevideo, 
+        and add Trial_Num and process to each frame of the track according to behave log
+        """
+
+        logger.info("FUN:: save_behave_session")
 
 
         key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
@@ -94,7 +77,6 @@ class MiniResult(MiniResult):
         behave_track=pd.DataFrame(track[track.columns[0:9]].values,
                      columns=['Head_x','Head_y','Head_lh','Body_x','Body_y','Body_lh','Tail_x','Tail_y','Tail_lh'])
         
-        
         # index timestamps file
         behave_ts = [i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*_ts.txt*")) if key in i][0]
         ts = pd.read_table(behave_ts,sep='\n',header=None,encoding='utf-16-le')
@@ -110,8 +92,43 @@ class MiniResult(MiniResult):
         behave_track['be_ts']=ts[0]-delta_t
 
         logger.info("correct 'be_ts' when the first_np as 0")
+
+        # add Trial_Num and process
+        # np.diff(np.insert(temp.values.reshape(1,-1),0,0)).reshape(10,6).shape
+        starts = np.insert(behavelog_time.values.reshape(1,-1),0,0)[0:-1]
+        stops = behavelog_time.values.reshape(1,-1)[0]
+        startstops=[]
+        i=1
+        for start,stop in zip(starts,stops):
+            # startstops structure:[(Trial,process,start,stop),etc]
+            startstops.append((int(np.ceil(i/6)),(i-1)%6,start,stop))
+            i = i+1
+            #Trial 从1开始，process从0开始
+        #将Trial_Num,process 写进behave_track
+        Trial_Num = []
+        process = []
+        for i in behave_track["be_ts"]:
+            if i < startstops[0][2] or i >startstops[-1][3]: # 小于第一个startstop的开始或者大于最后一个startstop的结束
+                Trial_Num.append(-1)
+                process.append(-1)
+            else:
+                for startstop in startstops:
+                    if i>=startstop[2] and i <startstop[3]:
+                        Trial_Num.append(startstop[0])
+                        process.append(startstop[1])
+                        break
+                    else:
+                        pass
+
+        behave_track["Trial_Num"]=Trial_Num
+        behave_track["process"]=process
+
+        with open(session,'wb') as f:
+            pickle.dump(ms_result,f)
+        print("%s is updated and saved"%session)
+
+
         # index in_context
-        print(behavevideo)
         in_context_mask,in_context_coords=Video(behavevideo).draw_rois(aim="in_context",count = 1)
 
         # index in_lineartrack
@@ -130,13 +147,13 @@ class MiniResult(MiniResult):
         savename = os.path.join(self.Result_dir,"behave_"+str(key)+".pkl")
         with open(savename,'wb') as f:
             pickle.dump(result,f)
-        logger.debug("%s get saved"%savename)
+        print("%s get saved"%savename)
 
 
 
     def save_aligned_session_pkl(self,session_tasks= ['hc','test','hc','test','train']):
         """
-        产生 corrected_ms_ts
+        产生 corrected_ms_ts,integrate behave session into miniscope session
         """
         # index behave*.pkl
         logger.info("FUN:: save_alinged_session_pkl")
@@ -155,6 +172,10 @@ class MiniResult(MiniResult):
         print("non-hc-task ms:")
         [print(i) for i in task_ms_infos]
 
+        if not len(behave_infos) == len(task_ms_infos):
+            logger.warning("non-hc-task is not the same length to bahavioral session")
+            sys.exit()
+
         ## 产生“corrected_ms_ts”
         for behave_info, task_ms_info in zip(behave_infos,task_ms_infos):
             ## 读取行为学beha_session
@@ -167,17 +188,17 @@ class MiniResult(MiniResult):
             with open(task_ms_info,'rb') as f:
                 task_ms_result = pickle.load(f)
             #行为学视频中的start,first_np,stop分别是哪一帧，哪一个行为学时间戳
-            print("behavevideo %s start at %s,first_np at %s,stop at %s frame, the corresponding timestamps are: " %(key,start,first_np,stop))
+            print("behavevideo %s start at %s,first_np at %s,stop at %s frame, the corresponding behavioral timestamps are: " %(key,start,first_np,stop))
             print(behave_result["behave_track"]["be_ts"][start-1],behave_result["behave_track"]["be_ts"][first_np-1],behave_result["behave_track"]["be_ts"][stop-1])
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
             logger.info("total time elaspse in 'behavioral video' and 'miniscope video': ****ATTENTION****")
             t1 = behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1]
             logger.info(t1)
-            logger.info(max(task_ms_result["ms_ts"])) #这部分不能相差太多
+            logger.info(max(task_ms_result["ms_ts"])/1000) #这部分不能相差太多
 
-            # 以行为学视频中，miniscope-led灯亮后的100ms为起始0点
-            delta_t = 0-(behave_result["behave_track"]["be_ts"][start-1]) # 这个0.1大约是启动时间
+            # 以行为学视频中，miniscope-led灯亮(后的100ms)为起始0点
+            delta_t = 0-(behave_result["behave_track"]["be_ts"][start-1]) 
 
             task_ms_result["corrected_ms_ts"] = task_ms_result["ms_ts"]-delta_t*1000
             logger.info("'corrected_ms_ts' corrected 'ms_ts' when first_np as 0")
@@ -186,15 +207,16 @@ class MiniResult(MiniResult):
             with open(task_ms_info,'wb') as f:
                 pickle.dump(dict(task_ms_result,**behave_result),f)
         
-            logger.debug("corrected ms_ts and behavioral result are saved %s"%task_ms_info)
+            print("corrected ms_ts and behavioral result are saved %s"%task_ms_info)
             print("---------------------")
         #     print(task_ms_result["ms_ts"])
         #     sys.exit()
-        print("=========================")
+
 
 
     def add_TrialNum_Process2behave_track(self,session):
         """
+        is about to discrete, has been integrated into save behave sessions.
         在session*.pkl中的behave_tracek 加上“Trial_Num”,"process"
         """
         logger.info("FUN:: add_TrialNum_Process2behave_track")
@@ -232,14 +254,30 @@ class MiniResult(MiniResult):
 
             ms_result["behave_track"]["Trial_Num"]=Trial_Num
             ms_result["behave_track"]["process"]=process
-            logger.info("Trial_Num,process here are the same length as behavioral data,not the final version")
+            print("Trial_Num,process here are the same length as behavioral data,not the final version")
             with open(session,'wb') as f:
                 pickle.dump(ms_result,f)
             print("%s is updated and saved"%session)
         else:
             print("%s is recorded in homecage"%session)
 
+    def show_in_context_masks(self,behavevideo,aim="in_context"):
+        mask, coord = Video(behavevideo).draw_rois(aim=aim)
 
+        cap = cv2.VideoCapture(behavevideo)
+        try:
+            cap.set(cv2.CAP_PROP_POS_FRAMES,1000-1)
+        except:
+            print("video is less than 100 frame")
+
+        ret,frame = cap.read()
+
+
+        cv2.polylines(frame,coord,True,(0,0,255),2)
+        plt.xticks([])
+        plt.yticks([])
+        plt.axis('off')
+        plt.imshow(frame)
 
 
 

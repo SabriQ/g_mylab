@@ -12,8 +12,9 @@ class CPP_Video(Video):
         super().__init__(video_path)
         self.led_xy = self.abs_prefix + '_led_xy.txt' # 这个数据结构和self.xy不一样，这个
         self.led_value_ts = self.abs_prefix+'_ledvalue_ts.csv'
-        self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
 
+        # timestamps files and track files should be ready first.
+        self.ts = TimestampsFile(self.videots_path,method="ffmpeg").ts
         self.track = TrackFile(self.video_track_path,parts=["Head","Body","Tail","led1","led2"]).behave_track
 
     @property
@@ -25,36 +26,74 @@ class CPP_Video(Video):
         return tracked_coords
     
 
-    def show_behaveframe_anotations(self,frame_No=10000):
+    def show_behaveframe_anotations(self,coords=None,half_diameter=13,frame_No=10000,color=(255,255,255),binarize=True):
+        """
+        Arguments:
+            coords: [(x1,y1),(x2,y2)]
+        """
 
         cap = cv2.VideoCapture(self.video_path)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
         ret,frame = cap.read()
+
+        if not coords is None:
+            for coord in coords:
+                x= int(coord[0])
+                y=int(coord[1])
+
+                cv2.rectangle(frame, (x-half_diameter, y-half_diameter), (x+half_diameter, y+half_diameter), color, 2)
+
+        if binarize:
+            _,frame = cv2.threshold(frame,250,255,cv2.THRESH_BINARY)
+        # led_zone = frame[(y-half_diameter):(y+half_diameter),(x-half_diameter):(x+half_diameter)]
+        while True:
+            cv2.imshow("led_location",frame)
+            key = cv2.waitKey(10) & 0xFF
+            if key == ord('q'):
+                break
+            if key == 27:
+                break
+
         cap.release()
-        plt.imshow(frame)
-        plt.xticks()
-        plt.yticks()
+        cv2.destroyAllWindows()
+
         
     
 
-    def _led_brightness(self,tracked_coords):
+    def _led_brightness(self,half_diameter=8,according="each_frame",binarize=True):
         """
         output the mean pixel value of specified coords of led
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
+        half_diameter: led gray value in roi defined by (x-half_diameter,x+half_diameter,y-half_diameter,y+half_diameter) was summarzied. 
+        according, chose from ["each frame","median"]. led locations were tracked in each frames. 
+                    "each _frame" suggest led_location of each frame was used
+                    "median" suggest the median of all tracked led location was used.
+
         """
         cap = cv2.VideoCapture(self.video_path)
         total_frame = cap.get(7)
         frame_No = 0
+        tracked_coords = self.tracked_coords
+        median_coords = np.median(tracked_coords,axis=0)
+
         while True:
             # key = cv2.waitKey(10) & 0xFF
             ret,frame = cap.read()
             if ret:
                 gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-                
+
+                if binarize:
+                    _,gray = cv2.threshold(gray,250,255,cv2.THRESH_BINARY)
                 # if key == ord('q'):
                 #     break
-            
-                coords=tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
+                if according == "each_frame":
+                    coords=tracked_coords[frame_No] # [(led1_xn,led1_yn),(led2_xn,led2_yn)]
+                elif according == "median":
+                    coords = median_coords
+                else:
+                    print("according could only be chosed from ['each_frame','median']")
+                    sys.exit()
+
                 frame_No = frame_No +1
                 led_pixel_values = []
                 for coord in coords: 
@@ -63,33 +102,44 @@ class CPP_Video(Video):
                     x= int(x)
                     y= int(y)
                     try:
-                        led_zone = gray[(y-2):(y+2),(x-2):(x+2)]
-                        led_pixel_values.append(sum(sum(led_zone)))
+                        led_zone = gray[(y-half_diameter):(y+half_diameter),(x-half_diameter):(x+half_diameter)]
+                        # print(np.mean(led_zone))
+                        led_pixel_values.append(np.mean(led_zone))
                     except:
                         try:
                             led_pixel_values.append(led_pixel_values[-1])
                         except:
                             led_pixel_values.append(np.nan)
-                            print("%sth frame: wrong track of  (%s,%s), which is recognized at the border of videw"%(frame_No-1,x,y))
+                            print("%sth frame: wrong track of  (%s,%s), which is recognized at the border of videw"%(frame_No,x,y))
                     # print("\r %s/%s"%(frame_No,int(total_frame)))
-                    
+                # print(led_pixel_values)
                 yield led_pixel_values # [led1_value,led2_value]
                 # cv2.imshow("crop_frame",led_zone)
+
             else:
                 break
 
         cap.release()
 
 
-    def leds_pixel_value(self,tracked_coords):
+    def leds_pixel_value(self,half_diameter=15,according="each_frame",binarize=True):
         """
         generate *_ledvalue_ts.csv
         tracked_coords: [[(led1_x1,led1_y1),(led2_x1,led2_y1),...],[],...,[(led1_xn,led1_yn),(led2_xn,led2_yn),...]]
+
+        returns
+            gray value of led1,led2,... was added as one column of the csv file to be saved.
         """
         leds_pixel=[]
         print("calculating frame by frame...")
-        for led_pixel_value in self._led_brightness(tracked_coords):
+        i = 1
+
+        for led_pixel_value in self._led_brightness(half_diameter=half_diameter,according=according,binarize=binarize):
             leds_pixel.append(led_pixel_value)
+            # if i%100 == 0:
+            #     print(i)
+            i = i+1
+
 
         df= pd.DataFrame(np.array(leds_pixel),columns=np.arange(len(led_pixel_value))+1)
         df["ts"]=self.ts
@@ -97,7 +147,147 @@ class CPP_Video(Video):
         print("%s is saved"%self.led_value_ts)
         # return df
         
+    def check_frames(self,args,location_coords=None):
+        '''
+        'a':后退一帧
+        'd':前进一帧
+        'w':前进一百帧
+        's':后退一百帧
+        'n':下一个指定帧
+        args: [(frame_No,led_1_value,led_2_value),...]
+        '''
+        #(10,15):left up, (400,15), right up
+        location_coords = (10,15) if location_coords ==None else location_coords
 
+        font = cv2.FONT_ITALIC
+        cap = cv2.VideoCapture(self.video_path)
+        
+        def nothing(x):  
+            pass
+            
+        # cv2.namedWindow("check_frames")
+        total_frame = int(cap.get(7))
+        # cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
+        print(f"there are {int(total_frame)} frames in total")
+        
+        frame_No=1
+        
+        specific_frames = args
+
+        if len(specific_frames)==0:
+            specific_frames=[0,-1,-1]
+        else:
+            print(specific_frames,"frames to check")
+        marked_frames=[]
+        
+        for info in specific_frames:
+            i,led_1_value,led_2_value = info
+            cv2.namedWindow("check_frames")
+            cv2.createTrackbar('frame_No','check_frames',1,int(total_frame),nothing)
+            if i < 1:
+                frame_No = 1
+                print(f"there is before the first frame")
+            elif i > total_frame:
+                frame_No = total_frame
+                print(f"{i} is after the last frame")
+            else:
+                frame_No = i
+                
+            cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No)
+            cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+            
+            ret,frame = cap.read()
+            cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+            cv2.imshow('check_frames',frame)
+            while 1:                
+                key = cv2.waitKey(1) & 0xFF
+                frame_No = cv2.getTrackbarPos('frame_No','check_frames')                
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                ret,frame = cap.read()
+                cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                cv2.imshow('check_frames',frame)
+                
+                if key == ord('m'):
+                    marked_frames.append(frame_No)
+                    print(f"the {frame_No} frame is marked")
+                if key == ord('d'):
+                    frame_No = frame_No +1
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('a'):
+                    frame_No = frame_No - 1
+                    if frame_No <=1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES,frame_No)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('w'):
+                    frame_No=frame_No +100
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('c'):
+                    frame_No=frame_No +10
+                    if frame_No >= total_frame:
+                        frame_No = total_frame
+                        print(f"you have reached the final frame {total_frame}")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('s'):
+                    frame_No=frame_No -100
+                    if frame_No <= 1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('z'):
+                    frame_No=frame_No -10
+                    if frame_No <= 1:
+                        frame_No = 1
+                        print(f"you have reached the first frame")
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
+                    cv2.setTrackbarPos("frame_No","check_frames",frame_No)
+                    ret,frame = cap.read()
+                    cv2.putText(frame,"frame_No %s %s %s"%(frame_No,led_1_value,led_2_value),location_coords, font, 0.5, (255,255,255))
+                    cv2.imshow('check_frames',frame)
+                if key == ord('n'):
+                    #led_ons.pop(i-1)
+                    print('end of this round checking')
+                    cv2.destroyAllWindows()
+                    break
+                if key == ord('q'):
+                    print('break out checking of this round')
+                    cv2.destroyAllWindows()
+                    break
+                if key == 27:
+                    print("quit checking")
+                    cv2.destroyAllWindows()
+                    sys.exit()                    
+        print("finish checking")
+        
+        if len(marked_frames) !=0:
+            print(marked_frames)
+            return marked_frames
     def draw_leds_location(self,count=2,frame_No=10000):
 
         # get the frame_No(default 10000 here) frame
@@ -181,14 +371,14 @@ class CPP_Video(Video):
             #     if frame_No >= total_frame:
             #         frame_No = total_frame
             #         print(f"you have reached the final frame {total_frame}")
-            #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+            #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
             #     ret,frame = cap.read()
             # elif key == ord('b'):
             #     frame_No=frame_No -10
             #     if frame_No < 1:
             #         frame_No = 1
             #         print(f"you have reached the first frame")
-            #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No-1)
+            #     cap.set(cv2.CAP_PROP_POS_FRAMES, frame_No)
             #     ret,frame = cap.read()
             else:
                 pass
