@@ -73,6 +73,7 @@ class Video():
         imageio.mimsave(gif_path,buff,"GIF",duration=duration)
         cap.release()
         print("%s is saved"%(self.abs_prefix+'.gif'))
+        
     def show_masks(self,aim="in_context"):
         masks = self.draw_rois(aim=aim)[0]
         for mask in masks:
