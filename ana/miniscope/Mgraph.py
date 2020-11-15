@@ -30,6 +30,8 @@ def compute_correlated_pair_ratio(arr,column_cell_ids):
 def comput_clustering_coefficient_by_session(arr,column_cell_ids,threshold =0.6):
     """
     compute clustering_coefficient for each neuron
+
+
     """
     
     matrix = pd.DataFrame(np.corrcoef(arr),columns=column_cell_ids)
@@ -41,6 +43,11 @@ def comput_component_probability_by_session(arr,column_cell_ids,threshold):
     """
     arr: coloumns means each observation, raws means firing rate in each timestamps
     threshold: the Pearson's correlation coefficient of two neurons are paired
+    
+    Explain:
+        A connected component is defined as a subgraph of nodes connected to each other by paths but not connected to any other nodes. 
+        **Each neuron was assigned either a 0 or 1 indicating whether it was a component member**,
+         and the proportion of neurons in a component (component probability) was computed for each imaging session
     """
     
     matrix = pd.DataFrame(np.corrcoef(arr),columns=column_cell_ids)

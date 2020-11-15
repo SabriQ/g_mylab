@@ -1,4 +1,4 @@
-import cv2
+import cv2,imageio
 import numpy as np
 import os
 import sys
@@ -60,6 +60,19 @@ class Video():
         cap.release()
         cv2.destroyAllWindows()
 
+
+    def save_gif(self,interval=900,duration=0.1,gif_path=None):
+        cap = cv2.VideoCapture(self.video_path)
+        total_frame = cap.get(7)
+        buff=[]
+        for i in np.arange(0,total_frame,interval):
+            cap.set(cv2.CAP_PROP_POS_FRAMES,i)
+            ret,frame = cap.read()
+            buff.append(frame)
+        gif_path = self.abs_prefix+".gif" if gif_path == None else gif_path
+        imageio.mimsave(gif_path,buff,"GIF",duration=duration)
+        cap.release()
+        print("%s is saved"%(self.abs_prefix+'.gif'))
     def show_masks(self,aim="in_context"):
         masks = self.draw_rois(aim=aim)[0]
         for mask in masks:

@@ -17,6 +17,28 @@ sh = logging.StreamHandler(sys.stdout) #stream handler
 sh.setLevel(logging.DEBUG)
 logger.addHandler(sh)
 
+def concatenate_sessions(session1,session2):
+    """
+    仅限于记录时有多个sessions但是只有一个behavioral video的情况
+    """
+    with open(session1,"rb") as f:
+        s1 = pickle.load(f)
+    with open(session2,"rb") as f:
+        s2 = pickle.load(f)
+
+
+    if (s1["idx_accepted"]==s2["idx_accepted"]).all():
+        s1["ms_ts"] = np.concatenate((s1["ms_ts"],s2["ms_ts"]+s1["ms_ts"].max()+33),axis=0)
+        s1["S_dff"] = np.vstack((s1.get("S_dff"),s2.get("S_dff")))
+        s1["sigraw"] = np.vstack((s1.get("sigraw"),s2.get("sigraw")))
+        s1["idx_accepted"] = s1["idx_accepted"]
+
+        with open(session1,"wb") as f:
+            pickle.dump(s1,f)
+        print("%s has been merged in %s"%(session2,session1))
+        print("you should remove %s"%session2)
+    else:
+        print("%s is not connected to %s"%(session2,session1))
 
 
 
@@ -29,6 +51,7 @@ class MiniResult():
     """
     def __init__(self,Result_dir):
         self.Result_dir = Result_dir
+
         self.ms_mat_path = os.path.join(self.Result_dir,"ms.mat")
         self.ms_mat_path2 = os.path.join(self.Result_dir,"ms.pkl")
         self.ms_ts_path = os.path.join(self.Result_dir,"ms_ts.pkl")
@@ -63,18 +86,21 @@ class MiniResult():
         else:
             return 0 
 
-    def save_session_pkl(self,orders=None):
+
+
+    def save_miniscope_session_pkl(self,orders=None):
         """
 
         """
+        logger.info("FUN:: save_miniscope_session_pkl")
         if os.path.exists(self.ms_mat_path):        
-            logger.debug("loading %s"%self.ms_mat_path)
+            print("loading %s"%self.ms_mat_path)
             ms = load_mat(self.ms_mat_path)
-            logger.debug("loaded %s"%self.ms_mat_path)
+            print("loaded %s"%self.ms_mat_path)
         else:
-            logger.debug("loading %s"%self.ms_mat_path2)
+            print("loading %s"%self.ms_mat_path2)
             ms = load_pkl(self.ms_mat_path2)
-            logger.debug("loaded %s"%self.ms_mat_path2)
+            print("loaded %s"%self.ms_mat_path2)
 
         sigraw = ms['ms']['sigraw'] #默认为sigraw
         try:            
@@ -84,9 +110,7 @@ class MiniResult():
             # read S_dff.pkl
                 S_dff = load_pkl(self.S_dff_path)
             except:
-                logger.debug("saving S_dff problem,is there S_dff.pkl in directory?")
-
-
+                print("saving S_dff problem,is there S_dff.pkl in directory?")
 
         idx_accepted = ms['ms']['idx_accepted']
         idx_deleeted = ms['ms']['idx_deleted']
@@ -129,27 +153,11 @@ class MiniResult():
 
             with open(os.path.join(self.Result_dir,name),'wb') as f:
                 pickle.dump(result,f)
-            logger.debug("%s is saved"%name)
+            print("%s is saved"%name)
 
 
 
-    def show_in_context_masks(self,behavevideo,aim="in_context"):
-        mask, coord = Video(behavevideo).draw_rois(aim=aim)
 
-        cap = cv2.VideoCapture(behavevideo)
-        try:
-            cap.set(cv2.CAP_PROP_POS_FRAMES,1000-1)
-        except:
-            print("video is less than 100 frame")
-
-        ret,frame = cap.read()
-
-
-        cv2.polylines(frame,coord,True,(0,0,255),2)
-        plt.xticks([])
-        plt.yticks([])
-        plt.axis('off')
-        plt.imshow(frame)
 
 
 

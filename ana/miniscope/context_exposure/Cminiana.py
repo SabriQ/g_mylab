@@ -545,6 +545,8 @@ class MiniAna(MA):
         self.trim_index["placebin"] = self.result["place_bin_No"].isin(placebin_list)
         logger.info("trim_index : trial are limited in %s"%placebin_list)
 
+    def play_behave_gif(self):
+        pass
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
 #     for session in sessions:
