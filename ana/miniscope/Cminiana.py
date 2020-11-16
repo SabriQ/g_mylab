@@ -117,25 +117,12 @@ class MiniAna():
         Video(miniscope_video_path).check_frames(*frame_points)
 
 
-    def show_behaveframe(self,tracking=True):
-        """
-        show all the tracking traectory in a behavioral video frame.
-        """
-        self.add_behavevideoframe()
-        plt.imshow(self.result["behavevideoframe"])
-        plt.xticks([])
-        plt.yticks([])
-        # plt.plot(s.result[])
-        plt.plot([i[0] for i in self.result["all_track_points"]],[i[1] for i in self.result["all_track_points"]],"ro",markersize=2)
-        if tracking :
-            plt.plot(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"],markersize=1)
-        plt.show()
 
-    def align_behave_ms(self,hc_trial_bin=5000):
+
+    def align_behave_ms(self,):
         """
         产生 aligned_behave2ms
         注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
-        hc_trial_bin: in ms, default 5000ms
         """
         logger.info("FUN:: aligned_behave2ms")
         if self.exp=="task":

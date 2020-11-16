@@ -9,17 +9,36 @@ from matplotlib.pylab import plt
 from mylab.ana.miniscope.Mquality import * # for shuffle
 
 
+def compute_correlated_pair_ratio(arr,threshold=0.3):
 
-def compute_correlated_pair_ratio(arr,column_cell_ids):
     """
-    compute correlated_pair_ratio for each neuron
+    compute correlated_pair_ratio for each neuron by shuffle
+    **Significantly correlated pairs of neurons** were defined based on
+    the correlation coefficients of Ca2+ transient events within one
+    second time bins during context exploration.
+    """
+    arr_cor = np.corrcoef(arr)
+    # shuffle_cor = shuffle_corrcoef(arr)
+    rows2,cols2 = np.where(arr_cor>threshold)
+    correlated_pairs_index = [(row,col) for row,col in zip(rows2,cols2) if row <col]
+    
+    ratio = dict()
+    for i in np.arange(arr_cor.shape[0]):
+        ratio[i] = sum([1 if i in j else 0 for j in correlated_pairs_index])/arr_cor.shape[0]
+    # for i,id in enumerate(column_cell_ids):
+    #     ratio[id] = sum([1 if i in j else 0 for j in correlated_pairs_index])/len(column_cell_ids)
+    return ratio
+
+def compute_correlated_pair_ratio2(arr,column_cell_ids,threshold=0.3):
+    """
+    compute correlated_pair_ratio for each neuron by shuffle and threshold
     **Significantly correlated pairs of neurons** were defined based on
     the correlation coefficients of Ca2+ transient events within one
     second time bins during context exploration.
     """
     arr_cor = np.corrcoef(arr)
     shuffle_cor = shuffle_corrcoef(arr)
-    rows2,cols2 = np.where(arr_cor > np.quantile(shuffle_cor,0.95,axis=0))
+    rows2,cols2 = np.where((arr_cor > np.quantile(shuffle_cor,0.95,axis=0)) & (arr_cor>threshold))
     correlated_pairs_index = [(row,col) for row,col in zip(rows2,cols2) if row <col]
     
     ratio = dict()
@@ -27,19 +46,19 @@ def compute_correlated_pair_ratio(arr,column_cell_ids):
         ratio[id] = sum([1 if i in j else 0 for j in correlated_pairs_index])/len(column_cell_ids)
     return ratio
 
-def comput_clustering_coefficient_by_session(arr,column_cell_ids,threshold =0.6):
+def comput_clustering_coefficient_by_session(arr,threshold =0.6):
     """
     compute clustering_coefficient for each neuron
 
 
     """
     
-    matrix = pd.DataFrame(np.corrcoef(arr),columns=column_cell_ids)
+    matrix = pd.DataFrame(np.corrcoef(arr),columns=np.arange(0,arr.shape[0]))
     Ng= make_graph(matrix,threshold=threshold )
     _,clustering_coefficient = get_metrics(Ng)
     return clustering_coefficient
 
-def comput_component_probability_by_session(arr,column_cell_ids,threshold):
+def comput_component_probability_by_session(arr,threshold=0.3,comp_size=3):
     """
     arr: coloumns means each observation, raws means firing rate in each timestamps
     threshold: the Pearson's correlation coefficient of two neurons are paired
@@ -50,9 +69,9 @@ def comput_component_probability_by_session(arr,column_cell_ids,threshold):
          and the proportion of neurons in a component (component probability) was computed for each imaging session
     """
     
-    matrix = pd.DataFrame(np.corrcoef(arr),columns=column_cell_ids)
+    matrix = pd.DataFrame(np.corrcoef(arr),columns=np.arange(0,arr.shape[0]))
     Ng= make_graph(matrix,threshold=threshold)
-    return frac_nodes_in_component(Ng.network,3)
+    return frac_nodes_in_component(Ng.network,comp_size)
 
 
                         
