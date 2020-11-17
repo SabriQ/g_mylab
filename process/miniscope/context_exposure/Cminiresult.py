@@ -51,7 +51,7 @@ class MiniResult(MiniResult):
         key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
         mark = starts_firstnp_stops(logfilepath)
 
-        _,start,first_np,mark_point,stop = mark(behavevideo)
+        _,start_frame,first_np_frame,mark_point,stop_frame = mark(behavevideo)
 
         #save a frame of behavioral video
         cap = cv2.VideoCapture(behavevideo)
@@ -122,7 +122,7 @@ class MiniResult(MiniResult):
 
         behave_track["Trial_Num"]=Trial_Num
         behave_track["process"]=process
-
+        print("Trial_Num and process has been added to behave_track")
 
         # index in_context
         in_context_mask,in_context_coords=Video(behavevideo).draw_rois(aim="in_context",count = 1)
@@ -130,7 +130,7 @@ class MiniResult(MiniResult):
         # index in_lineartrack
         in_lineartrack_mask,in_lineartrack_coords=Video(behavevideo).draw_rois(aim="in_lineartrack",count = 1)
 
-        result = {"behavevideo":[behavevideo,key,start,first_np,mark_point,stop]
+        result = {"behavevideo":[behavevideo,key,start_frame,first_np_frame,mark_point,stop_frame]
                   ,"behavevideoframe":frame
                   ,"behavelog_time":behavelog_time
                   ,"behavelog_info":behavelog_info
@@ -185,7 +185,9 @@ class MiniResult(MiniResult):
                 task_ms_result = pickle.load(f)
             #行为学视频中的start,first_np,stop分别是哪一帧，哪一个行为学时间戳
             print("behavevideo %s start at %s,first_np at %s,stop at %s frame, the corresponding behavioral timestamps are: " %(key,start,first_np,stop))
-            print(behave_result["behave_track"]["be_ts"][start-1],behave_result["behave_track"]["be_ts"][first_np-1],behave_result["behave_track"]["be_ts"][stop-1])
+            print(behave_result["behave_track"]["be_ts"][start-1]
+                ,behave_result["behave_track"]["be_ts"][first_np-1]
+                ,behave_result["behave_track"]["be_ts"][stop-1])
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
             logger.info("total time elaspse in 'behavioral video' and 'miniscope video': ****ATTENTION****")
