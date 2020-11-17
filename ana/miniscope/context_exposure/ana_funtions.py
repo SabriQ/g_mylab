@@ -10,7 +10,7 @@ from mylab.ana.miniscope.Mplacecells import *
 from mylab.ana.miniscope.Mpca import *
 
 #%% for single cell analysis
-def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**args):
+def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
     """
     s.align_behave_ms()
     s.add_alltrack_placebin_num
@@ -59,7 +59,7 @@ def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**args):
     }
 
 
-def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],*args,**kwargs):
+def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
     """
     s.align_behave_ms()
     s.add_Trial_Num_Process()
@@ -80,7 +80,7 @@ def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=
     meanfr_df["Context"]=Context
 
     idxes = s.result["idx_accepted"] if idxes==None else idxes
-    
+
     rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
     rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
     rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
