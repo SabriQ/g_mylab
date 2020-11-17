@@ -123,10 +123,6 @@ class MiniResult(MiniResult):
         behave_track["Trial_Num"]=Trial_Num
         behave_track["process"]=process
 
-        with open(session,'wb') as f:
-            pickle.dump(ms_result,f)
-        print("%s is updated and saved"%session)
-
 
         # index in_context
         in_context_mask,in_context_coords=Video(behavevideo).draw_rois(aim="in_context",count = 1)

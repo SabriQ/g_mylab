@@ -19,6 +19,29 @@ def save_txt(result, path):
     else:
         print("result to save is not str")
 
+def _dataframe2nparray(df):
+    if isinstance(df,dict):
+        print("df is a dict")
+        for key in list(df.keys()):
+            if isinstance(df[key],pd.core.frame.DataFrame):
+                df[str(key)+"_column"]=np.array(df[key].columns)
+                df[key]=df[key].values                    
+                # print("%s has transferred to numpy array"%key)
+            if isinstance(df[key],pd.core.series.Series):
+                df[key]=df[key].values
+            if isinstance(df[key],dict):
+                return _dataframe2nparray(df[key])
+        return df
+    elif isinstance(df,pd.core.frame.DataFrame):
+        print("df is a DataFrame")
+        return {"df":df.values,"df_columns":np.array(df.columns)}
+    else:
+        print(" can not be transferred to nparray")
+
+def savepkl2mat(savematname,result):
+    spio.savemat(savematname,_dataframe2nparray(result))
+    print("saved %s"%savematname)
+
 def Normalize_list(datalist):
     """
     归一化，对异常值敏感

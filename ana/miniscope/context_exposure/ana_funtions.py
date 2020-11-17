@@ -15,10 +15,14 @@ def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
 
     """
     # trim df, get the trimed df and index. 
-    df,index = s.trim_df2(
-        force_neg2zero
-        ,in_context=True)
+    s.add_Trial_Num_Process()
+    s.add_Context()
+    s.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None)
+    
+    df,index = s.trim_df(
+        "S_dff",placebin=np.arange())
 
+    
     meanfr_df = df[index].groupby(s.result["Trial_Num"][index]).mean().reset_index(drop=False)
 
     temp = pd.merge(meanfr_df,s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
