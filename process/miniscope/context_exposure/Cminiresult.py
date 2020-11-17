@@ -83,11 +83,11 @@ class MiniResult(MiniResult):
         
         # aligned log_time and behave video_time
         if mark_point  == 1:
-            delta_t = ts[0][first_np-1]-behavelog_time["P_nose_poke"][0]
+            delta_t = ts[0][first_np_frame-1]-behavelog_time["P_nose_poke"][0]
         
         ## 这里有时候因为first-np的灯刚好被手遮住，所以用第二个点的信号代替，即第一次enter_ctx的时间
         if mark_point == 2:
-            delta_t = ts[0][first_np-1]-behavelog_time["P_enter"][0]
+            delta_t = ts[0][first_np_frame-1]-behavelog_time["P_enter"][0]
 
         behave_track['be_ts']=ts[0]-delta_t
 
