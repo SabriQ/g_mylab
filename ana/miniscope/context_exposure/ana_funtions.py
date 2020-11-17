@@ -10,17 +10,14 @@ from mylab.ana.miniscope.Mplacecells import *
 from mylab.ana.miniscope.Mpca import *
 
 #%% for single cell analysis
-def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
+def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**args):
+    """
+    s.align_behave_ms()
+    s.add_alltrack_placebin_num
+    s.add_Trial_Num_Process()
     """
 
-    """
-    # trim df, get the trimed df and index. 
-    s.add_Trial_Num_Process()
-    s.add_Context()
-    s.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None)
-    
-    df,index = s.trim_df(
-        "S_dff",placebin=np.arange())
+    df,index = s.trim_df(*args,**kwargs)
 
     
     meanfr_df = df[index].groupby(s.result["Trial_Num"][index]).mean().reset_index(drop=False)
@@ -36,6 +33,7 @@ def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
     ctx_meanfr = meanfr_df[idxes].groupby(Context).mean().T
     ctx_meanfr["ranksums_p_value"] = ctx_pvalue
     ctx_meanfr["CSI"] = (ctx_meanfr["A"]-ctx_meanfr["B"])/(ctx_meanfr["A"]+ctx_meanfr["B"])
+
     ContextA_cells=[]
     ContextB_cells=[]
     non_context_cells=[]
@@ -61,17 +59,19 @@ def cellids_Context(s,idxes=None,context_map=["A","B","C","N"]):
     }
 
 
-def cellid_RD_incontext(s,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"]):
+def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],*args,**kwargs):
     """
+    s.align_behave_ms()
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num()
+    s.add_is_in_context()
+    s.add_in_context_running_direction_Body()
+    s.add_Context()
     """
-    df,index = s.trim_df2(df=None
-        ,force_neg2zero=True
-        ,Normalize=False
-        ,standarize=False
-        ,in_context=True)
+    df,index = s.trim_df(*args,**kwargs)
 
-    
     in_context_running_direction = pd.Series([rd_map[i] for i in s.result["in_context_running_direction_Body"]])
+
     meanfr_df = df[index].groupby([s.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
 
     temp = pd.merge(meanfr_df,s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
@@ -80,7 +80,7 @@ def cellid_RD_incontext(s,idxes=None,context_map=["A","B","C","N"],rd_map=["left
     meanfr_df["Context"]=Context
 
     idxes = s.result["idx_accepted"] if idxes==None else idxes
-
+    
     rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
     rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
     rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
@@ -90,11 +90,11 @@ def cellid_RD_incontext(s,idxes=None,context_map=["A","B","C","N"],rd_map=["left
     # print(non_rd_cells)
 
     rd_ctx_meanfr = meanfr_df[idxes].groupby([meanfr_df["Context"],meanfr_df["rd"]]).mean()
+
     rd_A_meanfr = rd_ctx_meanfr.xs("A").T
     rd_A_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="left")]
         ,x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="right")])[1],axis=0)
     rd_A_meanfr["RDSI"] = (rd_A_meanfr["left"]-rd_A_meanfr["right"])/(rd_A_meanfr["left"]+rd_A_meanfr["right"])
-
 
     A_left_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]>rd_A_meanfr["right"])].index
     A_right_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]<rd_A_meanfr["right"])].index
@@ -113,7 +113,7 @@ def cellid_RD_incontext(s,idxes=None,context_map=["A","B","C","N"],rd_map=["left
 
     return {
     "meanfr_df":meanfr_df,
-    "rd_meanfr":rd_meanfr,# meanfr in running direction o and 1, rank_sum_pvalue,RDSI
+    "rd_meanfr":rd_meanfr,# meanfr in running direction 0 and 1, rank_sum_pvalue,RDSI
     "left_cells":left_cells,
     "right_cells":right_cells,
     "non_rd_cells":non_rd_cells,
@@ -130,19 +130,21 @@ def cellid_RD_incontext(s,idxes=None,context_map=["A","B","C","N"],rd_map=["left
     }
 
 
-def cellid_PC_incontext(s,idxes=None,context_map=["A","B","C","N"],scale=0.33,placebin_number=20,shuffle_times=1000):
+def cellid_PC_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
     """
+    before performing this fun, we need to prepare:
+    s.align_behave_ms()
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,30,4,4,4],behavevideo)
+    s.add_Body_speed(scale=0.33)
+
     """
-    df,index = s.trim_df2(
-        df=None
-        ,force_neg2zero=True
-        ,Normalize=False
-        ,standarize=False
-        ,in_context=True
-        ,speed_min=3)
+
+    df,index = s.trim_df(*args,**kwargs)
+
     df=df[index]
 
-    in_context_placebin_num = s.result["in_context_placebin_num"][index]
+    in_context_placebin_num = s.result["place_bin_No"][index]
 
     Context = (pd.merge(s.result["Trial_Num"],s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)
     Context = pd.Series([context_map[int(i)] for i in Context])[index]

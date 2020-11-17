@@ -99,39 +99,6 @@ class MiniAna(MA):
         else:
             logger.debug("behavevideoframe has been there.")
 
-    def add_is_in_context(self):
-        logger.info("FUN::add_is_in_context")
-        if self.exp == "task":
-            mask = self.result["in_context_mask"]
-            is_in_context=[]
-            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
-                if 255 in mask[int(y),int(x)]:
-                    is_in_context.append(0)
-                else:
-                    is_in_context.append(1)
-            self.result["is_in_context"]=pd.Series(is_in_context,name="is_in_context")
-            print("'is_in_context' has been added")
-
-        else:
-            print("homecage session has no 'is_in_context'")
-
-    def add_is_in_lineartrack(self):
-
-        logger.info("FUN::add_is_in_lineartrack")
-        if self.exp == "task":
-            mask = self.result["in_lineartrack_mask"]
-            is_in_lineartrack=[]
-            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
-                if 255 in mask[int(y),int(x)]:
-                    is_in_lineartrack.append(0)
-                else:
-                    is_in_lineartrack.append(1)
-            self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack,name="is_in_lineartrack")
-            print("'is_in_lineartrack' has been added")
-
-        else:
-            print("homecage session has no 'is_in_lineartrack'")
-
     def add_Body_speed(self,scale=0.2339021309714166):
 
         logger.info("FUN::add_Body_speed")
@@ -164,6 +131,60 @@ class MiniAna(MA):
 
         else:
             print("homecage session has no 'Head_speed'")
+
+    def add_is_in_context2(self):
+        """
+        which is about to discrete
+        """
+        logger.info("FUN::add_is_in_context")
+        if self.exp == "task":
+            mask = self.result["in_context_mask"]
+            is_in_context=[]
+            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                if 255 in mask[int(y),int(x)]:
+                    is_in_context.append(0)
+                else:
+                    is_in_context.append(1)
+            self.result["is_in_context"]=pd.Series(is_in_context,name="is_in_context")
+            print("'is_in_context' has been added")
+
+        else:
+            print("homecage session has no 'is_in_context'")
+
+    def add_is_in_context(self):
+        """
+        which is about to discrete
+        """
+        logger.info("FUN::add_is_in_context")
+        if self.exp == "task":
+            is_in_context=[]
+            for x in self.result["aligned_behave2ms"]["Body_x"]:
+                if x>=self.result["all_track_points"][2][0] and x<=self.result["all_track_points"][3][0]:
+                    is_in_context.append(1)
+                else:
+                    is_in_context.append(0)
+            self.result["is_in_context"] = pd.Series(is_in_context,name="is_in_context")
+            print("'is_in_context' has been added")
+        else:
+            print("homecage session has no 'is_in_context'")
+
+    def add_is_in_lineartrack(self):
+
+        logger.info("FUN::add_is_in_lineartrack")
+        if self.exp == "task":
+            mask = self.result["in_lineartrack_mask"]
+            is_in_lineartrack=[]
+            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                if 255 in mask[int(y),int(x)]:
+                    is_in_lineartrack.append(0)
+                else:
+                    is_in_lineartrack.append(1)
+            self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack,name="is_in_lineartrack")
+            print("'is_in_lineartrack' has been added")
+
+        else:
+            print("homecage session has no 'is_in_lineartrack'")
+
 
 
     def add_in_context_running_direction_Body(self):
@@ -504,6 +525,10 @@ class MiniAna(MA):
             if key == "placebin":
                 self._trim_placebin(placebin_list=value)
 
+            if key == "in_context":
+                self._trim_in_context(value=value)
+
+
         for arg in args:
             if arg =="S_dff":
                 try:
@@ -555,7 +580,12 @@ class MiniAna(MA):
 
     def _trim_placebin(self,placebin_list):
         self.trim_index["placebin"] = self.result["place_bin_No"].isin(placebin_list)
-        print("trim_index : trial are limited in %s"%placebin_list)
+        print("trim_index : placebins are limited in %s"%placebin_list)
+
+    def _trim_in_context(self,value):
+        if value:
+            self.trim_index["in_context"] = self.result["is_in_context"]
+            
 
     def show_behaveframe(self,tracking=True):
         """
