@@ -19,7 +19,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.DEBUG)
+sh.setLevel(logging.INFO)
 logger.addHandler(sh)
 
 class MiniAna():
@@ -30,12 +30,12 @@ class MiniAna():
         fh = logging.FileHandler(self.logfile,mode="a")
         formatter = logging.Formatter("  %(asctime)s %(message)s")
         fh.setFormatter(formatter)
-        fh.setLevel(logging.INFO)
+        fh.setLevel(logging.DEBUG)
         logger.addHandler(fh)
 
         self._load_session()
         # self.align_behave_ms() # self.result["Trial_Num"], self.process
-        logger.info("'sigraw' is taken as original self.df")
+        logger.debug("'sigraw' is taken as original self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
         self.shape = self.df.shape
 
@@ -48,7 +48,7 @@ class MiniAna():
             self.exp = "hc"
         else:
             self.exp = "task"
-        logger.debug("loaded")
+        print("loaded")
         print(self.result.keys())
 
 
@@ -129,7 +129,7 @@ class MiniAna():
             if not "aligned_behave2ms" in self.result.keys():
                 # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
                 logger.debug("aligninging behavioral frame to each ms frame...")
-                logger.info("looking for behave frame for each corrected_ms_ts...")
+                logger.debug("looking for behave frame for each corrected_ms_ts...")
                 aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
                                                 ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
                 _,length = rlc(aligned_behave2ms["ms_behaveframe"])
