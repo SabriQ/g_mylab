@@ -16,7 +16,7 @@ def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
     s.add_alltrack_placebin_num
     s.add_Trial_Num_Process()
     """
-
+    print("FUNC::cellids_Context")
     df,index = s.trim_df(*args,**kwargs)
 
     
@@ -68,6 +68,7 @@ def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=
     s.add_in_context_running_direction_Body()
     s.add_Context()
     """
+    print("FUNC::cellid_RD_incontext")
     df,index = s.trim_df(*args,**kwargs)
 
     in_context_running_direction = pd.Series([rd_map[i] for i in s.result["in_context_running_direction_Body"]])
