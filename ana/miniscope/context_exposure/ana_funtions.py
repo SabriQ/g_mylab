@@ -65,13 +65,12 @@ def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=
     s.add_Trial_Num_Process()
     s.add_alltrack_placebin_num()
     s.add_is_in_context()
-    s.add_in_context_running_direction_Body()
     s.add_Context()
     """
     print("FUNC::cellid_RD_incontext")
     df,index = s.trim_df(*args,**kwargs)
 
-    in_context_running_direction = pd.Series([rd_map[i] for i in s.result["in_context_running_direction_Body"]])
+    in_context_running_direction = pd.Series([rd_map[i] for i in s.result["running_direction"]])
 
     meanfr_df = df[index].groupby([s.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
 
@@ -140,7 +139,7 @@ def cellid_PC_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle
     s.add_Body_speed(scale=0.33)
 
     """
-
+    print("FUNC::cellid_PC_incontext")
     df,index = s.trim_df(*args,**kwargs)
 
     df=df[index]
