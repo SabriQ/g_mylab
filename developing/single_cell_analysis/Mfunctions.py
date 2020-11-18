@@ -8,21 +8,34 @@ import matplotlib.pyplot as plt
 import glob,sys,os,re
 
 
-def cellids(session,scale=0.33,placebin_number=20,shuffle_times=1000):
+def cellids(session):
     s = MA(session)
     if s.exp == "task":
-        try:
-            del s.result["aligned_behave2ms"]
-        except:
-            pass
         s.align_behave_ms()
-        s.add_is_in_context()
-        s.add_Body_speed(scale=scale)
-        s.add_in_context_running_direction_Body()
-        s.add_incontext_placebin_num(placebin_number=20)
-        contextcells = cellids_Context(s)
-        rdcells = cellid_RD_incontext(s)
-        pccells = cellid_PC_incontext(s,placebin_number=20,shuffle_times=1000)
+        s.add_Trial_Num_Process() # s
+        s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,30,4,4,4])
+        s.add_Body_speed(scale=0.33)
+        s.add_running_direction(according="Body")
+
+        contextcells = cellids_Context(s,"S_dff"
+                        ,idxes=None
+                        ,context_map=["A","B","C","N"]
+                        ,placebin=np.arange(8,38))
+
+
+
+        rdcells = cellid_RD_incontext(s,"S_dff"
+                            ,idxes=None
+                            ,context_map=["A","B","C","N"]
+                            ,rd_map=["left","right","None"]
+                            ,placebin=np.arange(8,38))
+
+        pccells = cellid_PC_incontext(s,"S_dff"
+                            ,idxes=None,context_map=["A","B","C","N"]
+                            ,shuffle_times=1000
+                            ,placebin=np.arange(8,38)
+                            ,Body_speed=3)
+
         return contextcells, rdcells,pccells
     else:
         return -1,-1,-1

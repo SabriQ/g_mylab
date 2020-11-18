@@ -20,7 +20,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.DEBUG)
+sh.setLevel(logging.INFO)
 logger.addHandler(sh)
 
 class MiniAna(MA):
@@ -132,105 +132,27 @@ class MiniAna(MA):
         else:
             print("homecage session has no 'Head_speed'")
 
-    def add_is_in_context2(self):
-        """
-        which is about to discrete
-        """
-        logger.info("FUN::add_is_in_context")
-        if self.exp == "task":
-            mask = self.result["in_context_mask"]
-            is_in_context=[]
-            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
-                if 255 in mask[int(y),int(x)]:
-                    is_in_context.append(0)
-                else:
-                    is_in_context.append(1)
-            self.result["is_in_context"]=pd.Series(is_in_context,name="is_in_context")
-            print("'is_in_context' has been added")
-
-        else:
-            print("homecage session has no 'is_in_context'")
-
-    def add_is_in_context(self):
-        """
-        which is about to discrete
-        """
-        logger.info("FUN::add_is_in_context")
-        if self.exp == "task":
-            is_in_context=[]
-            for x in self.result["aligned_behave2ms"]["Body_x"]:
-                if x>=self.result["all_track_points"][2][0] and x<=self.result["all_track_points"][3][0]:
-                    is_in_context.append(1)
-                else:
-                    is_in_context.append(0)
-            self.result["is_in_context"] = pd.Series(is_in_context,name="is_in_context")
-            print("'is_in_context' has been added")
-        else:
-            print("homecage session has no 'is_in_context'")
-
-    def add_is_in_lineartrack(self):
-
-        logger.info("FUN::add_is_in_lineartrack")
-        if self.exp == "task":
-            mask = self.result["in_lineartrack_mask"]
-            is_in_lineartrack=[]
-            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
-                if 255 in mask[int(y),int(x)]:
-                    is_in_lineartrack.append(0)
-                else:
-                    is_in_lineartrack.append(1)
-            self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack,name="is_in_lineartrack")
-            print("'is_in_lineartrack' has been added")
-
-        else:
-            print("homecage session has no 'is_in_lineartrack'")
 
 
-
-    def add_in_context_running_direction_Body(self):
-        logger.info("FUN::add_in_context_running_direction_Body")
+    def add_running_direction(self,according="Body"):
+        logger.info("FUN::add_running_direction_%s"%according)
 
         if self.exp == "task":
-            in_context_running_direction_Body=[]
-
-            for Trial, in_context,Body_speed,Body_speed_angle in zip(self.result["Trial_Num"],self.result["is_in_context"],self.result["Body_speed"],self.result["Body_speed_angle"]):
-                if Trial == -1:
-                    in_context_running_direction_Body.append(-1)
+            running_direction = []
+            key = "%s_speed_angle"%according
+            if not key in ["Body","Head"]:
+                print("no %s_speed_angle"%according)
+                according = "Body"
+            for speed_angle in self.result[key]:
+                if speed_angle > 90 and speed_angle < 280 :
+                    running_direction.append(0)
                 else:
-                    if in_context == 0:
-                        in_context_running_direction_Body.append(-1)
-                    else:
-                        if Body_speed_angle > 90 and Body_speed_angle < 280 :
-                            in_context_running_direction_Body.append(0)
-                        else:
-                            in_context_running_direction_Body.append(1)
-            self.result["in_context_running_direction_Body"]=pd.Series(in_context_running_direction_Body,name="in_context_running_direction_Body")
-            print("in_context_running_direction_Body has been added")
-
+                    running_direction.append(1)
+            self.result["running_direction"]=pd.Series(running_direction,name="running_direction")
+            print("running_direction has been added")
         else:
-            print("homecage session has no 'in_context_running_direction_Body'")
+            print("homecage session has no 'running_direction'")
 
-    def add_in_context_running_direction_Head(self):
-        logger.info("FUN::add_in_context_running_direction_Head")
-
-        if self.exp == "task":
-            in_context_running_direction_Head=[]
-
-            for Trial, in_context,Head_speed,Head_speed_angle in zip(self.result["Trial_Num"],self.result["is_in_context"],self.result["Head_speed"],self.result["Head_speed_angle"]):
-                if Trial == -1:
-                    in_context_running_direction_Head.append(-1)
-                else:
-                    if in_context == 0:
-                        in_context_running_direction_Head.append(-1)
-                    else:
-                        if Head_speed_angle > 90 and Head_speed_angle < 280 :
-                            in_context_running_direction_Head.append(0)
-                        else:
-                            in_context_running_direction_Head.append(1)
-            self.result["in_context_running_direction_Head"]=pd.Series(in_context_running_direction_Head,name="in_context_running_direction_Head")
-            print("in_context_running_direction_Head has been added")
-        else:
-            print("homecage session has no 'in_context_running_direction_Head'")
 
 
     def add_alltrack_placebin_num(self,according = "Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None):
@@ -294,6 +216,60 @@ class MiniAna(MA):
 
         else:
             print("homecage session has no 'place_bin_No'")
+
+#%% which are about to discrete
+    def add_is_in_context2(self):
+        """
+        which is about to discrete
+        """
+        logger.info("FUN::add_is_in_context")
+        if self.exp == "task":
+            mask = self.result["in_context_mask"]
+            is_in_context=[]
+            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                if 255 in mask[int(y),int(x)]:
+                    is_in_context.append(0)
+                else:
+                    is_in_context.append(1)
+            self.result["is_in_context"]=pd.Series(is_in_context,name="is_in_context")
+            print("'is_in_context' has been added")
+
+        else:
+            print("homecage session has no 'is_in_context'")
+
+    def add_is_in_context(self):
+        """
+        which is about to discrete
+        """
+        logger.info("FUN::add_is_in_context")
+        if self.exp == "task":
+            is_in_context=[]
+            for x in self.result["aligned_behave2ms"]["Body_x"]:
+                if x>=self.result["all_track_points"][2][0] and x<=self.result["all_track_points"][3][0]:
+                    is_in_context.append(1)
+                else:
+                    is_in_context.append(0)
+            self.result["is_in_context"] = pd.Series(is_in_context,name="is_in_context")
+            print("'is_in_context' has been added")
+        else:
+            print("homecage session has no 'is_in_context'")
+
+    def add_is_in_lineartrack(self):
+
+        logger.info("FUN::add_is_in_lineartrack")
+        if self.exp == "task":
+            mask = self.result["in_lineartrack_mask"]
+            is_in_lineartrack=[]
+            for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
+                if 255 in mask[int(y),int(x)]:
+                    is_in_lineartrack.append(0)
+                else:
+                    is_in_lineartrack.append(1)
+            self.result["is_in_lineartrack"]=pd.Series(is_in_lineartrack,name="is_in_lineartrack")
+            print("'is_in_lineartrack' has been added")
+
+        else:
+            print("homecage session has no 'is_in_lineartrack'")
 
     def add_incontext_placebin_num(self,according="Head",placebin_number=40):
         logger.info("FUN::add_incontext_placebin_num")
@@ -474,6 +450,7 @@ class MiniAna(MA):
                 pickle.dump(self.result,f)
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
+#%%
 
     def add_behave_choice_side(self,):
         logger.info("FUN::add_behave_choice_side")

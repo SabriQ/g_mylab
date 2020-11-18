@@ -4,6 +4,19 @@ import scipy.signal as signal
 import scipy.stats as stats
 import pandas as pd
 import os,sys
+import pickle
+
+
+def save_pkl(result,result_path):
+    with open(result_path,'wb') as f:
+        pickle.dump(result,f)
+    print("result is saved at %s"% result_path)
+
+def load_pkl(result_path):
+    with open(result_path,'rb') as f:
+        result = pickle.load(f)
+    print("result is loaded")
+    return result
 
 def load_txt(path):
     with open(path,'r',encoding="utf-8") as f:
