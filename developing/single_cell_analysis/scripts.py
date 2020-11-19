@@ -10,13 +10,13 @@ def func(session):
     mouse_id = re.findall("Results_(\d+)",session)[0]
     part = re.findall("part(\d+)",session)[0]
     session_num = re.findall("session(\d+).pkl",session)[0]
-    filename = "cell_type_%s_part%s_session%s.pkl"%(mouse_id,part,session)
+    filename = "cell_type_%s_part%s_session%s.pkl"%(mouse_id,part,session_num)
 
     savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\celltypes",filename)
     print(filename)
     try:
         contextcells,rdcells,pccells = cellids(session)
-        if len(contextcells) == 1:
+        if type(contextcells) == int:
             savepath = savepath.replace(".pkl","_hc.pkl")
         save_pkl(result={
             "mouse_id":mouse_id,
@@ -47,6 +47,7 @@ if __name__ == "__main__":
     
     for file_path in file_pathes:
         sessions = glob.glob(os.path.join(file_path,"session*.pkl"))
+        [print(i) for i in sessions]
         pool = Pool(processes=8)
 
         pool.map(func,sessions)
