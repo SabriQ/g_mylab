@@ -13,10 +13,13 @@ def func(file_path):
         part = re.findall("part(\d+)",session)[0]
         session = re.findall("session(\d+).pkl",session)[0]
         filename = "cell_type_%s_part%s_session%s.pkl"%(mouse_id,part,session)
+
         savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\celltypes",filename)
         print(filename)
         try:
             contextcells,rdcells,pccells = cellids(sessions)
+            if contextcells == -1:
+                savepath = savepath.replace(".pkl","_hc.pkl")
             save_pkl(result={
                 "mouse_id":mouse_id,
                 "part":part,
@@ -30,6 +33,8 @@ def func(file_path):
                 "mouse_id":mouse_id,
                 "part":part,
                 "session":session},result_path=savepath)
+
+        print("========================================")
     
 
 if __name__ == "__main__":
