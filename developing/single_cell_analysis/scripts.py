@@ -17,7 +17,7 @@ def func(file_path):
         savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\celltypes",filename)
         print(filename)
         try:
-            contextcells,rdcells,pccells = cellids(sessions)
+            contextcells,rdcells,pccells = cellids(session)
             if contextcells == -1:
                 savepath = savepath.replace(".pkl","_hc.pkl")
             save_pkl(result={
