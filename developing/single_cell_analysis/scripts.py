@@ -16,7 +16,7 @@ def func(file_path):
         savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\celltypes",filename)
         print(filename)
         try:
-            contextcells,rdcells,pccells = cellids(sessions[8])
+            contextcells,rdcells,pccells = cellids(sessions)
             save_pkl(result={
                 "mouse_id":mouse_id,
                 "part":part,
@@ -26,6 +26,11 @@ def func(file_path):
                 "pccells":rdcells},result_path=savepath)
         except:
             savepath = savepath.replace(".pkl","_bug.pkl")
+            save_pkl(result={
+                "mouse_id":mouse_id,
+                "part":part,
+                "session":session},result_path=savepath)
+    
 
 if __name__ == "__main__":
 
