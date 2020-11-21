@@ -16,23 +16,23 @@ from mylab.ana.miniscope.Mplacecells import *
 import logging 
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger()
+# logger.setLevel(logging.DEBUG)
 
-sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.INFO)
-logger.addHandler(sh)
+# sh = logging.StreamHandler(sys.stdout) #stream handler
+# sh.setLevel(logging.INFO)
+# logger.addHandler(sh)
 
 class MiniAna(MA):
     def __init__(self,session_path):
         super().__init__(session_path)
 
-        self.logfile =self.session_path.replace('.pkl','_log.txt')
-        fh = logging.FileHandler(self.logfile,mode="a")
-        formatter = logging.Formatter("  %(asctime)s %(message)s")
-        fh.setFormatter(formatter)
-        fh.setLevel(logging.INFO)
-        logger.addHandler(fh)
+        # self.logfile =self.session_path.replace('.pkl','_log.txt')
+        # fh = logging.FileHandler(self.logfile,mode="a")
+        # formatter = logging.Formatter("  %(asctime)s %(message)s")
+        # fh.setFormatter(formatter)
+        # fh.setLevel(logging.INFO)
+        # logger.addHandler(fh)
 
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self,hc_trial_bin=5000):
@@ -41,7 +41,7 @@ class MiniAna(MA):
         , we need to regenereate "Trial_Num" and "Porcess" for each session
         and save them in pkl file
         """
-        logger.info("FUN:: add_Trial_Num_Process")
+        print("FUN:: add_Trial_Num_Process")
 
         if self.exp=="hc":
             print("this session was recorded in homecage")
@@ -60,14 +60,14 @@ class MiniAna(MA):
             self.result["process"] = self.result["aligned_behave2ms"]["process"]
 
         print("'Trial_Num' and 'process' were added")
-        self.savesession("Trial_Num","process")
+        # self.savesession("Trial_Num","process")
         
 
     def add_Context(self,context_map=None):
         """
         the same size as df.
         """
-        logger.info("FUN::add_Context")
+        print("FUN::add_Context")
         Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
         print("'Contex' came frome 'Enter_ctx'")
         self.result["Context"] = pd.Series([int(i) for i in Context],name="Context")
@@ -83,7 +83,7 @@ class MiniAna(MA):
         """
         which is moved to context_exposure/Cminiresult, and is about to discrete
         """
-        logger.info("FUN::add_c_behavevideoframe")
+        print("FUN::add_c_behavevideoframe")
         if not "behavevideoframe" in self.result.keys() and frame==999:
             behavevideo = self.result["behavevideo"][0] if behavevideo==None else behavevideo
             cap = cv2.VideoCapture(behavevideo)
@@ -95,13 +95,28 @@ class MiniAna(MA):
             ret,frame = cap.read()
             cap.release()
             self.result["behavevideoframe"]=frame
-            logger.debug("behavevideoframe was saved")
+            self.savesession("all_track_points")
+            # print("behavevideoframe was saved")
         else:
-            logger.debug("behavevideoframe has been there.")
+            print("behavevideoframe has been there.")
+
+    def add_c_all_track_points(self,):
+        """
+        """
+        print("FUN:: add_c_all_track_points")
+        if self.exp == "task":
+            if not "all_track_points" in self.result.keys():
+                behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
+                coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
+                self.result["all_track_points"] = coords
+                self.savesession("all_track_points")
+            else:
+                print("all_track_points has been there")
+
 
     def add_Body_speed(self,scale=0.2339021309714166):
 
-        logger.info("FUN::add_Body_speed")
+        print("FUN::add_Body_speed")
 
         if self.exp == "task":
             Body_speed,Body_speed_angle = speed(X=self.result["aligned_behave2ms"]["Body_x"]
@@ -117,7 +132,7 @@ class MiniAna(MA):
             print("homecage session has no 'Body_speed'")
 
     def add_Head_speed(self,scale=0.2339021309714166):
-        logger.info("FUN::add_Head_speed")
+        print("FUN::add_Head_speed")
 
         if self.exp == "task":
             Head_speed,Head_speed_angle = speed(X=self.result["aligned_behave2ms"]["Head_x"]
@@ -135,7 +150,7 @@ class MiniAna(MA):
 
 
     def add_running_direction(self,according="Body"):
-        logger.info("FUN::add_running_direction_%s"%according)
+        print("FUN::add_running_direction")
 
         if self.exp == "task":
             running_direction = []
@@ -159,7 +174,7 @@ class MiniAna(MA):
         """
         need to draw line in behavevideo, so save the coords of these lines.
         """
-        logger.info("FUN::add_alltrack_placebin_num")
+        print("FUN::add_alltrack_placebin_num")
 
         if self.exp == "task":
 
@@ -222,7 +237,7 @@ class MiniAna(MA):
         """
         which is about to discrete
         """
-        logger.info("FUN::add_is_in_context")
+        print("FUN::add_is_in_context")
         if self.exp == "task":
             mask = self.result["in_context_mask"]
             is_in_context=[]
@@ -241,7 +256,7 @@ class MiniAna(MA):
         """
         which is about to discrete
         """
-        logger.info("FUN::add_is_in_context")
+        print("FUN::add_is_in_context")
         if self.exp == "task":
             is_in_context=[]
             for x in self.result["aligned_behave2ms"]["Body_x"]:
@@ -256,7 +271,7 @@ class MiniAna(MA):
 
     def add_is_in_lineartrack(self):
 
-        logger.info("FUN::add_is_in_lineartrack")
+        print("FUN::add_is_in_lineartrack")
         if self.exp == "task":
             mask = self.result["in_lineartrack_mask"]
             is_in_lineartrack=[]
@@ -272,7 +287,7 @@ class MiniAna(MA):
             print("homecage session has no 'is_in_lineartrack'")
 
     def add_incontext_placebin_num(self,according="Head",placebin_number=40):
-        logger.info("FUN::add_incontext_placebin_num")
+        print("FUN::add_incontext_placebin_num")
 
         if self.exp == "task":
             Cx_min = np.min(np.array(self.result["in_context_coords"])[:,0])
@@ -307,7 +322,7 @@ class MiniAna(MA):
                         try:
                             in_context_placebin_num.append(temp)
                         except:
-                            logger.warning("%s is in context but not in any place bin"%x)
+                            print("%s is in context but not in any place bin"%x)
             self.result["in_context_placebin_num"] = pd.Series(in_context_placebin_num,name="in_context_placebin_num")
             print("in_context_placebin_num has been added, which should start from 1, 0 means out of context")
         else:
@@ -317,7 +332,7 @@ class MiniAna(MA):
         """
         need mannually draw zone in behavevideo, save the coordinates
         """
-        logger.info("FUN:: add_zone2result at zone %s"%zone)
+        print("FUN:: add_zone2result at zone %s"%zone)
 
         print("FUN:: add_zone2result at zone %s"%zone)
         mask = zone+"_mask"
@@ -347,7 +362,7 @@ class MiniAna(MA):
         which is about to discrete
         """
         #     scale = 0.2339021309714166 #cm/pixel 40cm的台子，202016，202017.202019适用
-        logger.info("FUN:: add_info2aligned_behave2ms scale: %scm/pixel ; placebin_number: %s"%(scale,placebin_number))
+        print("FUN:: add_info2aligned_behave2ms scale: %scm/pixel ; placebin_number: %s"%(scale,placebin_number))
 
         update = 0
             
@@ -432,7 +447,7 @@ class MiniAna(MA):
                             try:
                                 in_context_placebin_num.append(temp)
                             except:
-                                logger.warning("%s is in context but not in any place bin"%x)
+                                print("%s is in context but not in any place bin"%x)
 
                 print("in_context_placebin_num should start from 1, 0 means out of context")
                         
@@ -453,7 +468,7 @@ class MiniAna(MA):
 #%%
 
     def add_behave_choice_side(self,):
-        logger.info("FUN::add_behave_choice_side")
+        print("FUN::add_behave_choice_side")
 
         behave_choice_side = []
         if self.result["behavelog_info"]["Left_choice"][0]>self.result["behavelog_info"]["Right_choice"][0]:
@@ -472,7 +487,7 @@ class MiniAna(MA):
 
 
     def add_behave_context(self,according="Enter_ctx"):
-        logger.info("FUN::add_behave_context")
+        print("FUN::add_behave_context")
 
         self.result["behave_context"] = self.result["behavelog_info"][according]
         print("'behave_context' was added according to %s."%according)
@@ -514,7 +529,7 @@ class MiniAna(MA):
                     print("'S_dff' is taken as original self.df")
                 except:
                     self.df = self.df
-                    logger.warning("S_dff doesn't exist, sigraw is used.")
+                    print("S_dff doesn't exist, sigraw is used.")
 
             if arg == "sigraw":
                 self.df = pd.DataFrame(self.result["sigraw"],columns=self.result["idx_accepted"])
