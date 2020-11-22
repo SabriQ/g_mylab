@@ -35,7 +35,7 @@ class MiniAna():
 
         self._load_session()
         # self.align_behave_ms() # self.result["Trial_Num"], self.process
-        print("'sigraw' is taken as original self.df")
+        print("default 'sigraw' is taken as original self.df")
         self.df = pd.DataFrame(self.result["sigraw"][:,self.result["idx_accepted"]],columns=self.result["idx_accepted"])
         self.shape = self.df.shape
 
