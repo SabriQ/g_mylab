@@ -18,20 +18,12 @@ def cellids(session):
         s.add_running_direction(according="Body")
 
         contextcells = cellids_Context(s,"S_dff"
-                        ,idxes=None
-                        ,context_map=["A","B","C","N"]
                         ,placebin=np.arange(8,38))
 
-
-
         rdcells = cellid_RD_incontext(s,"S_dff"
-                            ,idxes=None
-                            ,context_map=["A","B","C","N"]
-                            ,rd_map=["left","right","None"]
                             ,placebin=np.arange(8,38))
 
         pccells = cellid_PC_incontext(s,"S_dff"
-                            ,idxes=None,context_map=["A","B","C","N"]
                             ,shuffle_times=1000
                             ,placebin=np.arange(8,38)
                             ,Body_speed=3)
