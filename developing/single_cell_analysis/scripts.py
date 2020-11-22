@@ -47,9 +47,9 @@ if __name__ == "__main__":
     
     for file_path in file_pathes:
         sessions = glob.glob(os.path.join(file_path,"session*.pkl"))
-        for session in sessions:
-            func(session)
-        # [print(i) for i in sessions]
-        # pool = Pool(processes=8)
-# 
-        # pool.map(func,sessions)
+        # for session in sessions:
+        #     func(session)
+        [print(i) for i in sessions]
+        pool = Pool(processes=8)
+
+        pool.map(func,sessions)
