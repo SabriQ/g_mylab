@@ -13,6 +13,7 @@ def cellids(session):
     if s.exp == "task":
         s.align_behave_ms()
         s.add_Trial_Num_Process() # s
+        s.add_Context()
         s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,30,4,4,4])
         s.add_Body_speed(scale=0.33)
         s.add_running_direction(according="Body")
