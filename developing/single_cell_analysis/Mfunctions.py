@@ -32,6 +32,8 @@ def cellids(session):
     else:
         return -1,-1,-1
 
+
+
 def plot_trace_with_running_direction(Context_dataframe_info):
     """
     return internal functions for plotting trace of each trial with two colors means two direction
