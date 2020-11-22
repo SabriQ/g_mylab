@@ -5,13 +5,15 @@ import pandas as pd
 import os,sys,glob
 import scipy.io as spio
 import pickle
+import itertools
 import scipy.stats as stats
 from mylab.ana.miniscope.Mplacecells import *
 from mylab.ana.miniscope.Mpca import *
 
 #%% for single cell analysis
-def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
+def cellids_Context2(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
     """
+    which is about to discrete
     s.align_behave_ms()
     s.add_alltrack_placebin_num
     s.add_Trial_Num_Process()
@@ -58,14 +60,9 @@ def cellids_Context(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
     "non_context_cells":non_context_cells
     }
 
-
-def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
+def cellid_RD_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
     """
-    s.align_behave_ms()
-    s.add_Trial_Num_Process()
-    s.add_alltrack_placebin_num()
-    s.add_is_in_context()
-    s.add_Context()
+    which is about to discrete
     """
     print("FUNC::cellid_RD_incontext")
     df,index = s.trim_df(*args,**kwargs)
@@ -130,13 +127,9 @@ def cellid_RD_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=
     }
 
 
-def cellid_PC_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
+def cellid_PC_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
     """
-    before performing this fun, we need to prepare:
-    s.align_behave_ms()
-    s.add_Trial_Num_Process()
-    s.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,30,4,4,4],behavevideo)
-    s.add_Body_speed(scale=0.33)
+    which is about to be discreted
 
     """
     print("FUNC::cellid_PC_incontext")
@@ -212,6 +205,157 @@ def cellid_PC_incontext(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle
         "observed_SIs_B":observed_SIs_B,
         "place_cells_B":place_cells_B
         }
+
+def cellids_Context(s,*args,**kwargs):
+    """
+    s.add_Context()
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num(placebins=[4,4,30,4,4,4])
+    """
+    print("FUNC::cellids_Context")
+    df,index = s.trim_df(*args,**kwargs)
+    df = df[index]
+
+
+    Trial_Num = s.result["Trial_Num"][index]
+    Context= s.result["Context"][index]
+
+    meanfr_df = df.groupby([Trial_Num,Context]).mean()
+    ctx_meanfr = meanfr_df.groupby(["Context"]).mean()
+
+    result = {}
+    result["meanfr_df"] = meanfr_df
+    result["ctx_meanfr"] = ctx_meanfr
+
+    if len(set(Context)) > 1:
+        for ctxes in itertools.combinations(set(Context),2):
+            a,b = ctxes
+            idx_a = meanfr_df.index.get_level_values(level="Context")==a
+            idx_b = meanfr_df.index.get_level_values(level="Context")==b
+            ctx_pvalue = meanfr_df.apply(func=lambda x: stats.ranksums(x[idx_a],x[idx_b])[1],axis=0)
+            CSI = (ctx_meanfr.loc[a,:]-ctx_meanfr.loc[b,:])/(ctx_meanfr.loc[a,:]+ctx_meanfr.loc[b,:])
+
+            ContextA_cells=[]
+            ContextB_cells=[]
+            non_context_cells=[]
+
+            for cellid,csi, p in zip(ctx_meanfr.columns,CSI,ctx_pvalue):
+                if p>=0.05:
+                    non_context_cells.append(cellid)
+                else:
+                    if csi>0:
+                        ContextA_cells.append(cellid)
+                    elif csi<0:
+                        ContextB_cells.append(cellid)
+                    else:
+                        print("meanfr of cell %s is equal in Context %s and Context %s"%(cellid,a,b))
+                        non_context_cells.append(cellid)
+
+            result["ctx%s_%s"%(a,b)]={
+            "ctx_pvalue":ctx_pvalue,
+            "CSI":CSI,
+            "context%s_cells"%a:ContextA_cells,
+            "context%s_cells"%b:ContextB_cells,
+            "non_context_cells":non_context_cells
+            }
+
+
+    return result
+
+def cellid_RD_incontext(s,*args,**kwargs):
+    """
+    s.align_behave_ms()
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num()
+    s.add_Context
+    s.add_Body_speed(scale=0.33)
+    s.add_running_direction(self,according="Body")
+    """
+    print("FUNC::cellid_RD_incontext")
+    df,index = s.trim_df(*args,**kwargs)
+    df = df[index]
+    Trial_Num = s.result["Trial_Num"][index]
+    Context= s.result["Context"][index]
+    in_context_running_direction=s.result["running_direction"][index]
+
+    meanfr_df=df.groupby([Trial_Num,Context,in_context_running_direction]).mean()
+
+    ctx_rd_meanfr=meanfr_df.groupby(["Context","running_direction"]).mean()
+    result = {}
+
+    result["meanfr_df"] = meanfr_df
+    result["ctx_rd_meanfr"] = ctx_rd_meanfr
+
+    for ctx in set(Context):
+        ctx_idx = meanfr_df.index.get_level_values(level="Context")==ctx
+        idx_0 = meanfr_df[ctx_idx].index.get_level_values(level="running_direction")==0
+        idx_1 = meanfr_df[ctx_idx].index.get_level_values(level="running_direction")==1
+        ctx_rd_pvalue = meanfr_df[ctx_idx].apply(func=lambda x: stats.ranksums(x[idx_0],x[idx_1])[1],axis=0)
+        ctx_rd_RDSI = (ctx_rd_meanfr.loc[(ctx,0),:]-ctx_rd_meanfr.loc[(ctx,1),:])/(ctx_rd_meanfr.loc[(ctx,0),:]+ctx_rd_meanfr.loc[(ctx,1),:])
+        left_cells=[]
+        right_cells=[]
+        non_rd_cells=[]
+        for cellid, p, si in zip(meanfr_df.columns,ctx_rd_pvalue,ctx_rd_RDSI):
+            if p>=0.05:
+                non_rd_cells.append(cellid)
+            else:
+                if si > 0:
+                    left_cells.append(cellid)
+                elif si<0:
+                    right_cells.append(cellid)
+                else:
+                    non_rd_cells.append(cellid)
+                    print("meanfr of cell %s is equal in two runnin directions"%cellid)
+
+        result["context_%s"%ctx] = {
+        "ctx_rd_pvalue":ctx_rd_pvalue,
+        "ctx_rd_RDSI":ctx_rd_RDSI,
+        "left_cells":left_cells,
+        "right_cells":right_cells,
+        "non_rd_cells":non_rd_cells
+        }
+
+    return result
+
+
+def cellid_PC_incontext(s,*args,shuffle_times=1000,**kwargs):
+    """
+    s.align_behave_ms()
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num(according="Head",place_bin_nums=[4,4,30,4,4,4],behavevideo)
+    s.add_Body_speed(scale=0.33)
+    """
+    print("FUNC::cellid_PC_incontext")
+    df,index = s.trim_df(*args,**kwargs)
+    df=df[index]
+    Trial_Num = s.result["Trial_Num"][index]
+    Context= s.result["Context"][index]
+
+    in_context_placebin_num = s.result["place_bin_No"][index]
+
+
+    result = {}
+    for ctx in set(Context):
+        result["context_%s"%ctx]={
+        "observed_SIs":Cal_SIs(df[Context==ctx],in_context_placebin_num[Context==ctx]),
+        "shuffle_func":bootstrap_Cal_SIs(df[Context==ctx],in_context_placebin_num[Context==ctx]),
+        "shuffle_SIs":[]
+        }
+
+
+    for i in range(shuffle_times):
+        sys.stdout.write("%s/%s"%(i+1,shuffle_times))
+        sys.stdout.write("\r")
+        for ctx in set(Context):
+            result["context_%s"%ctx]["shuffle_SIs"].append(result["context_%s"%ctx]["shuffle_func"]().values)
+    for ctx in set(Context):
+        result["context_%s"%ctx]["shuffle_SIs"] = pd.DataFrame(result["context_%s"%ctx]["shuffle_SIs"],columns=df.columns)
+        result["context_%s"%ctx]["zscore"] = (result["context_%s"%ctx]["observed_SIs"]-result["context_%s"%ctx]["shuffle_SIs"].mean())/result["context_%s"%ctx]["shuffle_SIs"].std()
+        result["context_%s"%ctx]["place_cells"] = result["context_%s"%ctx]["zscore"][result["context_%s"%ctx]["zscore"]>1.96].index.tolist()
+
+    return result
+
+
 
 def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxes=None,trials=None):
     """
