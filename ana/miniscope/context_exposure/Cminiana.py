@@ -486,11 +486,51 @@ class MiniAna(MA):
         print("'behave_choice_side' was added.")
 
 
-    def add_behave_context(self,according="Enter_ctx"):
-        print("FUN::add_behave_context")
+    def add_behave_forward_context(self,according="Enter_ctx"):
+        print("FUN::add_behave_forward_context")
 
-        self.result["behave_context"] = self.result["behavelog_info"][according]
-        print("'behave_context' was added according to %s."%according)
+        self.result["behave_forward_context"] = self.result["behavelog_info"][according]
+        print("'behave_forward_context' was added according to %s."%according)
+
+    def add_behave_forward_noise(self,according="Enter_ctx"):
+        print("FUN::add_behave_forward_noise")
+        behave_forward_noise=[]
+        if not "behave_forward_context" in self.result.keys():
+            self.add_behave_forward_context(according=according)
+        context = self.result["behave_forward_context"]
+        if context[0]==1:
+            behave_forward_noise.append(0)
+        else:
+            behave_forward_noise.append(1)
+
+        for context_change in np.diff(context):
+            if context_change == 0:
+                behave_forward_noise.append(0)
+            else:
+                behave_forward_noise.append(1)
+
+        self.result["behave_forward_noise"] = behave_forward_noise
+        print("'behave_forward_noise' was added according to %s."%according)
+
+
+    def add_behave_Trial_duration(self):
+        """
+        """
+        print("FUN::add_behave_Trial_duration")
+        durations = np.diff(self.result["behavelog_time"],axis=1)
+        behave_Trial_durations = pd.DataFrame(durations,columns=["process1","process2","processs3","process4","process5"])
+        behave_Trial_durations["Trial"] = np.sum(behave_Trial_durations,axis=1)
+        
+        self.result["behave_Trial_durations"] = behave_Trial_durations
+        print("'behave_Trial_durations' was added.")
+
+    def add_behave_reward(self):
+        """
+        """
+        print("FUN::add_behave_reward")
+        self.result["behave_reward"] = self.result["behavelog_info"]["Choice_class"]
+        print("'behave_reward' was added")
+
 
 
     def trim_df(self,*args,**kwargs):

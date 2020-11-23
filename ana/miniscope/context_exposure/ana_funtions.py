@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import os,sys,glob
+import os,sys,glob,re
 import scipy.io as spio
 import pickle
 import itertools
@@ -576,3 +576,36 @@ def dPCA(s,**kwargs):
     result = demixed_pca(R,trialR,**kwargs)
 
     return result
+
+
+#%% for behavioral analysis
+
+def behave_stat_info(s,):
+    stat_info = {}
+    s.add_behave_choice_side()
+    Choice_side = s.result["behave_choice_side"]
+    s.add_behave_forwad_context(according="Enter_Context")
+    Context  = s.result["behave_forwad_context"]
+
+    stat_info["video_name"] = s.result["behavevideo"][0]
+    stat_info["date"] = re.findall(r"(\d{8})-\d{6}",video_name)[0]
+    stat_info["mouse_id"] = re.findall(r"(\d+)-\d{8}-\d{6}",video_name)[0]
+    stat_info["aim"] = re.findall(r"CDC-(.*)-%s"%mouse_id,video_name)[0]
+    stat_info["Trial_Num"] = s..result["behavelog_info"].shape[0]
+
+
+
+    Left_choice = s.result["behavelog_info"]["Left_choice"]
+    Right_choice = s.result["behavelog_info"]["Right_choice"]
+    Choice_class = s.result["behavelog_info"]["Choice_class"]
+    forward_context = s.result["add_behave_forward_context"]
+
+    state_info["bias"] =  (max(Left_choice)-max(Right_choice))/(max(Left_choice)+max(Right_choice))
+    state_info["Total_Accuracy"] = sum(Choice_class)/len(Choice_class)
+    state_info["Left_Accuracy"] = sum(Choice_class[Choice_side=="left"])/len(Choice_class[Choice_side=="left"])
+    state_info["Right_Accuracy"] = sum(Choice_class[Choice_side=="right"])/len(Choice_class[Choice_side=="right"])
+
+    for ctx in set(Context):
+        state_info["ctx_%s_Accuracy"%ctx]= sum(Choice_class[Context==ctx])/len(Choice_class[Context==ctx])
+
+    return state_info
