@@ -584,7 +584,7 @@ def behave_stat_info(s,):
     stat_info = {}
     s.add_behave_choice_side()
     Choice_side = s.result["behave_choice_side"]
-    s.add_behave_forwad_context(according="Enter_Context")
+    s.add_behave_forward_context(according="Enter_Context")
     Context  = s.result["behave_forwad_context"]
 
     stat_info["video_name"] = s.result["behavevideo"][0]
