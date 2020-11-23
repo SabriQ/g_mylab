@@ -591,7 +591,7 @@ def behave_stat_info(s,):
     stat_info["date"] = re.findall(r"(\d{8})-\d{6}",video_name)[0]
     stat_info["mouse_id"] = re.findall(r"(\d+)-\d{8}-\d{6}",video_name)[0]
     stat_info["aim"] = re.findall(r"CDC-(.*)-%s"%mouse_id,video_name)[0]
-    stat_info["Trial_Num"] = s..result["behavelog_info"].shape[0]
+    stat_info["Trial_Num"] = s.result["behavelog_info"].shape[0]
 
 
 
