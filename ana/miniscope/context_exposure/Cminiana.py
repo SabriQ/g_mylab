@@ -489,7 +489,7 @@ class MiniAna(MA):
     def add_behave_forward_context(self,according="Enter_ctx"):
         print("FUN::add_behave_forward_context")
 
-        self.result["behave_forward_context"] = self.result["behavelog_info"][according]
+        self.result["behave_forward_context"] = pd.Series(self.result["behavelog_info"][according],name="behave_forward_context")
         print("'behave_forward_context' was added according to %s."%according)
 
     def add_behave_forward_noise(self,according="Enter_ctx"):
@@ -509,7 +509,7 @@ class MiniAna(MA):
             else:
                 behave_forward_noise.append(1)
 
-        self.result["behave_forward_noise"] = behave_forward_noise
+        self.result["behave_forward_noise"] = pd.Series(behave_forward_noise,name="behave_forward_noise")
         print("'behave_forward_noise' was added according to %s."%according)
 
 
@@ -521,16 +521,15 @@ class MiniAna(MA):
         behave_Trial_durations = pd.DataFrame(durations,columns=["process1","process2","processs3","process4","process5"])
         behave_Trial_durations["Trial"] = np.sum(behave_Trial_durations,axis=1)
         
-        self.result["behave_Trial_durations"] = behave_Trial_durations
+        self.result["behave_Trial_durations"] = pd.Series(behave_Trial_durations,name="behave_Trial_durations")
         print("'behave_Trial_durations' was added.")
 
     def add_behave_reward(self):
         """
         """
         print("FUN::add_behave_reward")
-        self.result["behave_reward"] = self.result["behavelog_info"]["Choice_class"]
+        self.result["behave_reward"] = pd.Series(self.result["behavelog_info"]["Choice_class"],name="behave_reward")
         print("'behave_reward' was added")
-
 
 
     def trim_df(self,*args,**kwargs):
