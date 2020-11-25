@@ -167,7 +167,7 @@ void process(int p){
       if (ir[4]==1){
         Serial.print("_l");
         left_choice= left_choice + 1;   
-        if (trial[i]==0){
+        if (trial[i]==1){
           Signal(50);//pump_rl给水
           Serial.println(" correct");
           Choice_class = 1; }else{
@@ -177,7 +177,7 @@ void process(int p){
       else if (ir[5]==1){
         Serial.print("_r") ;
         right_choice=right_choice + 1;          
-        if (trial[i]==1){  
+        if (trial[i]==0){  
           Signal(51);//pump_rr给水
           Serial.println(" correct");
           Choice_class = 1; }else{

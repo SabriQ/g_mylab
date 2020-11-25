@@ -50,10 +50,10 @@
 			}
 		},
 		{
-			"file": "exps/e5_stage_5/context_dependent_3c/master_Train/master_Train.ino",
+			"file": "sys_camera.py",
 			"settings":
 			{
-				"buffer_size": 9955,
+				"buffer_size": 3690,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -93,12 +93,11 @@
 	[
 		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab",
 		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/exps",
-		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/exps/e5_stage_5",
-		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent_3c",
-		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent_3c/master_Train"
+		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/exps/e5_stage_5"
 	],
 	"file_history":
 	[
+		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/exps/e5_stage_5/context_dependent_3c/master_Train/master_Train.ino",
 		"/C/MinGW/msys/1.0/msys.bat",
 		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/ana/linear_track/miniLWana.py",
 		"/C/Users/dell/AppData/Local/Programs/Python/Python37-32/Lib/site-packages/mylab/process/miniscope/lick_water/CminiLWresult.py",
@@ -173,7 +172,7 @@
 	"groups":
 	[
 		{
-			"selected": 3,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -261,42 +260,41 @@
 					},
 					"stack_index": 1,
 					"type": "text"
-				},
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
 				{
 					"buffer": 3,
-					"file": "exps/e5_stage_5/context_dependent_3c/master_Train/master_Train.ino",
+					"file": "sys_camera.py",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 9955,
+						"buffer_size": 3690,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								1733,
+								1733
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/C++/C.sublime-syntax",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
+							"syntax": "Packages/Python/Python.sublime-syntax"
 						},
 						"translation.x": 0.0,
-						"translation.y": 1512.0,
+						"translation.y": 1242.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				}
-			]
-		},
-		{
-			"sheets":
-			[
 			]
 		}
 	],

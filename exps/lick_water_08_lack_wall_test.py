@@ -6,12 +6,12 @@ from matplotlib.pyplot import MultipleLocator
 import matplotlib.pyplot as plt
 import numpy as np
 class LickWater(Exp):
-    def __init__(self,port,data_dir=r"E:\linear_track",mode="switch_AB_test",video_record=True):
+    def __init__(self,port,data_dir=r"E:\linear_track",mode="lack_wall",video_record=True):
         super().__init__(port,data_dir)
         self.data_dir = os.path.join(data_dir,time.strftime("%Y%m%d", time.localtime()))
         self.video_record = video_record
         self.mode = mode
-        modes = ["adaptation_40cm","adaptation_60cm","adaptation_80cm","adaptation_80cm_CCC","local-global","elements-omission","train","test","switch_AB_test"]
+        modes = ["adaptation_40cm","adaptation_60cm","adaptation_80cm","adaptation_80cm_CCC","local-global","elements-omission","train","test","all_blank","lack_wall"]
         if not self.mode in modes:
             print("please choose mode from %s"% modes)
             sys.exit()

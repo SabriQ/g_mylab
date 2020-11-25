@@ -24,26 +24,42 @@ int ir_rr =A7;
 int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
-
-//int trial[60] = {2,1,1,2,1,1,2,2,2,1,
-//                1,2,1,2,1,2,2,2,1,1,
-//                1,2,1,1,1,2,2,1,2,2,
-//                1,2,2,1,2,1,2,2,1,1,
-//                2,2,1,1,2,1,2,1,2,1,
-//                2,1,2,1,2,1,2,1,2,1};
-int trial[60] = {1,0,1,0,1,0,0,1,0,1,
-                0,0,1,0,1,0,1,0,1,1,
-                1,0,1,0,1,0,1,1,0,0,
-                1,0,1,1,0,1,0,0,1,0,
-                0,1,1,0,0,1,0,0,0,1,
-                0,1,1,1,0,1,0,0,0,1};
-//int trial[60] = {0,1,1,0,1,1,0,0,0,1,
-//                1,0,1,0,1,0,0,0,1,1,
-//                1,0,1,1,1,0,0,1,0,0,
-//                1,0,0,1,0,1,0,0,1,1,
-//                0,0,1,1,0,1,0,1,0,1,
-//                0,1,0,1,0,1,0,1,0,1};
-//                              
+//27: 0 27:1 6: 2
+//int trial[60] = {2,1,0,0,1,1,0,1,0,1,
+//                1,0,1,2,1,0,0,0,1,0,
+//                1,2,1,0,1,0,0,1,0,0,
+//                1,0,0,1,2,1,0,0,1,0,
+//                0,0,1,1,0,1,0,1,2,1,
+//                0,1,2,1,0,1,0,1,0,1};
+//30:0 30:1
+int trial[60] = {0,1,0,0,1,1,0,1,0,1,
+                1,0,1,0,1,0,0,1,1,0,
+                1,1,1,0,1,0,0,1,0,0,
+                1,0,0,1,1,1,0,0,1,0,
+                0,0,1,1,0,1,0,1,0,1,
+                0,1,1,0,0,1,0,1,0,1};
+//int trial[60] = {1,1,0,1,0,1,0,0,0,1,
+//                1,0,1,0,1,0,0,1,1,0,
+//                1,0,1,0,1,1,0,1,0,0,
+//                1,0,1,1,1,0,0,0,1,0,
+//                1,0,1,0,0,1,0,1,0,1,
+//                0,0,1,1,0,1,0,1,0,1};
+//20: 0 20:1 20: 2    
+            
+//int trial[60] ={2,1,2,1,0,1,0,1,2,0,
+//                0,1,2,1,2,2,0,2,1,0,
+//                0,2,2,0,0,1,2,1,0,1,
+//                2,1,2,1,0,1,0,1,2,0,
+//                0,1,2,1,2,2,0,2,1,0,
+//                0,2,2,0,0,1,2,1,0,1};
+//15: 0 30:1 15: 2               
+//int trial[60] = {0,1,2,1,2,1,0,1,0,1,
+//                2,1,2,1,0,1,2,1,0,1,
+//                2,1,0,1,0,1,0,1,2,1,
+//                0,1,2,1,2,1,0,1,2,1,
+//                0,1,0,1,2,1,0,1,2,1,
+//                0,1,2,1,0,1,2,1,2,1,};
+                
 int trial_length = 60;
 
 int i =0;
@@ -134,10 +150,10 @@ void process(int p){
       miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-       if (trial[i]==0){
+       if (2-trial[i]==0){
         Signal(52);cur_enter_context=0;
         }
-       else if(trial[i]==1){
+       else if(2-trial[i]==1){
           Signal(53);cur_enter_context=1;
           }
        else{
@@ -166,22 +182,28 @@ void process(int p){
       Serial.print("Stat4: choice");//打印stat 
       if (ir[4]==1){
         Serial.print("_l");
+        Signal(50);//pump_rl给水
         left_choice= left_choice + 1;   
-        if (trial[i]==1){
-          Signal(50);//pump_rl给水
+        if (trial[i]==0){
           Serial.println(" correct");
           Choice_class = 1; }else{
           Serial.println(" wrong");           
           Choice_class = 0;}
       }
-      else if (ir[5]==1){
+       else if (ir[5]==1){
         Serial.print("_r") ;
         right_choice=right_choice + 1;          
-        if (trial[i]==0){  
+        if (trial[i]==1){  
           Signal(51);//pump_rr给水
           Serial.println(" correct");
           Choice_class = 1; }else{
-          Serial.println(" wrong");            
+          Serial.println(" wrong");
+          Signal(51);//pump_rl给水
+          //just for train
+//          if (right_choice > 2* left_choice ||right_choice >= left_choice +15 && Trial_num >= 10){
+//            Signal(50);//pump_rl 给水
+//            }
+            
           Choice_class = 0; }   
        }
        else {
@@ -228,35 +250,21 @@ void Signal(int s){
   switch (s)
   {
     case 48://ll_pump,nosepoke
-    water_deliver(pump_ll,7);
-
+      water_deliver(pump_ll,7);
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
       
     case 50://rl_pump 
-    if (2*right_choice < left_choice || right_choice +15 <= left_choice && Trial_num >= 15){
-      water_deliver(pump_rl,4);
-    }else{
-        water_deliver(pump_rl,7);
-    }
-      //如果bias 太严重,增加unprefer这一边的水量一倍
-      if (2*left_choice < right_choice || left_choice +15 <=right_choice && Trial_num >= 15){
         water_deliver(pump_rl,7); 
-      }
       break;
       
     case 51://rr_pump
-    if (2*left_choice < right_choice || left_choice +15 <=right_choice && Trial_num >= 15){
-      water_deliver(pump_rr,4);
-    }else{
-      water_deliver(pump_rr,7);
-    }
-    
-    if (2*right_choice < left_choice || right_choice +15 <= left_choice && Trial_num >= 15){
-      water_deliver(pump_rr,7); 
-    }
+      water_deliver(pump_rr,8);      
+      if (2*right_choice < left_choice || right_choice +10 <= left_choice && Trial_num >= 10){
+        water_deliver(pump_rr,8); 
+      }
       break;
       
     case 52://to context0 4
@@ -291,7 +299,7 @@ void Read_ir(){
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
     if (exp_start ==0 && on_signal>=0.90){
-      Signal(55);
+      Signal(55);//锁死电机,初始化电机转动速度序列
       Signal(48);//默认第一个trial的开始nose poke给水
       exp_start_time=millis();
       digitalWrite(miniscope_trigger,HIGH);

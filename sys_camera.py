@@ -12,7 +12,7 @@ def get_cameraName():
     out = child.communicate()[1].decode("utf-8")
 ##    print(out)
     pattern = re.compile('"(.*)"')    
-    return pattern.findall(out)[1]    ##改这里
+    return pattern.findall(out)[2]    ##改这里
 
 def get_cameraParam():
     cameraName = get_cameraName()
@@ -48,7 +48,7 @@ def video_online_play():
         '-f','dshow',
         '-video_size','640x480',
         '-i','video='+cameraName,
-        '-vf',r"drawtext=fontsize=12:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}':fontcolor=green'",
+        '-vf',r"drawtext=fontsize=12:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}%{pts\:hms}':fontcolor=green'",
         '-loglevel','quiet']
         child = subprocess.Popen(command,stdin=subprocess.PIPE,encoding='utf-8')
     if (platform.system()=="Linux"):
@@ -57,7 +57,7 @@ def video_online_play():
             '-f','v4l2',
             '-video_size','640x480',
             '-i',cameraName,
-            '-vf',r"drawtext=fontsize=16:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}':fontcolor=green'",
+            '-vf',r"drawtext=fontsize=16:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}%{pts\:hms}':fontcolor=green'",
             '-loglevel','quiet']
         child = subprocess.Popen(command,stdin=subprocess.PIPE,encoding='utf-8')
     return child
@@ -72,9 +72,9 @@ def video_recording(video_name):
         '-i','video='+cameraName,
         '-vcodec','rawvideo',
         '-pix_fmt','yuv420p',    
-        '-vf',r"drawtext=fontsize=12:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}':fontcolor=green'",
+        '-vf',r"drawtext=fontsize=12:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}%{pts\:hms}':fontcolor=green'",
         '-f','sdl','Recording',
-        '-vf',r"drawtext=fontsize=12:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}':fontcolor=white'",
+        '-vf',r"drawtext=fontsize=12:text='%{localtime\:%Y\-%m\-%d %H\\\:%M\\\:%S}%{pts\:hms}':fontcolor=white'",
         '-loglevel','quiet',
         video_name ]
         child = subprocess.Popen(command,stdin=subprocess.PIPE,encoding='utf-8')

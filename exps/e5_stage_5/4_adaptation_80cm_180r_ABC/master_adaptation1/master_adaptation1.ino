@@ -25,19 +25,19 @@ int ir[6];
 float on_signal;
 //in trial[60], 0 for context A , 1 for context B
 //27: 0 27:1 6: 2
-int trial[60] = {2,1,0,0,1,1,0,1,0,1,
-                1,0,1,2,1,0,0,0,1,0,
-                1,2,1,0,1,0,0,1,0,0,
-                1,0,0,1,2,1,0,0,1,0,
-                0,0,1,1,0,1,0,1,2,1,
-                0,1,2,1,0,1,0,1,0,1};
+//int trial[60] = {2,1,0,0,1,1,0,1,0,1,
+//                1,0,1,2,1,0,0,0,1,0,
+//                1,2,1,0,1,0,0,1,0,0,
+//                1,0,0,1,2,1,0,0,1,0,
+//                0,0,1,1,0,1,0,1,2,1,
+//                0,1,2,1,0,1,0,1,0,1};
 //30:0 30:1
-//int trial[60] = {0,1,0,0,1,1,0,1,0,1,
-//                1,0,1,0,1,0,0,1,1,0,
-//                1,1,1,0,1,0,0,1,0,0,
-//                1,0,0,1,1,1,0,0,1,0,
-//                0,0,1,1,0,1,0,1,0,1,
-//                0,1,1,0,0,1,0,1,0,1};
+int trial[60] = {0,1,0,0,1,1,0,1,0,1,
+                1,0,1,0,1,0,0,1,1,0,
+                1,1,1,0,1,0,0,1,0,0,
+                1,0,0,1,1,1,0,0,1,0,
+                0,0,1,1,0,1,0,1,0,1,
+                0,1,1,0,0,1,0,1,0,1};
 //int trial[60] = {1,1,0,1,0,1,0,0,0,1,
 //                1,0,1,0,1,0,0,1,1,0,
 //                1,0,1,0,1,1,0,1,0,0,
@@ -150,10 +150,10 @@ void process(int p){
       miniscope_event_on();
       Serial.println("Stat1: nose_poke");//打印stat
       Trial_num =Trial_num+1;//Trial_num 加一      
-       if (2-trial[i]==0){
+       if (trial[i]==0){
         Signal(52);cur_enter_context=0;
         }
-       else if(2-trial[i]==1){
+       else if(trial[i]==1){
           Signal(53);cur_enter_context=1;
           }
        else{
@@ -250,15 +250,14 @@ void Signal(int s){
   switch (s)
   {
     case 48://ll_pump,nosepoke
-    water_deliver(pump_ll,7);
-
+      water_deliver(pump_ll,7);
       break;
     case 49://lr_pump
       water_deliver(pump_lr,10);
       break;
       
     case 50://rl_pump 
-        water_deliver(pump_rl,7);
+        water_deliver(pump_rl,7); 
       break;
       
     case 51://rr_pump
@@ -287,6 +286,10 @@ void Signal(int s){
         send2slave1_motor=3;
         write2slave(1,send2slave1_motor);
         break;
+    case 56://enable ena HIGH
+        send2slave1_motor=4;
+        write2slave(1,send2slave1_motor);
+        break;
     default:
       break;}
     }
@@ -296,6 +299,7 @@ void Read_ir(){
   on_signal = Read_digital(ON, 4);
 //  Serial.print(on_signal);Serial.print(" ");
     if (exp_start ==0 && on_signal>=0.90){
+      Signal(55);//锁死电机,初始化电机转动速度序列
       Signal(48);//默认第一个trial的开始nose poke给水
       exp_start_time=millis();
       digitalWrite(miniscope_trigger,HIGH);
@@ -348,9 +352,11 @@ void Read_ir(){
     Trial_num = 0;  
     left_choice = 0;
     right_choice = 0;
-    exp_start = 0;
     digitalWrite(pump_led,LOW);
     digitalWrite(miniscope_trigger,LOW);
+    if (exp_start == 1){
+    Signal(56);}
+    exp_start = 0;
   }  }
 //////////////////////////////////////////
 float Read_analog(int analog, int times) {
