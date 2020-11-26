@@ -622,7 +622,7 @@ class MiniAna(MA):
         """
         show all the tracking traectory in a behavioral video frame.
         """
-        self.add_behavevideoframe()
+        self.add_c_behavevideoframe(behavevideo=None,frame=999)
         plt.imshow(self.result["behavevideoframe"])
         plt.xticks([])
         plt.yticks([])
