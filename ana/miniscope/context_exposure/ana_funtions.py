@@ -581,6 +581,10 @@ def dPCA(s,**kwargs):
 #%% for behavioral analysis
 
 def behave_stat_info(s,):
+    """
+    计算每一个test or train session的行为学相关参数
+    """
+
     stat_info = {}
     s.add_behave_choice_side()
     Choice_side = s.result["behave_choice_side"]
@@ -608,3 +612,8 @@ def behave_stat_info(s,):
             stat_info["ctx_%s_Accuracy"%ctx]= sum(Choice_class[Context==ctx])/len(Choice_class[Context==ctx])
 
     return stat_info
+
+def behave_logistic_regression(s,):
+    pass
+    
+#%% SVM decoding for single neuron with Bayesian optimization
