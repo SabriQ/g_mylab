@@ -6,7 +6,7 @@ from multiprocessing import Pool
 
 
 
-def func(session):
+def savecelltypes(session):
     mouse_id = re.findall("Results_(\d+)",session)[0]
     part = re.findall("part(\d+)",session)[0]
     session_num = re.findall("session(\d+).pkl",session)[0]
@@ -33,6 +33,8 @@ def func(session):
             "session":session},result_path=savepath)
 
     print("========================================")
+    
+
     
 
 if __name__ == "__main__":
