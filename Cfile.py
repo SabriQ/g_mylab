@@ -82,15 +82,17 @@ class TimestampsFile(File):
     def read_timestamp(self):
         if self.method == "datetime":
             data = pd.read_csv(self.file_path,sep=",")
-            start = datetime.datetime.strptime(data["0"][0], '%Y-%m-%d %H:%M:%S.%f')
-            data["0"]=data["0"].apply(self.datetime2minisceconds,args=[start,])
-            return pd.Series(data["0"]/1000,name="datetime_ms")
+            data.columns = ["frame_No","ts"]
+            start = datetime.datetime.strptime(data["ts"][0], '%Y-%m-%d %H:%M:%S.%f')
+            data["ts"]=data["ts"].apply(self.datetime2minisceconds,args=[start,])
+
+            return pd.Series(data["ts"]/1000,name="datetime_ms")
         if self.method  == "ffmpeg":
             try:
-                ts = pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["ffmpeg_ts"])
+                ts = pd.read_csv(self.file_path,encoding="utf-16",header=None,sep=" ",names=["ts"])
             except :
                 try:
-                    ts = pd.read_csv(self.file_path,header=None,sep=" ",names=["ffmpeg_ts"])
+                    ts = pd.read_csv(self.file_path,header=None,sep=" ",names=["ts"])
                 except:
                     print("default method is ffmpeg, try 'datetime'")
                     sys.exit()
