@@ -23,9 +23,10 @@ import logging
 # sh.setLevel(logging.INFO)
 # logger.addHandler(sh)
 
-class MiniAna(MA):
-    def __init__(self,session_path):
-        super().__init__(session_path)
+
+# class MiniAna(MA):
+#     def __init__(self,session_path):
+#         super().__init__(session_path)
 
         # self.logfile =self.session_path.replace('.pkl','_log.txt')
         # fh = logging.FileHandler(self.logfile,mode="a")
@@ -34,6 +35,213 @@ class MiniAna(MA):
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
 
+def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
+    """
+    Arguments:
+
+    session_path: path of each session after aligned
+    r"...\batch3\Results_201033-finish\part1\session2.pkl"
+    context_map_file: transfer to function session_describe, the default is okay
+
+    Returns:
+
+    a trial list in which each trial get a structure organized.
+    """
+    mouse_id1 = re.findall("Results_(\d+)",session_path)[0]
+    part = re.findall("part(\d+)",session_path)[0]
+    session_num = re.findall("session(\d+).pkl",session_path)[0]
+
+    s = MA(session_path)
+    if not s.exp == "hc":
+        
+
+        videoname = s.result["behavevideo"][0]
+
+        mouse_id2 = re.findall("(\d+)-\d{8}-\d{6}.mp4",videoname)[0]
+        key_index = s.result["behavevideo"][1]
+        aim=re.findall("(.*)-%s"%mouse_id2,videoname)[0]
+
+        if mouse_id1 == mouse_id2:
+            mouse_id = mouse_id1
+
+        tirals = []
+        trial_list= [i for i in set(s.result["Trial_Num"]) if not i==-1] 
+
+        for trial in trial_list :
+
+            info={
+                "mouse_id":mouse_id,
+                "part":part,
+                "session_num":session_num,
+                "aim":aim,
+                "index":key_index,
+                "Trial_Num":trial,
+                "behavevideoframe":s.result["behavevideoframe"],
+                "all_track_points":s.result["all_track_points"]
+                }
+
+            index = s.result["aligned_behave2ms"]["Trial_Num"]==trial
+
+            miniscope={
+                "idx_accepted":s.result["idx_accepted"],
+                "S_dff":s.result["S_dff"][index],
+                "sigraw":s.result["sigraw"][index],
+                "corrected_ms_ts":s.result["corrected_ms_ts"][index]
+                }
+
+            behavior={
+                "track":s.result["aligned_behave2ms"][index],
+                "loginfo":s.result["behavelog_info"][s.result["behavelog_info"]["Trial_Num"]==trial],
+                "logtime":s.result["behavelog_time"].loc[trial-1]}
+
+            quality={
+                "aligned_difference":None
+            }
+
+            Trial = {
+            "info":info,
+            "miniscope":miniscope,
+            "behavior":behavior,
+            "quality":quality
+            }
+
+            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,trial))
+
+            with open(savepath,'wb') as f:
+                pickle.dump(Trial,f)
+            print("Trial is saved at %s"% savepath)
+
+    else:
+        print("homecage session")
+        savepath = os.path.join(savedir,"%s_part%s_session%s_hc.pkl"%(mouse_id1,part,session_num))
+
+        with open(savepath,'wb') as f:
+            pickle.dump(s.result,f)
+        print("homecage session is saved at %s"% savepath)
+
+        
+
+def construct_trial_lists(mouse_id,part,day,session=None,screen_trials=None,screen_trials_out=None,trial_pool_path=None):
+    """
+    index ,screen and sort trials in trial pools
+    each trial lists have only one mouse_id,one part,one day, however more than one sessions is allowed.
+    Accordingly, we could screen out some trials.
+
+    """
+    trial_pool_path  = r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials\*.pkl" if trial_pool_path is None else trial_pool_path
+    trials = glob.glob(trial_pool_path)
+    trials = [i for i in trials if not "hc" in i]
+    trials = [i for i in trials if str(mouse_id) in i]
+    trials = [i for i in trials if "part%s"%part in i]
+    trials = [i for i in trials if str(day) in i]
+
+    if not session is None:
+        trials = [i for i in trials if "session%s"%session in i]
+    if not screen_trials is None:
+        trials = [i for i in trials if int(re.findall("trial(\d+)",i)[0]) in screen_trials]
+    if not screen_trials_out is None:
+        trials = [i for i in trials if not int(re.findall("trial(\d+)",i)[0]) in screen_trials_out]
+
+    def key(file):
+        hms = int(re.findall("index\d{8}-(\d{6})_",file)[0])
+        session = int(re.findall("session(\d+)_",file)[0])
+        trial = int(re.findall("trial(\d+)",file)[0])
+        return [hms,session,trial]
+
+    trials.sort(key=key)
+
+    return trials
+
+def _load_trial(trial_path):
+    with open(trial_path,'rb') as f:
+        result = pickle.load(f)
+    print("%s is loaded"%os.path.basename(trial_path))
+    return result
+
+def concatenate_trials(trials):
+    """
+    concatenate trials gemerated by function  "construct_trial_lists" as new sessions
+    """
+    mouse_ids=[]
+    parts=[]
+    session_nums=[]
+    aims=[]
+    indexes=[]
+    
+    S_dffs=None
+
+    aligned_behave2ms=None
+    behavelog_info=None
+    behavelog_time=None
+    for trial in trials:
+        t = _load_trial(trial)
+        mouse_id,part,session_num,aim,index,_,_,_ = t["info"].values()
+        idx_accepted,S_dff,sigraw,corrected_ms_ts = t["miniscope"].values()
+        track,loginfo,logtime = t["behavior"].values()
+
+        if not mouse_id in mouse_ids:
+            mouse_ids.append(mouse_id)
+        if not part in parts:
+            parts.append(part)
+        if not session_num in session_nums:
+            session_nums.append(session_num)
+        if not aim in aims:
+            aims.append(aim)
+        if not index in indexes:
+            indexes.append(index)
+
+        if  S_dffs is None:
+            S_dffs=S_dff
+        else:
+            S_dffs = np.concatenate((S_dffs,S_dff),axis=0)
+
+
+        if aligned_behave2ms is None:
+            aligned_behave2ms=track
+        else:
+            aligned_behave2ms = pd.concat((aligned_behave2ms,track))
+
+        if behavelog_info is None:
+            behavelog_info = loginfo
+        else:
+            behavelog_info = pd.concat((behavelog_info,loginfo))
+
+        if behavelog_time is None:
+            behavelog_time = pd.DataFrame(logtime).T
+        else:
+            behavelog_time = pd.concat((behavelog_time,pd.DataFrame(logtime).T))
+
+    result={
+    "mouse_id":mouse_ids,
+    "part":parts,
+    "session_num":session_nums,
+    "aim":aims,
+    "index":indexes,
+    "behavevideoframe":t["info"]["behavevideoframe"],
+    "all_track_points":t["info"]["all_track_points"],
+
+    "idx_accepted":t["miniscope"]["idx_accepted"],
+    "S_dff":S_dff,
+
+    "aligned_behave2ms":aligned_behave2ms,
+
+    "behavelog_info":behavelog_info,
+    "behavelog_time":behavelog_time
+    }
+
+    session = {}
+    session["trial_list"]=[os.path.basename(i) for i in trials]
+    session["result"] = result
+    return session 
+
+
+
+
+class AnaMini():
+    def __init__(self,session):
+        self.result = session["result"]
+        self.exp="task"
+        self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self,hc_trial_bin=5000):
         """
@@ -521,7 +729,7 @@ class MiniAna(MA):
         behave_Trial_durations = pd.DataFrame(durations,columns=["process1","process2","processs3","process4","process5"])
         behave_Trial_durations["Trial"] = np.sum(behave_Trial_durations,axis=1)
         
-        self.result["behave_Trial_durations"] = pd.Series(behave_Trial_durations,name="behave_Trial_durations")
+        self.result["behave_Trial_durations"] = behave_Trial_durations
         print("'behave_Trial_durations' was added.")
 
     def add_behave_reward(self):
@@ -576,7 +784,7 @@ class MiniAna(MA):
                 print("'sigraw' is taken as original self.df")
 
             if arg=="detect_ca_transient":
-                _,self.df,_= self.detect_ca_transients()
+                _,self.df,_= detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh=1.5,baseline=0.8,t_half=0.2,FR=30)
                 print("trim_df : calcium transients are detected and ")
 
             if arg=="force_neg2zero":                
