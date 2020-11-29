@@ -349,6 +349,7 @@ def cellid_PC_incontext(s,*args,shuffle_times=1000,**kwargs):
         for ctx in set(Context):
             result["context_%s"%ctx]["shuffle_SIs"].append(result["context_%s"%ctx]["shuffle_func"]().values)
     for ctx in set(Context):
+        del result["context_%s"%ctx]["shuffle_func"]
         result["context_%s"%ctx]["shuffle_SIs"] = pd.DataFrame(result["context_%s"%ctx]["shuffle_SIs"],columns=df.columns)
         result["context_%s"%ctx]["zscore"] = (result["context_%s"%ctx]["observed_SIs"]-result["context_%s"%ctx]["shuffle_SIs"].mean())/result["context_%s"%ctx]["shuffle_SIs"].std()
         result["context_%s"%ctx]["place_cells"] = result["context_%s"%ctx]["zscore"][result["context_%s"%ctx]["zscore"]>1.96].index.tolist()
