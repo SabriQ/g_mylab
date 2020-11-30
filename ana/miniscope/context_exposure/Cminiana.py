@@ -287,39 +287,6 @@ class AnaMini():
         else:
             print("'Context' was represented as 0,1,2 or -1")
 
-    def add_c_behavevideoframe(self,behavevideo=None,frame=999):
-        """
-        which is moved to context_exposure/Cminiresult, and is about to discrete
-        """
-        print("FUN::add_c_behavevideoframe")
-        if not "behavevideoframe" in self.result.keys() and frame==999:
-            behavevideo = self.result["behavevideo"][0] if behavevideo==None else behavevideo
-            cap = cv2.VideoCapture(behavevideo)
-            try:
-                cap.set(cv2.CAP_PROP_POS_FRAMES,frame)
-            except:
-                print("video is less than 100 frame")
-
-            ret,frame = cap.read()
-            cap.release()
-            self.result["behavevideoframe"]=frame
-            self.savesession("all_track_points")
-            # print("behavevideoframe was saved")
-        else:
-            print("behavevideoframe has been there.")
-
-    def add_c_all_track_points(self,):
-        """
-        """
-        print("FUN:: add_c_all_track_points")
-        if self.exp == "task":
-            if not "all_track_points" in self.result.keys():
-                behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
-                coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
-                self.result["all_track_points"] = coords
-                self.savesession("all_track_points")
-            else:
-                print("all_track_points has been there")
 
 
     def add_Body_speed(self,scale=0.2339021309714166):
