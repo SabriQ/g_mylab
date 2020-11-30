@@ -8,10 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob,sys,os,re
 
-def build_session(mouse_id,part,day):
-    trial_lists = construct_trial_lists(mouse_id,part,day)
-    session = concatenate_trials(trial_lists)
-    return AM(session)
+
 
 def cellids(s):
 
