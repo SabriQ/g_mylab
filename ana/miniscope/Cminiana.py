@@ -232,7 +232,91 @@ class MiniAna():
         return df, index.all(axis=1)
 
 
+def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
+    """
+    Arguments:
 
+    session_path: path of each session after aligned
+    r"...\batch3\Results_201033-finish\part1\session2.pkl"
+    context_map_file: transfer to function session_describe, the default is okay
+
+    Returns:
+
+    a trial list in which each trial get a structure organized.
+    """
+    mouse_id1 = re.findall("Results_(\d+)",session_path)[0]
+    part = re.findall("part(\d+)",session_path)[0]
+    session_num = re.findall("session(\d+).pkl",session_path)[0]
+
+    s = MiniAna(session_path)
+    if not s.exp == "hc":
+        
+
+        videoname = s.result["behavevideo"][0]
+
+        mouse_id2 = re.findall("(\d+)-\d{8}-\d{6}.mp4",videoname)[0]
+        key_index = s.result["behavevideo"][1]
+        aim=re.findall("(.*)-%s"%mouse_id2,videoname)[0]
+
+        if mouse_id1 == mouse_id2:
+            mouse_id = mouse_id1
+
+        tirals = []
+        trial_list= [i for i in set(s.result["Trial_Num"]) if not i==-1] 
+
+        for trial in trial_list :
+
+            info={
+                "mouse_id":mouse_id,
+                "part":part,
+                "session_num":session_num,
+                "aim":aim,
+                "index":key_index,
+                "Trial_Num":trial,
+                "behavevideoframe":s.result["behavevideoframe"],
+                "all_track_points":s.result["all_track_points"]
+                }
+
+            index = s.result["aligned_behave2ms"]["Trial_Num"]==trial
+
+            miniscope={
+                "idx_accepted":s.result["idx_accepted"],
+                "S_dff":s.result["S_dff"][index],
+                "sigraw":s.result["sigraw"][index],
+                "corrected_ms_ts":s.result["corrected_ms_ts"][index]
+                }
+
+            behavior={
+                "track":s.result["aligned_behave2ms"][index],
+                "loginfo":s.result["behavelog_info"][s.result["behavelog_info"]["Trial_Num"]==trial],
+                "logtime":s.result["behavelog_time"].loc[trial-1]}
+
+            quality={
+                "aligned_difference":None
+            }
+
+            Trial = {
+            "info":info,
+            "miniscope":miniscope,
+            "behavior":behavior,
+            "quality":quality
+            }
+
+            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,trial))
+
+            with open(savepath,'wb') as f:
+                pickle.dump(Trial,f)
+            print("Trial is saved at %s"% savepath)
+
+    else:
+        print("homecage session")
+        savepath = os.path.join(savedir,"%s_part%s_session%s_hc.pkl"%(mouse_id1,part,session_num))
+
+        with open(savepath,'wb') as f:
+            pickle.dump(s.result,f)
+        print("homecage session is saved at %s"% savepath)
+
+        
 
 # if __name__ == "__main__":
 #     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
