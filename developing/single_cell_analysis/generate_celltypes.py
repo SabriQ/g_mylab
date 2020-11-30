@@ -82,4 +82,5 @@ if __name__ == "__main__":
     part = "1"
     days = ["20200721","20200722","20200723","20200724"]
     for day in days:
-        savecelltypes(mouse_id,part,day)
+        if day == "20200722":
+            savecelltypes(mouse_id,part,day)

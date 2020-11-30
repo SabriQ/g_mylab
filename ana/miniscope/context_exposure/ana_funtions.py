@@ -20,6 +20,8 @@ def cellids_Context(s,*args,**kwargs):
     """
     print("FUNC::cellids_Context")
     df,index = s.trim_df(*args,**kwargs)
+    print(index)
+    print(df)
     df = df[index]
 
 
