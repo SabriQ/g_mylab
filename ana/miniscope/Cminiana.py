@@ -249,8 +249,7 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
     session_num = re.findall("session(\d+).pkl",session_path)[0]
 
     s = MiniAna(session_path)
-    if not s.exp == "hc":
-        
+    if not s.exp == "hc":        
 
         videoname = s.result["behavevideo"][0]
 
@@ -262,10 +261,13 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
             mouse_id = mouse_id1
 
         tirals = []
-        trial_list= [i for i in set(s.result["Trial_Num"]) if not i==-1] 
+        trial_list= [i for i in set(s.result["aligned_behave2ms"]["Trial_Num"]) if not i==-1] 
 
         for trial in trial_list :
-
+            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,trial))
+            if os.path.exists(savepath):
+                print("%s exists"%os.path.basename(savepath))
+                break
             info={
                 "mouse_id":mouse_id,
                 "part":part,
@@ -302,7 +304,7 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
             "quality":quality
             }
 
-            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,trial))
+            
 
             with open(savepath,'wb') as f:
                 pickle.dump(Trial,f)
@@ -311,10 +313,12 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
     else:
         print("homecage session")
         savepath = os.path.join(savedir,"%s_part%s_session%s_hc.pkl"%(mouse_id1,part,session_num))
-
-        with open(savepath,'wb') as f:
-            pickle.dump(s.result,f)
-        print("homecage session is saved at %s"% savepath)
+        if os.path.exists(savepath):
+            print("%s exists"%os.path.basename(savepath))
+        else:
+            with open(savepath,'wb') as f:
+                pickle.dump(s.result,f)
+            print("homecage session is saved at %s"% savepath)
 
         
 

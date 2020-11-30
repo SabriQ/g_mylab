@@ -35,7 +35,7 @@ import logging
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
 
-def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
+def divide_sessions_into_trials2(session_path,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
     """
     Arguments:
 
@@ -65,7 +65,7 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
             mouse_id = mouse_id1
 
         tirals = []
-        trial_list= [i for i in set(s.result["Trial_Num"]) if not i==-1] 
+        trial_list= [i for i in set(s.result["aligned_behave2ms"]["Trial_Num"]) if not i==-1] 
 
         for trial in trial_list :
 
