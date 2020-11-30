@@ -216,6 +216,8 @@ class MiniResult(MiniResult):
         """
         is about to discrete, has been integrated into save behave sessions.
         在session*.pkl中的behave_tracek 加上“Trial_Num”,"process"
+        process=0 means the start of one trial
+            ,specifing the duration after "context exit" of last trial and before "nosepoke" of this trial
         """
         logger.info("FUN:: add_TrialNum_Process2behave_track")
         with open(session,'rb') as f:
