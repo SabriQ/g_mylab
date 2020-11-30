@@ -1,5 +1,5 @@
 import glob,cv2,os,re
-from mylab.ana.miniscope.context_exposure.Cminiana import divide_sessions_into_trials
+from mylab.ana.miniscope.Cminiana import divide_sessions_into_trials
 from multiprocessing import Pool
 
 if __name__ == '__main__':

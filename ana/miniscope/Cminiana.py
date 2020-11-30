@@ -153,6 +153,18 @@ class MiniAna():
         else:
             print("this session was recorded in homecage")
 
+    def add_c_all_track_points(self,):
+        """
+        """
+        print("FUN:: add_c_all_track_points")
+        if self.exp == "task":
+            if not "all_track_points" in self.result.keys():
+                behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
+                coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
+                self.result["all_track_points"] = coords
+                self.savesession("all_track_points")
+            else:
+                print("all_track_points has been there")
 
     def detect_ca_transients(self,thresh=1.5,baseline=0.8,t_half=0.2,FR=30):
         """
@@ -261,6 +273,8 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
             mouse_id = mouse_id1
 
         tirals = []
+        s.align_behave_ms()
+        s.add_c_all_track_points()
         trial_list= [i for i in set(s.result["aligned_behave2ms"]["Trial_Num"]) if not i==-1] 
 
         for trial in trial_list :
@@ -268,6 +282,7 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
             if os.path.exists(savepath):
                 print("%s exists"%os.path.basename(savepath))
                 break
+            if 
             info={
                 "mouse_id":mouse_id,
                 "part":part,
