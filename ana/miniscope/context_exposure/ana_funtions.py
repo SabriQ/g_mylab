@@ -11,200 +11,6 @@ from mylab.ana.miniscope.Mplacecells import *
 from mylab.ana.miniscope.Mpca import *
 
 #%% for single cell analysis
-def cellids_Context2(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
-    """
-    which is about to discrete
-    s.align_behave_ms()
-    s.add_alltrack_placebin_num
-    s.add_Trial_Num_Process()
-    """
-    print("FUNC::cellids_Context")
-    df,index = s.trim_df(*args,**kwargs)
-
-    
-    meanfr_df = df[index].groupby(s.result["Trial_Num"][index]).mean().reset_index(drop=False)
-
-    temp = pd.merge(meanfr_df,s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
-    Context = temp["Enter_ctx"]
-    Context = pd.Series([context_map[i] for i in Context])
-
-
-    idxes = s.result["idx_accepted"] if idxes==None else idxes
-
-    ctx_pvalue = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[Context=="A"],x[Context=="B"])[1],axis=0)
-    ctx_meanfr = meanfr_df[idxes].groupby(Context).mean().T
-    ctx_meanfr["ranksums_p_value"] = ctx_pvalue
-    ctx_meanfr["CSI"] = (ctx_meanfr["A"]-ctx_meanfr["B"])/(ctx_meanfr["A"]+ctx_meanfr["B"])
-
-    ContextA_cells=[]
-    ContextB_cells=[]
-    non_context_cells=[]
-
-    for cellid,a, b, p in zip(ctx_meanfr.index,ctx_meanfr["A"],ctx_meanfr["B"],ctx_meanfr["ranksums_p_value"]):
-        if p>=0.05:
-            non_context_cells.append(cellid)
-        else:
-            if a>b:
-                ContextA_cells.append(cellid)
-            elif a<b:
-                ContextB_cells.append(cellid)
-            else:
-                print("meanfr of cell % is equal in Context A and Context B"%cellid)
-                non_context_cells.append(cellid)
-
-    return{
-    "meanfr_df":meanfr_df,
-    "ctx_meanfr":ctx_meanfr, # meanfr in context A and B, rank_sum_pvalue,CSI
-    "ContextA_cells":ContextA_cells,
-    "ContextB_cells":ContextB_cells,
-    "non_context_cells":non_context_cells
-    }
-
-def cellid_RD_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
-    """
-    which is about to discrete
-    """
-    print("FUNC::cellid_RD_incontext")
-    df,index = s.trim_df(*args,**kwargs)
-
-    in_context_running_direction = pd.Series([rd_map[i] for i in s.result["running_direction"]])
-
-    meanfr_df = df[index].groupby([s.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
-
-    temp = pd.merge(meanfr_df,s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
-    Context = temp["Enter_ctx"]
-    Context = pd.Series([context_map[i] for i in Context])
-    meanfr_df["Context"]=Context
-
-    idxes = s.result["idx_accepted"] if idxes==None else idxes
-
-    rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
-    rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
-    rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
-    left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]>rd_meanfr["right"])].index
-    right_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]<rd_meanfr["right"])].index
-    non_rd_cells = rd_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
-    # print(non_rd_cells)
-
-    rd_ctx_meanfr = meanfr_df[idxes].groupby([meanfr_df["Context"],meanfr_df["rd"]]).mean()
-
-    rd_A_meanfr = rd_ctx_meanfr.xs("A").T
-    rd_A_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="left")]
-        ,x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="right")])[1],axis=0)
-    rd_A_meanfr["RDSI"] = (rd_A_meanfr["left"]-rd_A_meanfr["right"])/(rd_A_meanfr["left"]+rd_A_meanfr["right"])
-
-    A_left_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]>rd_A_meanfr["right"])].index
-    A_right_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]<rd_A_meanfr["right"])].index
-    A_non_rd_cells = rd_meanfr[rd_A_meanfr["rd_pvalue"]>0.05].index
-    # print(A_non_rd_cells)
-
-    rd_B_meanfr = rd_ctx_meanfr.xs("B").T
-    rd_B_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="left")]
-        ,x[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="right")])[1],axis=0)
-    rd_B_meanfr["RDSI"] = (rd_B_meanfr["left"]-rd_B_meanfr["right"])/(rd_B_meanfr["left"]+rd_B_meanfr["right"])
-
-    B_left_cells = rd_B_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_B_meanfr["left"]>rd_B_meanfr["right"])].index
-    B_right_cells = rd_B_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_B_meanfr["left"]<rd_B_meanfr["right"])].index
-    B_non_rd_cells = rd_B_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
-    # print(B_non_rd_cells)
-
-    return {
-    "meanfr_df":meanfr_df,
-    "rd_meanfr":rd_meanfr,# meanfr in running direction 0 and 1, rank_sum_pvalue,RDSI
-    "left_cells":left_cells,
-    "right_cells":right_cells,
-    "non_rd_cells":non_rd_cells,
-
-    "rd_A_meanfr":rd_A_meanfr,
-    "A_left_cells":A_left_cells,
-    "A_right_cells":A_right_cells,
-    "A_non_rd_cells":A_non_rd_cells,
-
-    "rd_B_meanfr":rd_B_meanfr,
-    "B_left_cells":B_left_cells,
-    "B_right_cells":B_right_cells,
-    "B_non_rd_cells":B_non_rd_cells
-    }
-
-
-def cellid_PC_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
-    """
-    which is about to be discreted
-
-    """
-    print("FUNC::cellid_PC_incontext")
-    df,index = s.trim_df(*args,**kwargs)
-
-    df=df[index]
-
-    in_context_placebin_num = s.result["place_bin_No"][index]
-
-    Context = (pd.merge(s.result["Trial_Num"],s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)
-    Context = pd.Series([context_map[int(i)] for i in Context])[index]
-
-    idxes = s.result["idx_accepted"] if idxes==None else idxes
-
-    observed_SIs_A = Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
-    shuffle_A = bootstrap_Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
-    shuffle_SIs_A=[]
-
-    observed_SIs_B = Cal_SIs(df[Context=="B"],in_context_placebin_num[Context=="B"])
-    shuffle_B = bootstrap_Cal_SIs(df[Context=="B"],in_context_placebin_num[Context=="B"])
-    shuffle_SIs_B=[]
-    # print(observed_SIs_A)
-    try:
-        if df[Context=="C"].shape[0] != 0:
-            observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
-            shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
-            shuffle_SIs_C=[]
-            C = True
-        else:
-            C = False
-    except:
-        print("No context C")
-        C = False
-    print("we shuffle mean firing rate in each place bin")
-    
-    
-    for i in range(shuffle_times):
-        sys.stdout.write("%s/%s"%(i+1,shuffle_times))
-        sys.stdout.write("\r")
-        shuffle_SIs_A.append(shuffle_A().values)
-        shuffle_SIs_B.append(shuffle_B().values)
-        if C:
-            shuffle_SIs_C.append(shuffle_C().values)
-
-
-    shuffle_SIs_A = pd.DataFrame(shuffle_SIs_A,columns=idxes)
-    shuffle_SIs_B = pd.DataFrame(shuffle_SIs_B,columns=idxes)
-    if C:
-        shuffle_SIs_C = pd.DataFrame(shuffle_SIs_C,columns=idxes)
-
-    print("we define spatial information zscore of cell larger than 1.96 as place cell")
-    zscores_A = (observed_SIs_A-shuffle_SIs_A.mean())/shuffle_SIs_A.std()
-    place_cells_A = (zscores_A[zscores_A>1.96]).index.tolist()
-    zscores_B = (observed_SIs_B-shuffle_SIs_B.mean())/shuffle_SIs_B.std()
-    place_cells_B = (zscores_B[zscores_B>1.96]).index.tolist()
-    if C:
-        zscores_C = (observed_SIs_C-shuffle_SIs_C.mean())/shuffle_SIs_C.std()
-        place_cells_C = (zscores_C[zscores_C>1.96]).index.tolist()
-
-    if C:
-        return{
-        "observed_SIs_A":observed_SIs_A,
-        "place_cells_A":place_cells_A,
-        "observed_SIs_B":observed_SIs_B,
-        "place_cells_B":place_cells_B,
-        "observed_SIs_C":observed_SIs_C,
-        "place_cells_C":place_cells_C
-        }
-    else:
-        return{
-        "observed_SIs_A":observed_SIs_A,
-        "place_cells_A":place_cells_A,
-        "observed_SIs_B":observed_SIs_B,
-        "place_cells_B":place_cells_B
-        }
 
 def cellids_Context(s,*args,**kwargs):
     """
@@ -618,3 +424,201 @@ def behave_logistic_regression(s,):
     pass
     
 #%% SVM decoding for single neuron with Bayesian optimization
+
+
+#%% which is about to discard
+
+def cellids_Context2(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
+    """
+    which is about to discrete
+    s.align_behave_ms()
+    s.add_alltrack_placebin_num
+    s.add_Trial_Num_Process()
+    """
+    print("FUNC::cellids_Context")
+    df,index = s.trim_df(*args,**kwargs)
+
+    
+    meanfr_df = df[index].groupby(s.result["Trial_Num"][index]).mean().reset_index(drop=False)
+
+    temp = pd.merge(meanfr_df,s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+    Context = temp["Enter_ctx"]
+    Context = pd.Series([context_map[i] for i in Context])
+
+
+    idxes = s.result["idx_accepted"] if idxes==None else idxes
+
+    ctx_pvalue = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[Context=="A"],x[Context=="B"])[1],axis=0)
+    ctx_meanfr = meanfr_df[idxes].groupby(Context).mean().T
+    ctx_meanfr["ranksums_p_value"] = ctx_pvalue
+    ctx_meanfr["CSI"] = (ctx_meanfr["A"]-ctx_meanfr["B"])/(ctx_meanfr["A"]+ctx_meanfr["B"])
+
+    ContextA_cells=[]
+    ContextB_cells=[]
+    non_context_cells=[]
+
+    for cellid,a, b, p in zip(ctx_meanfr.index,ctx_meanfr["A"],ctx_meanfr["B"],ctx_meanfr["ranksums_p_value"]):
+        if p>=0.05:
+            non_context_cells.append(cellid)
+        else:
+            if a>b:
+                ContextA_cells.append(cellid)
+            elif a<b:
+                ContextB_cells.append(cellid)
+            else:
+                print("meanfr of cell % is equal in Context A and Context B"%cellid)
+                non_context_cells.append(cellid)
+
+    return{
+    "meanfr_df":meanfr_df,
+    "ctx_meanfr":ctx_meanfr, # meanfr in context A and B, rank_sum_pvalue,CSI
+    "ContextA_cells":ContextA_cells,
+    "ContextB_cells":ContextB_cells,
+    "non_context_cells":non_context_cells
+    }
+
+def cellid_RD_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
+    """
+    which is about to discrete
+    """
+    print("FUNC::cellid_RD_incontext")
+    df,index = s.trim_df(*args,**kwargs)
+
+    in_context_running_direction = pd.Series([rd_map[i] for i in s.result["running_direction"]])
+
+    meanfr_df = df[index].groupby([s.result["Trial_Num"][index],in_context_running_direction[index]]).mean().reset_index(drop=False).rename(columns={"level_1":"rd"})
+
+    temp = pd.merge(meanfr_df,s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])
+    Context = temp["Enter_ctx"]
+    Context = pd.Series([context_map[i] for i in Context])
+    meanfr_df["Context"]=Context
+
+    idxes = s.result["idx_accepted"] if idxes==None else idxes
+
+    rd_meanfr = meanfr_df[idxes].groupby(meanfr_df["rd"]).mean().T 
+    rd_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[meanfr_df['rd']=="left"],x[meanfr_df['rd']=="right"])[1],axis=0)
+    rd_meanfr["RDSI"] = (rd_meanfr["left"]-rd_meanfr["right"])/(rd_meanfr["left"]+rd_meanfr["right"])
+    left_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]>rd_meanfr["right"])].index
+    right_cells = rd_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_meanfr["left"]<rd_meanfr["right"])].index
+    non_rd_cells = rd_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
+    # print(non_rd_cells)
+
+    rd_ctx_meanfr = meanfr_df[idxes].groupby([meanfr_df["Context"],meanfr_df["rd"]]).mean()
+
+    rd_A_meanfr = rd_ctx_meanfr.xs("A").T
+    rd_A_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="left")]
+        ,x[(meanfr_df["Context"]=="A") & (meanfr_df['rd']=="right")])[1],axis=0)
+    rd_A_meanfr["RDSI"] = (rd_A_meanfr["left"]-rd_A_meanfr["right"])/(rd_A_meanfr["left"]+rd_A_meanfr["right"])
+
+    A_left_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]>rd_A_meanfr["right"])].index
+    A_right_cells = rd_meanfr[(rd_A_meanfr["rd_pvalue"]<0.05) & (rd_A_meanfr["left"]<rd_A_meanfr["right"])].index
+    A_non_rd_cells = rd_meanfr[rd_A_meanfr["rd_pvalue"]>0.05].index
+    # print(A_non_rd_cells)
+
+    rd_B_meanfr = rd_ctx_meanfr.xs("B").T
+    rd_B_meanfr["rd_pvalue"] = meanfr_df[idxes].apply(func=lambda x: stats.ranksums(x[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="left")]
+        ,x[(meanfr_df["Context"]=="B") & (meanfr_df['rd']=="right")])[1],axis=0)
+    rd_B_meanfr["RDSI"] = (rd_B_meanfr["left"]-rd_B_meanfr["right"])/(rd_B_meanfr["left"]+rd_B_meanfr["right"])
+
+    B_left_cells = rd_B_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_B_meanfr["left"]>rd_B_meanfr["right"])].index
+    B_right_cells = rd_B_meanfr[(rd_meanfr["rd_pvalue"]<0.05) & (rd_B_meanfr["left"]<rd_B_meanfr["right"])].index
+    B_non_rd_cells = rd_B_meanfr[rd_meanfr["rd_pvalue"]>0.05].index
+    # print(B_non_rd_cells)
+
+    return {
+    "meanfr_df":meanfr_df,
+    "rd_meanfr":rd_meanfr,# meanfr in running direction 0 and 1, rank_sum_pvalue,RDSI
+    "left_cells":left_cells,
+    "right_cells":right_cells,
+    "non_rd_cells":non_rd_cells,
+
+    "rd_A_meanfr":rd_A_meanfr,
+    "A_left_cells":A_left_cells,
+    "A_right_cells":A_right_cells,
+    "A_non_rd_cells":A_non_rd_cells,
+
+    "rd_B_meanfr":rd_B_meanfr,
+    "B_left_cells":B_left_cells,
+    "B_right_cells":B_right_cells,
+    "B_non_rd_cells":B_non_rd_cells
+    }
+
+
+def cellid_PC_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
+    """
+    which is about to be discreted
+
+    """
+    print("FUNC::cellid_PC_incontext")
+    df,index = s.trim_df(*args,**kwargs)
+
+    df=df[index]
+
+    in_context_placebin_num = s.result["place_bin_No"][index]
+
+    Context = (pd.merge(s.result["Trial_Num"],s.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)
+    Context = pd.Series([context_map[int(i)] for i in Context])[index]
+
+    idxes = s.result["idx_accepted"] if idxes==None else idxes
+
+    observed_SIs_A = Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
+    shuffle_A = bootstrap_Cal_SIs(df[Context=="A"],in_context_placebin_num[Context=="A"])
+    shuffle_SIs_A=[]
+
+    observed_SIs_B = Cal_SIs(df[Context=="B"],in_context_placebin_num[Context=="B"])
+    shuffle_B = bootstrap_Cal_SIs(df[Context=="B"],in_context_placebin_num[Context=="B"])
+    shuffle_SIs_B=[]
+    # print(observed_SIs_A)
+    try:
+        if df[Context=="C"].shape[0] != 0:
+            observed_SIs_C = Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+            shuffle_C = bootstrap_Cal_SIs(df[Context=="C"],in_context_placebin_num[Context=="C"])
+            shuffle_SIs_C=[]
+            C = True
+        else:
+            C = False
+    except:
+        print("No context C")
+        C = False
+    print("we shuffle mean firing rate in each place bin")
+    
+    
+    for i in range(shuffle_times):
+        sys.stdout.write("%s/%s"%(i+1,shuffle_times))
+        sys.stdout.write("\r")
+        shuffle_SIs_A.append(shuffle_A().values)
+        shuffle_SIs_B.append(shuffle_B().values)
+        if C:
+            shuffle_SIs_C.append(shuffle_C().values)
+
+
+    shuffle_SIs_A = pd.DataFrame(shuffle_SIs_A,columns=idxes)
+    shuffle_SIs_B = pd.DataFrame(shuffle_SIs_B,columns=idxes)
+    if C:
+        shuffle_SIs_C = pd.DataFrame(shuffle_SIs_C,columns=idxes)
+
+    print("we define spatial information zscore of cell larger than 1.96 as place cell")
+    zscores_A = (observed_SIs_A-shuffle_SIs_A.mean())/shuffle_SIs_A.std()
+    place_cells_A = (zscores_A[zscores_A>1.96]).index.tolist()
+    zscores_B = (observed_SIs_B-shuffle_SIs_B.mean())/shuffle_SIs_B.std()
+    place_cells_B = (zscores_B[zscores_B>1.96]).index.tolist()
+    if C:
+        zscores_C = (observed_SIs_C-shuffle_SIs_C.mean())/shuffle_SIs_C.std()
+        place_cells_C = (zscores_C[zscores_C>1.96]).index.tolist()
+
+    if C:
+        return{
+        "observed_SIs_A":observed_SIs_A,
+        "place_cells_A":place_cells_A,
+        "observed_SIs_B":observed_SIs_B,
+        "place_cells_B":place_cells_B,
+        "observed_SIs_C":observed_SIs_C,
+        "place_cells_C":place_cells_C
+        }
+    else:
+        return{
+        "observed_SIs_A":observed_SIs_A,
+        "place_cells_A":place_cells_A,
+        "observed_SIs_B":observed_SIs_B,
+        "place_cells_B":place_cells_B
+        }

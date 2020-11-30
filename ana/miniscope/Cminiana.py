@@ -153,7 +153,28 @@ class MiniAna():
         else:
             print("this session was recorded in homecage")
 
-    def add_c_all_track_points(self,):
+    def add_c_behavevideoframe(self,behavevideo=None,frame=999):
+        """
+        which is moved to context_exposure/Cminiresult, and is about to discrete
+        """
+        print("FUN::add_c_behavevideoframe")
+        if not "behavevideoframe" in self.result.keys() and frame==999:
+            behavevideo = self.result["behavevideo"][0] if behavevideo==None else behavevideo
+            cap = cv2.VideoCapture(behavevideo)
+            try:
+                cap.set(cv2.CAP_PROP_POS_FRAMES,frame)
+            except:
+                print("video is less than 100 frame")
+
+            ret,frame = cap.read()
+            cap.release()
+            self.result["behavevideoframe"]=frame
+            self.savesession("all_track_points")
+            # print("behavevideoframe was saved")
+        else:
+            print("behavevideoframe has been there.")
+            
+    def add_c_all_track_points(self,behavevideo=None):
         """
         """
         print("FUN:: add_c_all_track_points")

@@ -1,5 +1,6 @@
 
-from mylab.ana.miniscope.context_exposure.Cminiana import MiniAna as MA
+from mylab.ana.miniscope.context_exposure.Cminiana import AnaMini as AM
+from mylab.ana.miniscope.context_exposure.Cminiana import *
 from mylab.ana.miniscope.context_exposure.ana_funtions import *
 
 import numpy as np
@@ -7,11 +8,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob,sys,os,re
 
+def build_session(mouse_id,part,day):
+    trial_lists = construct_trial_lists(mouse_id,part,day)
+    session = concatenate_trials(trial_lists)
+    return AM(session)
 
-def cellids(session):
-    s = MA(session)
+def cellids(s):
+
     if s.exp == "task":
-        s.align_behave_ms()
         s.add_Trial_Num_Process() # s
         s.add_Context()
         s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,30,4,4,4])

@@ -10,7 +10,6 @@ import scipy.stats as stats
 from mylab.Cvideo import *
 from mylab.Functions import *
 from mylab.process.miniscope.Mfunctions import *
-from mylab.ana.miniscope.Cminiana import MiniAna as MA
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
 from mylab.ana.miniscope.Mplacecells import *
 import logging 
@@ -35,91 +34,7 @@ import logging
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
 
-def divide_sessions_into_trials2(session_path,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
-    """
-    Arguments:
 
-    session_path: path of each session after aligned
-    r"...\batch3\Results_201033-finish\part1\session2.pkl"
-    context_map_file: transfer to function session_describe, the default is okay
-
-    Returns:
-
-    a trial list in which each trial get a structure organized.
-    """
-    mouse_id1 = re.findall("Results_(\d+)",session_path)[0]
-    part = re.findall("part(\d+)",session_path)[0]
-    session_num = re.findall("session(\d+).pkl",session_path)[0]
-
-    s = MA(session_path)
-    if not s.exp == "hc":
-        
-
-        videoname = s.result["behavevideo"][0]
-
-        mouse_id2 = re.findall("(\d+)-\d{8}-\d{6}.mp4",videoname)[0]
-        key_index = s.result["behavevideo"][1]
-        aim=re.findall("(.*)-%s"%mouse_id2,videoname)[0]
-
-        if mouse_id1 == mouse_id2:
-            mouse_id = mouse_id1
-
-        tirals = []
-        trial_list= [i for i in set(s.result["aligned_behave2ms"]["Trial_Num"]) if not i==-1] 
-
-        for trial in trial_list :
-
-            info={
-                "mouse_id":mouse_id,
-                "part":part,
-                "session_num":session_num,
-                "aim":aim,
-                "index":key_index,
-                "Trial_Num":trial,
-                "behavevideoframe":s.result["behavevideoframe"],
-                "all_track_points":s.result["all_track_points"]
-                }
-
-            index = s.result["aligned_behave2ms"]["Trial_Num"]==trial
-
-            miniscope={
-                "idx_accepted":s.result["idx_accepted"],
-                "S_dff":s.result["S_dff"][index],
-                "sigraw":s.result["sigraw"][index],
-                "corrected_ms_ts":s.result["corrected_ms_ts"][index]
-                }
-
-            behavior={
-                "track":s.result["aligned_behave2ms"][index],
-                "loginfo":s.result["behavelog_info"][s.result["behavelog_info"]["Trial_Num"]==trial],
-                "logtime":s.result["behavelog_time"].loc[trial-1]}
-
-            quality={
-                "aligned_difference":None
-            }
-
-            Trial = {
-            "info":info,
-            "miniscope":miniscope,
-            "behavior":behavior,
-            "quality":quality
-            }
-
-            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,trial))
-
-            with open(savepath,'wb') as f:
-                pickle.dump(Trial,f)
-            print("Trial is saved at %s"% savepath)
-
-    else:
-        print("homecage session")
-        savepath = os.path.join(savedir,"%s_part%s_session%s_hc.pkl"%(mouse_id1,part,session_num))
-
-        with open(savepath,'wb') as f:
-            pickle.dump(s.result,f)
-        print("homecage session is saved at %s"% savepath)
-
-        
 
 def construct_trial_lists(mouse_id,part,day,session=None,screen_trials=None,screen_trials_out=None,trial_pool_path=None):
     """
@@ -221,9 +136,9 @@ def concatenate_trials(trials):
     "all_track_points":t["info"]["all_track_points"],
 
     "idx_accepted":t["miniscope"]["idx_accepted"],
-    "S_dff":S_dff,
+    "S_dff":S_dffs,
 
-    "aligned_behave2ms":aligned_behave2ms,
+    "aligned_behave2ms":aligned_behave2ms.reset_index(drop=True),
 
     "behavelog_info":behavelog_info,
     "behavelog_time":behavelog_time
@@ -287,39 +202,6 @@ class AnaMini():
         else:
             print("'Context' was represented as 0,1,2 or -1")
 
-    def add_c_behavevideoframe(self,behavevideo=None,frame=999):
-        """
-        which is moved to context_exposure/Cminiresult, and is about to discrete
-        """
-        print("FUN::add_c_behavevideoframe")
-        if not "behavevideoframe" in self.result.keys() and frame==999:
-            behavevideo = self.result["behavevideo"][0] if behavevideo==None else behavevideo
-            cap = cv2.VideoCapture(behavevideo)
-            try:
-                cap.set(cv2.CAP_PROP_POS_FRAMES,frame)
-            except:
-                print("video is less than 100 frame")
-
-            ret,frame = cap.read()
-            cap.release()
-            self.result["behavevideoframe"]=frame
-            self.savesession("all_track_points")
-            # print("behavevideoframe was saved")
-        else:
-            print("behavevideoframe has been there.")
-
-    def add_c_all_track_points(self,):
-        """
-        """
-        print("FUN:: add_c_all_track_points")
-        if self.exp == "task":
-            if not "all_track_points" in self.result.keys():
-                behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
-                coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
-                self.result["all_track_points"] = coords
-                self.savesession("all_track_points")
-            else:
-                print("all_track_points has been there")
 
 
     def add_Body_speed(self,scale=0.2339021309714166):
@@ -798,8 +680,8 @@ class AnaMini():
                 pass
 
         print("trim_df : df was trimmed.")
-
-        return self.df,self.trim_index.all(axis=1)
+        
+        return self.df,self.trim_index.all(axis=1).reset_index(drop=True)
 
     def _trim_Body_speed(self,min_speed=3):
         self.trim_index["Body_speed"] = self.result["Body_speed"]>min_speed
@@ -830,7 +712,6 @@ class AnaMini():
         """
         show all the tracking traectory in a behavioral video frame.
         """
-        self.add_c_behavevideoframe(behavevideo=None,frame=999)
         plt.imshow(self.result["behavevideoframe"])
         plt.xticks([])
         plt.yticks([])
