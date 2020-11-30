@@ -34,6 +34,13 @@ import logging
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
 
+def build_session(mouse_id,part,day):
+    trial_lists = construct_trial_lists(mouse_id,part,day)
+    if len(trial_lists)>0:
+        session = concatenate_trials(trial_lists)
+        return AnaMini(session)
+    else:
+        return -1
 
 
 def construct_trial_lists(mouse_id,part,day,session=None,screen_trials=None,screen_trials_out=None,trial_pool_path=None):
@@ -93,6 +100,9 @@ def concatenate_trials(trials):
         mouse_id,part,session_num,aim,index,_,_,_ = t["info"].values()
         idx_accepted,S_dff,sigraw,corrected_ms_ts = t["miniscope"].values()
         track,loginfo,logtime = t["behavior"].values()
+
+        if np.shape(S_dff) == np.shape(sigraw):
+            S_dff = S_dff[:,idx_accepted]
 
         if not mouse_id in mouse_ids:
             mouse_ids.append(mouse_id)
