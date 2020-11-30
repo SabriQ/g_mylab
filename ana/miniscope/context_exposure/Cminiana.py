@@ -114,11 +114,13 @@ def concatenate_trials(trials):
         if aligned_behave2ms is None:
             aligned_behave2ms=track
         else:
+            track["Trial_Num"] = max(aligned_behave2ms["Trial_Num"]) + 1
             aligned_behave2ms = pd.concat((aligned_behave2ms,track))
 
         if behavelog_info is None:
             behavelog_info = loginfo
         else:
+            loginfo["Trial_Num"] = max(behavelog_info["Trial_Num"])+1
             behavelog_info = pd.concat((behavelog_info,loginfo))
 
         if behavelog_time is None:
@@ -680,7 +682,7 @@ class AnaMini():
                 pass
 
         print("trim_df : df was trimmed.")
-        
+
         return self.df,self.trim_index.all(axis=1).reset_index(drop=True)
 
     def _trim_Body_speed(self,min_speed=3):
