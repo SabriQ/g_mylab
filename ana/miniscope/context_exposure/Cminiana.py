@@ -33,14 +33,21 @@ import logging
         # fh.setFormatter(formatter)
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
-
-def build_session(mouse_id,part,day):
+def save_session(mouse_id,part,day,save=True):
     trial_lists = construct_trial_lists(mouse_id,part,day)
     if len(trial_lists)>0:
         session = concatenate_trials(trial_lists)
-        return AnaMini(session)
+        if save:
+            filename = "%s_part%s_day%s.pkl"%(mouse_id,part,day)
+            savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\sessions",filename)
+            save_pkl(session,savepath)
     else:
-        return -1
+        print("no trial is indexed")
+
+def build_session(session_path):
+    s =load_pkl(session_path) 
+    return AnaMini(s)
+
 
 
 def construct_trial_lists(mouse_id,part,day,session=None,screen_trials=None,screen_trials_out=None,trial_pool_path=None):
