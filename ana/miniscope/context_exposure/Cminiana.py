@@ -33,14 +33,20 @@ import logging
         # fh.setFormatter(formatter)
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
-def save_session(mouse_id,part,day,save=True):
+def save_session(mouse_id,part,day):
     trial_lists = construct_trial_lists(mouse_id,part,day)
+
+    filename = "%s_part%s_day%s.pkl"%(mouse_id,part,day)
+    savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\sessions",filename)
+
     if len(trial_lists)>0:
-        session = concatenate_trials(trial_lists)
-        if save:
-            filename = "%s_part%s_day%s.pkl"%(mouse_id,part,day)
-            savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\sessions",filename)
-            save_pkl(session,savepath)
+        try:
+            session = concatenate_trials(trial_lists)            
+        except:
+            print("problem in concatenate_trials")
+            session = {}
+            savepath = savepath.replace(".pkl","_bug.pkl")
+        save_pkl(session,savepath)
     else:
         print("no trial is indexed")
 
