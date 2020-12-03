@@ -97,7 +97,7 @@ class Video():
                 child.wait()
                 print("%s has been transcoded")
 
-    def crop_video(self,show_details=False,multiprocess=False):
+    def crop_video(self,show_details=False,multiprocess=False,frame_num=1000):
         '''
         ffmpeg -i $1 -vf crop=$2:$3:$4:$5 -loglevel quiet $6
 
@@ -113,9 +113,11 @@ class Video():
         if not os.path.exists(croped_video):
             if not os.path.exists(crop_video_file):
                 cap = cv2.VideoCapture(self.video_path)
-                cap.set(cv2.CAP_PROP_POS_FRAMES,1000)
+                cap.set(cv2.CAP_PROP_POS_FRAMES,frame_num)
                 ret,frame = cap.read()
-                x,y,w,h = cv2.selectROI("%s"%os.path.basename(self.video_path),frame)
+                if not ret:
+                    return self.crop_video(show_details,multiprocess,frame_num=10)
+                x,y,w,h = cv2.selectROI("crop",frame) 
                 cv2.destroyAllWindows()
                 coords = pd.DataFrame(data={"x":[x],"y":[y],"w":[w],"h":[h]})
                 print(coords)
