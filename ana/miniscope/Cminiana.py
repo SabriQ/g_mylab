@@ -265,7 +265,8 @@ class MiniAna():
         return df, index.all(axis=1)
 
 
-def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
+def divide_sessions_into_trials(session_path
+    ,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
     """
     Arguments:
 
@@ -303,7 +304,7 @@ def divide_sessions_into_trials(session_path,savedir=r"\\10.10.46.135\Lab_Member
             if os.path.exists(savepath):
                 print("%s exists"%os.path.basename(savepath))
                 break
-            if 
+                
             info={
                 "mouse_id":mouse_id,
                 "part":part,
