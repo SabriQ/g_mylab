@@ -51,6 +51,11 @@ def _dataframe2nparray(df):
     else:
         print(" can not be transferred to nparray")
 
+def spread(a):
+    """flattern list with list in it
+    """
+    return sum((spread(x) if type(x) is list else [x] for x in a), [])
+
 def savepkl2mat(savematname,result):
     spio.savemat(savematname,_dataframe2nparray(result))
     print("saved %s"%savematname)
