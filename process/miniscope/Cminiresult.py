@@ -3,19 +3,20 @@ import matplotlib.pyplot as plt
 import os,sys,glob,csv,re
 import json,cv2
 import scipy.io as spio
+from scipy.io import savemat
 import pickle
 from mylab.process.miniscope.Mfunctions import * #load/save pkl/mat/hdf5
 
 
-import logging 
+# import logging 
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger()
+# logger.setLevel(logging.DEBUG)
 
-sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.DEBUG)
-logger.addHandler(sh)
+# sh = logging.StreamHandler(sys.stdout) #stream handler
+# sh.setLevel(logging.DEBUG)
+# logger.addHandler(sh)
 
 def concatenate_sessions(session1,session2):
     """
@@ -41,6 +42,28 @@ def concatenate_sessions(session1,session2):
         print("%s is not connected to %s"%(session2,session1))
 
 
+def ms_tses2ms_ts(dirpath):
+    """
+    将每天的ms_ts.pkl合并成一个ms_ts.mat/ms_ts.pkl
+    """
+    ms_tses = glob.glob(os.path.join(dirpath,"*[0-9]/ms_ts.pkl"))
+    [print(i) for i in ms_tses]
+    mss = []
+    for ms_ts in ms_tses:
+        with open(ms_ts,"rb") as f:
+            ms = pickle.load(f)
+        print(len(ms))
+        [mss.append(i) for i in ms]
+    print(len(mss))
+    pklpath=os.path.join(dirpath,"ms_ts.pkl")
+    matpath=os.path.join(dirpath,"ms_ts.mat")
+
+    savemat(matpath,{'ms_ts':np.array(mss)})
+
+    with open(pklpath,"wb") as output:
+        pickle.dump(mss,output)
+
+    print("concate all the ms_ts and saved")
 
 class MiniResult():
     """
@@ -62,11 +85,11 @@ class MiniResult():
         self.ms_mc_path = os.path.join(self.Result_dir,"ms_mc.mp4")
         self.S_dff_path = os.path.join(self.Result_dir,"S_dff.pkl")
 
-        fh = logging.FileHandler(self.logfile,mode="a")
-        formatter = logging.Formatter("  %(asctime)s %(message)s")
-        fh.setFormatter(formatter)
-        fh.setLevel(logging.INFO)
-        logger.addHandler(fh)
+        # fh = logging.FileHandler(self.logfile,mode="a")
+        # formatter = logging.Formatter("  %(asctime)s %(message)s")
+        # fh.setFormatter(formatter)
+        # fh.setLevel(logging.INFO)
+        # logger.addHandler(fh)
 
     def frame_num(self):
         if os.path.exists(self.ms_mc_path):
@@ -92,7 +115,7 @@ class MiniResult():
         """
 
         """
-        logger.info("FUN:: save_miniscope_session_pkl")
+        print("FUN:: save_miniscope_session_pkl")
         if os.path.exists(self.ms_mat_path):        
             print("loading %s"%self.ms_mat_path)
             ms = load_mat(self.ms_mat_path)
@@ -118,13 +141,13 @@ class MiniResult():
         with open(self.ms_ts_path,'rb') as f:
             timestamps = pickle.load(f)
         [print(len(i)) for i in timestamps]
-        logger.info("session lenth:%s, timestamps length:%s, sigraw shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),sigraw.shape))
+        print("session lenth:%s, timestamps length:%s, sigraw shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),sigraw.shape))
 
         # 对不同session的分析先后顺序排序
         if not orders == None:
             timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
             [print(len(i)) for i in timestamps_order]
-            logger.info("timestamps are sorted by %s"%orders)
+            print("timestamps are sorted by %s"%orders)
 
 
         #根据timestamps将dff切成对应的session

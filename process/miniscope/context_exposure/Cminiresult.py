@@ -11,12 +11,12 @@ from mylab.process.miniscope.Cminiresult import *
 import logging 
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger()
+# logger.setLevel(logging.DEBUG)
 
-sh = logging.StreamHandler(sys.stdout) #stream handler
-sh.setLevel(logging.DEBUG)
-logger.addHandler(sh)
+# sh = logging.StreamHandler(sys.stdout) #stream handler
+# sh.setLevel(logging.DEBUG)
+# logger.addHandler(sh)
 
 
 
@@ -30,11 +30,11 @@ class MiniResult(MiniResult):
     def __init__(self,Result_dir):
         super().__init__(Result_dir)
 
-        fh = logging.FileHandler(self.logfile,mode="a")
-        formatter = logging.Formatter("  %(asctime)s %(message)s")
-        fh.setFormatter(formatter)
-        fh.setLevel(logging.INFO)
-        logger.addHandler(fh)
+        # fh = logging.FileHandler(self.logfile,mode="a")
+        # formatter = logging.Formatter("  %(asctime)s %(message)s")
+        # fh.setFormatter(formatter)
+        # fh.setLevel(logging.INFO)
+        # logger.addHandler(fh)
 
 
 
@@ -45,7 +45,7 @@ class MiniResult(MiniResult):
         and add Trial_Num and process to each frame of the track according to behave log
         """
 
-        logger.info("FUN:: save_behave_session")
+        print("FUN:: save_behave_session")
 
 
         key = str(re.findall('\d{8}-\d{6}',behavevideo)[0])
@@ -69,7 +69,7 @@ class MiniResult(MiniResult):
         log = pd.read_csv(behave_log,skiprows=3)
         behavelog_time = log.iloc[:,12:]-min(log["P_nose_poke"])
         behavelog_info = log.iloc[:,:6]
-        logger.info("correct 'behavelog_time' when the first_np as 0")
+        print("correct 'behavelog_time' when the first_np as 0")
 
         # index track file
         behave_track = [i for i in glob.glob(os.path.join(os.path.dirname(behavevideo),"*DLC*h5")) if key in i][0]    
@@ -91,7 +91,7 @@ class MiniResult(MiniResult):
 
         behave_track['be_ts']=ts[0]-delta_t
 
-        logger.info("correct 'be_ts' when the first_np as 0")
+        print("correct 'be_ts' when the first_np as 0")
 
         # add Trial_Num and process
         # np.diff(np.insert(temp.values.reshape(1,-1),0,0)).reshape(10,6).shape
@@ -152,7 +152,7 @@ class MiniResult(MiniResult):
         产生 corrected_ms_ts,integrate behave session into miniscope session
         """
         # index behave*.pkl
-        logger.info("FUN:: save_alinged_session_pkl")
+        print("FUN:: save_alinged_session_pkl")
         behave_infos = glob.glob(os.path.join(self.Result_dir,"behave*"))
 
         # indx session*.pkl
@@ -169,7 +169,7 @@ class MiniResult(MiniResult):
         [print(i) for i in task_ms_infos]
 
         if not len(behave_infos) == len(task_ms_infos):
-            logger.warning("non-hc-task is not the same length to bahavioral session")
+            print("non-hc-task is not the same length to bahavioral session")
             sys.exit()
 
         ## 产生“corrected_ms_ts”
@@ -190,16 +190,16 @@ class MiniResult(MiniResult):
                 ,behave_result["behave_track"]["be_ts"][stop-1])
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
-            logger.info("total time elaspse in 'behavioral video' and 'miniscope video': ****ATTENTION****")
+            print("total time elaspse in 'behavioral video' and 'miniscope video': ****ATTENTION****")
             t1 = behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1]
-            logger.info(t1)
-            logger.info(max(task_ms_result["ms_ts"])/1000) #这部分不能相差太多
+            print(t1)
+            print(max(task_ms_result["ms_ts"])/1000) #这部分不能相差太多
 
             # 以行为学视频中，miniscope-led灯亮(后的100ms)为起始0点
             delta_t = 0-(behave_result["behave_track"]["be_ts"][start-1]) 
 
             task_ms_result["corrected_ms_ts"] = task_ms_result["ms_ts"]-delta_t*1000
-            logger.info("'corrected_ms_ts' corrected 'ms_ts' when first_np as 0")
+            print("'corrected_ms_ts' corrected 'ms_ts' when first_np as 0")
 
             #jiang behave_result中的数据全部整合到 ms_session
             with open(task_ms_info,'wb') as f:
@@ -219,7 +219,7 @@ class MiniResult(MiniResult):
         process=0 means the start of one trial
             ,specifing the duration after "context exit" of last trial and before "nosepoke" of this trial
         """
-        logger.info("FUN:: add_TrialNum_Process2behave_track")
+        print("FUN:: add_TrialNum_Process2behave_track")
         with open(session,'rb') as f:
             ms_result = pickle.load(f)
 
