@@ -164,42 +164,183 @@ def cellid_PC_incontext(s,*args,shuffle_times=1000,**kwargs):
 
 
 
-def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxes=None,trials=None):
+
+
+def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,*args,**kwargs):    
+    """
+    generate a dict contains a matrix of each context
+    the structure of matrix is [len(cellids),len(place_bins),len(trials)]
+
+    s.add_Trial_Num_Process()
+    s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,30,4,4,4],behavevideo=None) # add "place_bin_No"
+    s.add_Context(context_map=None) # add "Contxt" as a set of [0,1,2] 
+    """
+    # 添加需要的数据
+    
+    
+    print("FUNC::SingleCell_MeanFr_in_SingleTrial_along_Placebin")
+    df,index = s.trim_df(*args,**kwargs)
+    df = df[index]
+    Trial_Num = s.result["Trial_Num"][index]
+    Context= s.result["Context"][index]
+
+    
+    #  meanfr by "Trial_Num","Context","place_bin_No"
+    meanfr = df.groupby([s.result["Trial_Num"],s.result["Context"],s.result["place_bin_No"]]).mean()
+    meanfr.index.names = ['Trial_Num', 'Context', 'place_bin_No']
+
+    #screen rows in specified contexts, then Trials is also ready, because of each meaningful context has a meaningful trial_num
+    contexts = np.unique(meanfr.index.get_level_values("Context")) 
+    context = meanfr.index.get_level_values(level="Context")
+    meanfr = meanfr[context.isin(contexts)]
+            
+    # screen rows in specified place_bins
+    place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) 
+    place_bin_No = meanfr.index.get_level_values(level="place_bin_No")
+    meanfr = meanfr[place_bin_No.isin(place_bins)]
+    
+    # screen rows in specified Trials, which could be used to screen trials according to choice or reward
+    trials = np.unique(meanfr.index.get_level_values("Trial_Num")) 
+    trial = meanfr.index.get_level_values(level="Trial_Num")
+    meanfr = meanfr[trial.isin(trials)]
+    
+    # build np.array with dimensions like [len_cellids,len_placebins,len_trials]
+    cellids = s.result["idx_accepted"] 
+    
+    Context_Matrix_cellids_placebins_trials= {}
+    Context_Matrix_info = {}
+    Context_Matrix_info["cellids"] = cellids
+    Context_Matrix_info["place_bins"] = place_bins    
+    Context_Matrix_info["trials"] = {}
+    for c in contexts:  
+        trials = np.unique(meanfr.xs(c,level="Context").index.get_level_values("Trial_Num"))
+        Context_Matrix_info["trials"]["context%s"%c] = trials
+        matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)    
+        for i,t in enumerate(trials):
+            for j,p in enumerate(place_bins):
+                try:
+                    matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
+                except:
+                    pass
+        Context_Matrix_cellids_placebins_trials["context%s"%c]=matrix
+
+    Context_Matrix_info["Context_Matrix_cellids_placebins_trials"] = Context_Matrix_cellids_placebins_trials
+
+    return Context_Matrix_info
+
+def plot_MeanFr_along_Placebin(Context_Matrix_info):    
+    """
+    Context_Matrix_info: the output of FUNCTION: SingleCell_MeanFr_in_SingleTrial_along_Placebin
+    return two internal functions for plotting place fields or continuous MeanFr along place bins
+    """
+    
+    Context_Matrix_cellids_placebins_trials = Context_Matrix_info["Context_Matrix_cellids_placebins_trials"]    
+    
+    def plot(idx,context):
+        """
+        return an internal funtion 
+            that could plot MeanFr in each place bin of each cellid in each context by specify cellid and context
+        
+        """
+        # specified idx and context 
+        if context in Context_Matrix_cellids_placebins_trials.keys():
+            if idx in Context_Matrix_info["cellids"]:
+                dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
+            else:
+                print("Cell %s doesn't exist"%idx)
+                return 
+        else:
+            print("context '%s' don't exist"%context)
+            return 
+        
+        # for specifed neuron in specified context, there are row-number of placebin and column-number of trials
+        matrix = Context_Matrix_cellids_placebins_trials[context][dim1,:,:] # [placebins,trials]        
+        matrix_mean = np.nanmean(matrix,axis=1)
+        matrix_and_mean = np.column_stack((matrix,matrix_mean))
+        matrix_and_mean_norm = np.apply_along_axis(lambda x:(x-np.nanmean(x))/np.nanstd(x,ddof=1),axis=0,arr=matrix_and_mean)
+        
+        
+        plt.imshow(matrix_and_mean_norm.T)
+        plt.axhline(y=matrix_and_mean_norm.shape[1]-1.6,color="red",linewidth=0.8,linestyle="--")
+        plt.xlabel("Place bins")
+        plt.ylabel("Trials")
+        plt.title("MeanFr in Context %s"%context)
+               
+        plt.show()
+        
+    def plot2(idx):
+        """
+        return an internal function
+            that could plot MeanFr along placebins for each cellid in different contexts
+        """
+        # specified idx
+        if idx in Context_Matrix_info["cellids"]:
+            dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
+        else:
+            print("Cell %s doesn't exist"%idx)
+            return 
+
+        matrix_0 = Context_Matrix_cellids_placebins_trials[0][dim1,:,:] # [placebins,trials]    
+        matrix_1 = Context_Matrix_cellids_placebins_trials[1][dim1,:,:] # [placebins,trials]  
+        
+        matrix_0_mean = np.nanmean(matrix_0,axis=1)
+        matrix_1_mean = np.nanmean(matrix_1,axis=1)
+        
+        matrix_0_sem = np.nanstd(matrix_0,axis=1,ddof=1)/np.sqrt(matrix_0.shape[1])
+        matrix_1_sem = np.nanstd(matrix_1,axis=1,ddof=1)/np.sqrt(matrix_1.shape[1])
+        
+
+        plt.plot(matrix_0_mean,linestyle="--",color="red")
+        plt.plot(matrix_1_mean,linestyle="--",color="green")
+        plt.fill_between(x=np.arange(len(matrix_0_mean)),y1=matrix_0_mean-matrix_0_sem,y2=matrix_0_mean+matrix_0_sem,alpha=0.3,color="red")
+        plt.fill_between(x=np.arange(len(matrix_1_mean)),y1=matrix_1_mean-matrix_1_sem,y2=matrix_1_mean+matrix_1_sem,alpha=0.3,color="green")
+        plt.legend(["Ctx 0","Ctx 1"])
+        plt.title("MeanFr in different contexts")
+        plt.xlabel("Place bins")
+        plt.ylabel("MeanFr (UnNorm.)")
+        plt.show()
+        
+    return plot,plot2
+
+def SingleCell_trace_in_SingleTrial(s,*args,**kwargs):
     """
     generate a dict containing lists of each context in which are dataframe of each trials
     the columns of the dataframe are [ms_ts,Body_speed_angle,idxes...]
+
+    s.add_Trial_Num_Process()
+    s.add_Context(context_map=None) # add Contxt as a set of [0,1,2]
+    s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,30,4,4,4],behavevideo=None) # add "place_bin_No"
+    s.add_Body_speed(scale=0.33) # Body_speed & Body_speed_angle are ready
+
     """
-    df = s.df if df ==None else df
-    cellids = s.result["idx_accepted"] if idxes == None else idxes
-    if not idxes == None:
-        df = df[cellids]
-        print("screen df accoording to given idxes")
+
+    print("FUNC::SingleCell_trace_in_SingleTrial")
+    df,index = s.trim_df(*args,**kwargs)
+    df = df[index]
+    Trial_Num = s.result["Trial_Num"][index]
+    Context= s.result["Context"][index]
 
     # Trials is ready    
-    ms_ts = pd.Series(s.result["ms_ts"])# ms_ts is ready
-    s.add_Context(context_map=None) # add Contxt as a set of [0,1,2]
-    s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None) # add "place_bin_No"
-    s.add_Body_speed(scale=0.33) # Body_speed & Body_speed_angle are ready
 
     df["Context"] = s.result["Context"]
     df["place_bin_No"] = s.result["place_bin_No"] # used only in screen data in context. actually s.add_is_in_context is alternative way to screen this.
     df["Trial_Num"] = s.result["Trial_Num"]
-    df["ms_ts"] = s.result["ms_ts"]
+    df["ms_ts"] = s.result["aligned_behave2ms"]["corrected_ms_ts"]
     df["Body_speed_angle"] = s.result["Body_speed_angle"]
 
     #screen contexts
-    contexts = np.unique(s.result["Context"]) if contexts == None else contexts  
+    contexts = np.unique(s.result["Context"]) 
     df = df.loc[df["Context"].isin(contexts)]
     print("screen df according to given contexts")
 
     #screen placebins
-    placebins = np.unique(s.result["place_bin_No"]) if place_bins==None else place_bins
+    placebins = np.unique(s.result["place_bin_No"]) 
     df = df.loc[df["place_bin_No"].isin(placebins)]
     df.drop(columns="place_bin_No",inplace=True) 
     print("screen df according to given place bins")
 
     #screen trials
-    trials = np.unique(s.result["Trial_Num"]) if trials == None else trials
+    trials = np.unique(s.result["Trial_Num"]) 
     df = df.loc[df["Trial_Num"].isin(trials)]
     print("screen df according to given tirals")
     
@@ -215,66 +356,55 @@ def SingleCell_trace_in_SingleTrial(s,df=None,contexts=None,place_bins=None,idxe
                 temp = context_df[context_df["Trial_Num"]==trial]
                 temp.drop(columns="Trial_Num",inplace=True)
                 Trial_list_info.append(temp) #Besides idxes only "ms_ts" and "Body_speed_angle" left
-            Context_dataframe_info[context]=Trial_list_info
+            Context_dataframe_info["context%s"%context]=Trial_list_info
 
     return Context_dataframe_info
-
-def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,df=None,contexts=None,place_bins=None,idxes = None,trials=None):    
+def plot_trace_with_running_direction(Context_dataframe_info):
     """
-    generate a dict contains a matrix of each context
-    the structure of matrix is [len(cellids),len(place_bins),len(trials)]
+    return internal functions for plotting trace of each trial with two colors means two direction
     """
-    # 添加需要的数据
-    
-    df = s.df if df == None else df
-    
-    # "Trial_Num"  is ready
-    s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,40,4,4,4],behavevideo=None) # add "place_bin_No"
-    s.add_Context(context_map=None) # add "Contxt" as a set of [0,1,2] 
-    
-    #  meanfr by "Trial_Num","Context","place_bin_No"
-    meanfr = df.groupby([s.result["Trial_Num"],s.result["Context"],s.result["place_bin_No"]]).mean()
-    meanfr.index.names = ['Trial_Num', 'Context', 'place_bin_No']
+    def plot(idx,context):
+        """
+        return an inter function
+            That could plot trace along each trial which have "ms_ts" and "Body_speed_angle" Besides idxes 
+        """
 
-    #screen rows in specified contexts, then Trials is also ready, because of each meaningful context has a meaningful trial_num
-    contexts = np.unique(meanfr.index.get_level_values("Context")) if contexts==None else contexts
-    context = meanfr.index.get_level_values(level="Context")
-    meanfr = meanfr[context.isin(contexts)]
+        if context in Context_dataframe_info.keys():
+            trials = Context_dataframe_info[context]
+
+        else:
+            print("Context %s doesn't exist."%context)
+            return 
+
+        trial_lens = len(trials)
+
+        fig,axes = plt.subplots(trial_lens,1
+                                ,figsize=(8,0.5*trial_lens)
+                                ,subplot_kw = {"xticks":[],"yticks":[]}
+                                )
+
+        for i,ax in enumerate(axes):
+            if i==0:
+                ax.set_title("incontext(placebins) firing rate cellid:%s, context:%s"%(idx,context))
+            if i==len(axes)-1:
+                ax.set_xlabel("Trial Time(ctx enter > r-ctx_exit)")
+            ax.set_ylabel(i+1,rotation=0)
+            ax.set_aspect("auto")
+            #ax.set_axis_off() 
+            ax.spines['top'].set_visible(False)
+            #ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            color=["red" if i>90 and i<280 else "green" for i in trials[i]["Body_speed_angle"]]
+            ax.scatter(x=trials[i]["ms_ts"]-np.min(trials[i]["ms_ts"]),y=trials[i][idx],c=color,s=1)
+        plt.show()
+
+
+    return plot
+
+
             
-    # screen rows in specified place_bins
-    place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) if place_bins == None else place_bins
-    place_bin_No = meanfr.index.get_level_values(level="place_bin_No")
-    meanfr = meanfr[place_bin_No.isin(place_bins)]
-    
-    # screen rows in specified Trials, which could be used to screen trials according to choice or reward
-    trials = np.unique(meanfr.index.get_level_values("Trial_Num")) if trials == None else trials
-    trial = meanfr.index.get_level_values(level="Trial_Num")
-    meanfr = meanfr[trial.isin(trials)]
-    
-    # build np.array with dimensions like [len_cellids,len_placebins,len_trials]
-    cellids = s.result["idx_accepted"] if idxes == None else idxes
-    
-    Context_Matrix_cellids_placebins_trials= {}
-    Context_Matrix_info = {}
-    Context_Matrix_info["cellids"] = cellids
-    Context_Matrix_info["place_bins"] = place_bins    
-    Context_Matrix_info["trials"] = []
-    for c in contexts:  
-        trials = np.unique(meanfr.xs(c,level="Context").index.get_level_values("Trial_Num"))
-        Context_Matrix_info["trials"].append(trials)
-        matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)    
-        for i,t in enumerate(trials):
-            for j,p in enumerate(place_bins):
-                try:
-                    matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
-                except:
-                    pass
-        Context_Matrix_cellids_placebins_trials[c]=matrix
-
-    Context_Matrix_info["Context_Matrix_cellids_placebins_trials"] = Context_Matrix_cellids_placebins_trials
-
-    return Context_Matrix_info
-
+            
 
 
 #%% for population analysis

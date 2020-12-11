@@ -33,26 +33,7 @@ import logging
         # fh.setFormatter(formatter)
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
-def save_session(mouse_id,part,day):
-    trial_lists = construct_trial_lists(mouse_id,part,day)
 
-    filename = "%s_part%s_day%s.pkl"%(mouse_id,part,day)
-    savepath = os.path.join(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\sessions",filename)
-
-    if len(trial_lists)>0:
-        try:
-            session = concatenate_trials(trial_lists)            
-        except:
-            print("problem in concatenate_trials")
-            session = {}
-            savepath = savepath.replace(".pkl","_bug.pkl")
-        save_pkl(session,savepath)
-    else:
-        print("no trial is indexed")
-
-def build_session(session_path):
-    s =load_pkl(session_path) 
-    return AnaMini(s)
 
 
 
@@ -63,7 +44,7 @@ def construct_trial_lists(mouse_id,part,day,session=None,screen_trials=None,scre
     Accordingly, we could screen out some trials.
 
     """
-    trial_pool_path  = r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials\*.pkl" if trial_pool_path is None else trial_pool_path
+    trial_pool_path  = r"\\10.10.47.163\Data_archive\qiushou\Trials\*.pkl" if trial_pool_path is None else trial_pool_path
     trials = glob.glob(trial_pool_path)
     trials = [i for i in trials if not "hc" in i]
     trials = [i for i in trials if str(mouse_id) in i]
@@ -175,7 +156,26 @@ def concatenate_trials(trials):
     return session 
 
 
+def save_session(mouse_id,part,day):
+    trial_lists = construct_trial_lists(mouse_id,part,day)
 
+    filename = "%s_part%s_day%s.pkl"%(mouse_id,part,day)
+    savepath = os.path.join(r"\\10.10.47.163\Data_archive\qiushou\Sessions",filename)
+
+    if len(trial_lists)>0:
+        try:
+            session = concatenate_trials(trial_lists)            
+        except:
+            print("problem in concatenate_trials")
+            session = {}
+            savepath = savepath.replace(".pkl","_bug.pkl")
+        save_pkl(session,savepath)
+    else:
+        print("no trial is indexed")
+
+def build_session(session_path):
+    s =load_pkl(session_path) 
+    return AnaMini(s)
 
 class AnaMini():
     def __init__(self,session):

@@ -117,13 +117,14 @@ class MiniResult():
         """
         print("FUN:: save_miniscope_session_pkl")
         if os.path.exists(self.ms_mat_path):        
-            print("loading %s"%self.ms_mat_path)
-            ms = load_mat(self.ms_mat_path)
-            print("loaded %s"%self.ms_mat_path)
-        else:
-            print("loading %s"%self.ms_mat_path2)
-            ms = load_pkl(self.ms_mat_path2)
-            print("loaded %s"%self.ms_mat_path2)
+            try:
+                print("loading %s"%self.ms_mat_path)
+                ms = load_mat(self.ms_mat_path)
+                print("loaded %s"%self.ms_mat_path)
+            except:
+                print("loading %s"%self.ms_mat_path2)
+                ms = load_pkl(self.ms_mat_path2)
+                print("loaded %s"%self.ms_mat_path2)
 
         sigraw = ms['ms']['sigraw'] #默认为sigraw
         try:            
