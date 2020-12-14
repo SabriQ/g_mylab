@@ -116,25 +116,24 @@ class MiniResult():
 
         """
         print("FUN:: save_miniscope_session_pkl")
-        if os.path.exists(self.ms_mat_path):        
-            try:
-                print("loading %s"%self.ms_mat_path)
-                ms = load_mat(self.ms_mat_path)
-                print("loaded %s"%self.ms_mat_path)
-            except:
-                print("loading %s"%self.ms_mat_path2)
-                ms = load_pkl(self.ms_mat_path2)
-                print("loaded %s"%self.ms_mat_path2)
+        try:
+            print("loading %s"%self.ms_mat_path)
+            ms = load_mat(self.ms_mat_path)
+            print("loaded %s"%self.ms_mat_path)
+        except:
+            print("loading %s"%self.ms_mat_path2)
+            ms = load_pkl(self.ms_mat_path2)
+            print("loaded %s"%self.ms_mat_path2)
 
         sigraw = ms['ms']['sigraw'] #默认为sigraw
         try:            
             S_dff = ms['ms']['S_dff']
         except:            
             try:
-            # read S_dff.pkl
                 S_dff = load_pkl(self.S_dff_path)
             except:
                 print("saving S_dff problem,is there S_dff.pkl in directory?")
+                sys.exit()
 
         idx_accepted = ms['ms']['idx_accepted']
         idx_deleeted = ms['ms']['idx_deleted']
@@ -147,7 +146,7 @@ class MiniResult():
         # 对不同session的分析先后顺序排序
         if not orders == None:
             timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
-            [print(len(i)) for i in timestamps_order]
+            # [print(len(i)) for i in timestamps_order]
             print("timestamps are sorted by %s"%orders)
 
 
