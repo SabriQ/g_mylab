@@ -156,8 +156,8 @@ def concatenate_trials(trials):
     return session 
 
 
-def save_session(mouse_id,part,day,aim='ce',savedir=None):
-    trial_lists = construct_trial_lists(mouse_id,part,day)
+def save_session(mouse_id,part,day,aim='ce',trial_pool_path=None,savedir=None):
+    trial_lists = construct_trial_lists(mouse_id,part,day,trial_pool_path)
 
     filename = "%s_part%s_day%s_%s.pkl"%(mouse_id,part,day,aim)
     savedir = r"\\10.10.47.163\Data_archive\qiushou\Sessions" if savedir ==None else savedir
