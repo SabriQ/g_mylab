@@ -114,7 +114,7 @@ class MiniResult():
 
 
 
-    def save_miniscope_session_pkl(self,orders=None):
+    def save_miniscope_session_pkl(self,orders=None,jump=False):
         """
 
         """
@@ -148,7 +148,10 @@ class MiniResult():
         if not sum([len(i) for i in timestamps]) == sigraw.shape[0]:
             print("timestamps length:%s, sigraw shape:%s"%(sum([len(i) for i in timestamps]),sigraw.shape))
             print("not equal")
-            return -1
+            if not jump:
+                return -1
+            else:
+                print("jump")
         
 
         # 对不同session的分析先后顺序排序
