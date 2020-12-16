@@ -257,7 +257,7 @@ class MiniResult(MiniResult):
                 except:
                     pickle.dump(dict(ms_result,**behave_result),f,protocol=4)
         
-
+            print("------------------------------------------")
 
 
 
