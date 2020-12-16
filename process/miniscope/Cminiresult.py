@@ -145,7 +145,7 @@ class MiniResult():
             timestamps = pickle.load(f)
         [print(len(i)) for i in timestamps]
 
-        if not sum([len(i) for i in timestamps]) == sigraw.shape[1]:
+        if not sum([len(i) for i in timestamps]) == sigraw.shape[0]:
             print("timestamps length:%s, sigraw shape:%s"%(sum([len(i) for i in timestamps]),sigraw.shape))
             print("not equal")
             return -1
