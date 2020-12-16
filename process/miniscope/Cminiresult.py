@@ -147,7 +147,7 @@ class MiniResult():
 
         if not sum([len(i) for i in timestamps]) == sigraw.shape[1]:
             print("timestamps length:%s, sigraw shape:%s"%(sum([len(i) for i in timestamps]),sigraw.shape))
-            print(not equal)
+            print("not equal")
             return -1
         
 
