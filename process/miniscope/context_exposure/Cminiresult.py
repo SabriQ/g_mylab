@@ -5,18 +5,12 @@ import json,cv2
 import scipy.io as spio
 import pickle
 from mylab.process.miniscope.context_exposure.Mfunctions import *  # starts_firstnp_stops
-
+from mylab.Functions import *
 from mylab.process.miniscope.Cminiresult import *
 
 import logging 
 
 
-# logger = logging.getLogger()
-# logger.setLevel(logging.DEBUG)
-
-# sh = logging.StreamHandler(sys.stdout) #stream handler
-# sh.setLevel(logging.DEBUG)
-# logger.addHandler(sh)
 
 
 
@@ -30,16 +24,10 @@ class MiniResult(MiniResult):
     def __init__(self,Result_dir):
         super().__init__(Result_dir)
 
-        # fh = logging.FileHandler(self.logfile,mode="a")
-        # formatter = logging.Formatter("  %(asctime)s %(message)s")
-        # fh.setFormatter(formatter)
-        # fh.setLevel(logging.INFO)
-        # logger.addHandler(fh)
 
 
 
-    def save_behave_session(self,behavevideo
-        ,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
+    def save_behave_session(self,behavevideo,logfilepath = r"C:\Users\qiushou\OneDrive\miniscope_2\202016\starts_firstnp_stops.csv"):
         """
         save log, track, timestamp as behavesession according to behavevideo, 
         and add Trial_Num and process to each frame of the track according to behave log
@@ -173,7 +161,7 @@ class MiniResult(MiniResult):
             sys.exit()
 
         ## 产生“corrected_ms_ts”
-        for behave_info, task_ms_info in zip(behave_infos,task_ms_infos):
+        for behave_info, task_ms_info,task in zip(behave_infos,task_ms_infos,session_tasks):
             ## 读取行为学beha_session
             with open(behave_info,'rb') as f:
                 behave_result = pickle.load(f)
@@ -182,50 +170,27 @@ class MiniResult(MiniResult):
 
             ## 读取有行为学的ms_session
             with open(task_ms_info,'rb') as f:
-                task_ms_result = pickle.load(f)
-            #行为学视频中的start,first_np,stop分别是哪一帧，哪一个行为学时间戳
-            print("behavevideo %s start at %s,first_np at %s,stop at %s frame, the corresponding behavioral timestamps are: " %(key,start,first_np,stop))
-            print(behave_result["behave_track"]["be_ts"][start-1]
-                ,behave_result["behave_track"]["be_ts"][first_np-1]
-                ,behave_result["behave_track"]["be_ts"][stop-1])
+                ms_result = pickle.load(f)
+                ms_result["exp"] = task
 
             #行为学中miniscope亮灯的总时长和 miniscope记录的总时长
             print("total time elaspse in 'behavioral video' and 'miniscope video': ****ATTENTION****")
             t1 = behave_result["behave_track"]["be_ts"][stop-1]-behave_result["behave_track"]["be_ts"][start-1]
             print(t1)
-            print(max(task_ms_result["ms_ts"])/1000) #这部分不能相差太多
+            print(max(ms_result["ms_ts"])/1000) #这部分不能相差太多
 
-            # 以行为学视频中，miniscope-led灯亮(后的100ms)为起始0点
+            # 以行为学视频中，miniscope-led灯亮(或其后的100ms)为起始0点
             delta_t = 0-(behave_result["behave_track"]["be_ts"][start-1]) 
 
-            task_ms_result["corrected_ms_ts"] = task_ms_result["ms_ts"]-delta_t*1000
-            print("'corrected_ms_ts' corrected 'ms_ts' when first_np as 0")
-
-            #jiang behave_result中的数据全部整合到 ms_session
-            with open(task_ms_info,'wb') as f:
-                pickle.dump(dict(task_ms_result,**behave_result),f)
-        
+            ms_result["corrected_ms_ts"] = ms_result["ms_ts"]-delta_t*1000
             print("corrected ms_ts and behavioral result are saved %s"%task_ms_info)
-            print("---------------------")
-        #     print(task_ms_result["ms_ts"])
-        #     sys.exit()
 
 
+            #=================================
 
-    def add_TrialNum_Process2behave_track(self,session):
-        """
-        is about to discrete, has been integrated into save behave sessions.
-        在session*.pkl中的behave_tracek 加上“Trial_Num”,"process"
-        process=0 means the start of one trial
-            ,specifing the duration after "context exit" of last trial and before "nosepoke" of this trial
-        """
-        print("FUN:: add_TrialNum_Process2behave_track")
-        with open(session,'rb') as f:
-            ms_result = pickle.load(f)
 
-        if "behavelog_time" in ms_result.keys():
             #提取每一个trial的start和stop ，并产生对应的Trial_Num ,process
-            temp = ms_result["behavelog_time"]
+            temp = behave_result["behavelog_time"]
             # np.diff(np.insert(temp.values.reshape(1,-1),0,0)).reshape(10,6).shape
             starts = np.insert(temp.values.reshape(1,-1),0,0)[0:-1]
             stops = temp.values.reshape(1,-1)[0]
@@ -239,7 +204,7 @@ class MiniResult(MiniResult):
             #将Trial_Num,process 写进behave_track
             Trial_Num = []
             process = []
-            for i in ms_result["behave_track"]["be_ts"]:
+            for i in behave_result["behave_track"]["be_ts"]:
                 if i < startstops[0][2] or i >startstops[-1][3]: # 小于第一个startstop的开始或者大于最后一个startstop的结束
                     Trial_Num.append(-1)
                     process.append(-1)
@@ -252,14 +217,51 @@ class MiniResult(MiniResult):
                         else:
                             pass
 
-            ms_result["behave_track"]["Trial_Num"]=Trial_Num
-            ms_result["behave_track"]["process"]=process
+            behave_result["behave_track"]["Trial_Num"]=Trial_Num
+            behave_result["behave_track"]["process"]=process
             print("Trial_Num,process here are the same length as behavioral data,not the final version")
-            with open(session,'wb') as f:
-                pickle.dump(ms_result,f)
-            print("%s is updated and saved"%session)
-        else:
-            print("%s is recorded in homecage"%session)
+
+            #%%===========align_behave_ms========================
+
+            # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
+            print("aligninging behavioral frame to each ms frame...")
+            print("looking for behave frame for each corrected_ms_ts...")
+            aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": ms_result["corrected_ms_ts"]
+                                            ,"ms_behaveframe":[find_close_fast(arr=behave_result["behave_track"]["be_ts"]*1000,e=k) for k in ms_result["corrected_ms_ts"]]})
+            _,length = rlc(aligned_behave2ms["ms_behaveframe"])
+            # print(length)
+            print("for one miniscope frame, there are at most %s behavioral frames "%max(length))
+
+            if max(length)>10:
+                print("********ATTENTION when align_behave_ms**********")
+                print("miniscope video is longer than behavioral video, please check")
+                print("********ATTENTION when align_behave_ms**********")
+
+            aligned_behave2ms = aligned_behave2ms.join(behave_result["behave_track"],on="ms_behaveframe")
+            
+            ms_result["aligned_behave2ms"]=aligned_behave2ms
+
+            # quality info is saved in case of later use
+            ms_result["quality"]={
+            "behave_duration":t1,
+            "mini_duration":max(ms_result["ms_ts"])/1000,
+            "delta_t":delta_t,
+            "max_lenth":max(length)
+            }
+
+
+            #jiang behave_result中的数据全部整合到 ms_session
+            with open(task_ms_info,'wb') as f:
+                try:
+                    pickle.dump(dict(ms_result,**behave_result),f)
+                except:
+                    pickle.dump(dict(ms_result,**behave_result),f,protocol=4)
+        
+
+
+
+
+
 
     def show_in_context_masks(self,behavevideo,aim="in_context"):
         mask, coord = Video(behavevideo).draw_rois(aim=aim)

@@ -156,8 +156,8 @@ def concatenate_trials(trials):
     return session 
 
 
-def save_session(mouse_id,part,day,aim='ce',trial_pool_path=None,savedir=None):
-    trial_lists = construct_trial_lists(mouse_id,part,day,trial_pool_path)
+def save_session(mouse_id,part,day,aim='ce',savedir=None):
+    trial_lists = construct_trial_lists(mouse_id,part,day)
 
     filename = "%s_part%s_day%s_%s.pkl"%(mouse_id,part,day,aim)
     savedir = r"\\10.10.47.163\Data_archive\qiushou\Sessions" if savedir ==None else savedir
@@ -180,8 +180,8 @@ def build_session(session_path):
 
 class AnaMini():
     def __init__(self,session):
-        self.result = session["result"]
-        self.exp="task"
+        self.result = session
+        self.exp=self.result["exp"]
         self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self,hc_trial_bin=5000):
@@ -348,7 +348,7 @@ class AnaMini():
         else:
             print("homecage session has no 'place_bin_No'")
 
-#%% which are about to discrete
+    #%% which are about to discrete
     def add_is_in_context2(self):
         """
         which is about to discrete
@@ -581,7 +581,7 @@ class AnaMini():
                 pickle.dump(self.result,f)
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
-#%%
+    #%%
 
     def add_behave_choice_side(self,):
         print("FUN::add_behave_choice_side")
@@ -746,11 +746,12 @@ class AnaMini():
         if tracking :
             plt.plot(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"],markersize=1)
         plt.show()
-# if __name__ == "__main__":
-#     sessions = glob.glob(r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\Results_202016\20200531_165342_0509-0511-Context-Discrimination-30fps\session*.pkl")
-#     for session in sessions:
-#         S = MiniAna(session)
-#         S.savepkl2mat()
+
+
+
+
+
+
 if __name__ == "__main__":
     s3 = Cellid(r"C:\Users\Sabri\Desktop\20200531_165342_0509-0511-Context-Discrimination-30fps\session3.pkl")
     print("----")

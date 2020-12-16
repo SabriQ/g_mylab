@@ -79,9 +79,7 @@ class MiniResult():
         self.ms_mat_path2 = os.path.join(self.Result_dir,"ms.pkl")
         self.ms_ts_path = os.path.join(self.Result_dir,"ms_ts.pkl")
         self.resulthdf5 =  os.path.join(self.Result_dir,"result.hdf5")
-        self.logfile = os.path.join(self.Result_dir,"pre-process_log.txt")
-        self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl"))
-        self.sessions.sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
+
         self.ms_mc_path = os.path.join(self.Result_dir,"ms_mc.mp4")
         self.S_dff_path = os.path.join(self.Result_dir,"S_dff.pkl")
 
@@ -90,6 +88,11 @@ class MiniResult():
         # fh.setFormatter(formatter)
         # fh.setLevel(logging.INFO)
         # logger.addHandler(fh)
+    @property
+    def sessions(self):
+        self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl"))
+        self.sessions.sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
+        return self.sessions
 
     def frame_num(self):
         if os.path.exists(self.ms_mc_path):
@@ -141,14 +144,19 @@ class MiniResult():
         with open(self.ms_ts_path,'rb') as f:
             timestamps = pickle.load(f)
         [print(len(i)) for i in timestamps]
-        print("session lenth:%s, timestamps length:%s, sigraw shape:%s"%(len(timestamps),sum([len(i) for i in timestamps]),sigraw.shape))
+
+        if not sum([len(i) for i in timestamps]) == sigraw.shape[1]:
+            print("timestamps length:%s, sigraw shape:%s"%(sum([len(i) for i in timestamps]),sigraw.shape))
+            print(not equal)
+            return -1
+        
 
         # 对不同session的分析先后顺序排序
-        if not orders == None:
-            timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
-            # [print(len(i)) for i in timestamps_order]
-            print("timestamps are sorted by %s"%orders)
+        orders = list(np.arange(1,len(timestamps)+1)) if orders == None else orders
 
+        timestamps_order = np.array([timestamps[i] for i in np.array(orders)-1])
+        # [print(len(i)) for i in timestamps_order]
+        print("timestamps are sorted by %s"%orders)
 
         #根据timestamps将dff切成对应的session
         slice = []

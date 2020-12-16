@@ -118,41 +118,6 @@ class MiniAna():
 
 
 
-
-    def align_behave_ms(self,):
-        """
-        产生 aligned_behave2ms
-        注意 有的是行为学视频比较长，有的是miniscope视频比较长，一般是行为学视频比较长
-        """
-        print("FUN:: aligned_behave2ms")
-        if self.exp=="task":
-            if not "aligned_behave2ms" in self.result.keys():
-                # 为每一帧miniscope数据找到对应的行为学数据并保存  为 aligned_behave2ms
-                print("aligninging behavioral frame to each ms frame...")
-                print("looking for behave frame for each corrected_ms_ts...")
-                aligned_behave2ms=pd.DataFrame({"corrected_ms_ts": self.result["corrected_ms_ts"]
-                                                ,"ms_behaveframe":[find_close_fast(arr=self.result["behave_track"]["be_ts"]*1000,e=k) for k in self.result["corrected_ms_ts"]]})
-                _,length = rlc(aligned_behave2ms["ms_behaveframe"])
-                # print(length)
-                print("for one miniscope frame, there are at most %s behavioral frames "%max(length))
-
-                if max(length)>10:
-                    print("********ATTENTION when align_behave_ms**********")
-                    print("miniscope video is longer than behavioral video, please check")
-                    print("********ATTENTION when align_behave_ms**********")
-
-                aligned_behave2ms = aligned_behave2ms.join(self.result["behave_track"],on="ms_behaveframe")
-                
-                self.result["aligned_behave2ms"]=aligned_behave2ms
-
-                self.savesession("aligned_behave2ms")
-
-            else:
-                print("behaveiroal timestamps were aligned to ms")
-
-        else:
-            print("this session was recorded in homecage")
-
     def add_c_behavevideoframe(self,behavevideo=None,frame=999):
         """
         which is moved to context_exposure/Cminiresult, and is about to discrete
@@ -187,82 +152,8 @@ class MiniAna():
             else:
                 print("all_track_points has been there")
 
-    def detect_ca_transients(self,thresh=1.5,baseline=0.8,t_half=0.2,FR=30):
-        """
-        return ca_transients,celldata_detect, single_cell_detected_transiend. 
-        celldata_detect have the same size with df
-        """
-        print("detecting calcium transients for each cell")
-        self.result["ca_transients"],self.result["ca_transient_detect"],self.result["single_cell_detected_transient"]=detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh,baseline,t_half,FR)
-        print("calcium tansients are detected... ")
 
 
-
-
-    def trim_df2(self,df=None,force_neg2zero=True,Normalize=False,standarize=False
-        ,Trial_Num=None
-        ,in_process=False,process=None
-        ,in_context=False,in_lineartrack=False
-        ,speed_min = False):
-        """
-        is about to discrete
-        process: list process, for example [0,1,2]
-        """
-        print("FUN:: trim_df")
-
-        df = self.df if df == None else df
-        if force_neg2zero:
-            print("negative values are forced to be zero")
-            df[df<0]=0
-
-        if Normalize:
-            df,_,_ = Normalization(df)
-            print("NORMALIZED sigraw trace")
-        if standarize:
-            df,_,_ = Standarization(df)
-            print("STANDARIZED sigraw trace")
-
-        if Trial_Num==None:
-            Trial_Num = self.result["Trial_Num"]
-
-
-        index=pd.DataFrame()
-        index["Trial_Num"] = Trial_Num>=0
-        print("Trial_Num start from 1")
-
-        if in_process:
-            if not process ==None:
-                index["in_process"] = self.process.isin(process)
-                print("process is limited in %s"%process)
-            else:
-                print("warning: process is [None], please specify.")
-
-        if in_context:
-            try:
-                index["in_context"] = self.result["is_in_context"]
-                print("interested zone are restricted 'is_in_context'")
-            except:
-                print("warning: is_in_context does not exist")
-        if in_lineartrack:
-            try:
-                index["in_lineartrack"] = self.result["is_in_lineartrack"]
-                print("interested zone are restricted 'is_in_lineartrack'")
-            except:
-                print("warning: is_in_lineartrack does not exist")
-
-        if speed_min:
-            try:
-                index["speed_min"] = self.result["Body_speed"]>speed_min
-                print("minimum speed are restricted to at least %s cm/s"%speed_min)
-            except:
-                print("warning: Body_speed>%s is problemic"%speed_min)
-                
-
-
-        # df = df[index.all(axis=1)]
-        # print(index.all(axis=1))
-        
-        return df, index.all(axis=1)
 
 
 def divide_sessions_into_trials(session_path
@@ -295,7 +186,7 @@ def divide_sessions_into_trials(session_path
             mouse_id = mouse_id1
 
         tirals = []
-        s.align_behave_ms()
+        s.add_c_behavevideoframe()
         s.add_c_all_track_points()
         trial_list= [i for i in set(s.result["aligned_behave2ms"]["Trial_Num"]) if not i==-1] 
 
@@ -331,7 +222,7 @@ def divide_sessions_into_trials(session_path
                 "logtime":s.result["behavelog_time"].loc[trial-1]}
 
             quality={
-                "aligned_difference":None
+                "quality":s.result["quality"]
             }
 
             Trial = {
