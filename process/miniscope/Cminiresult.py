@@ -90,9 +90,9 @@ class MiniResult():
         # logger.addHandler(fh)
     @property
     def sessions(self):
-        self.sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl"))
-        self.sessions.sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
-        return self.sessions
+        sessions = glob.glob(os.path.join(self.Result_dir,"session*.pkl"))
+        sessions.sort(key=lambda x:int(re.findall(r"session(\d+).pkl",x)[0]))
+        return sessions
 
     def frame_num(self):
         if os.path.exists(self.ms_mc_path):
