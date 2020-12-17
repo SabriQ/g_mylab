@@ -16,13 +16,6 @@ from mylab.ana.miniscope.Mplacecells import *
 
 
 
-
-
-
-
-
-
-
 def _load_trial(trial_path):
     with open(trial_path,'rb') as f:
         result = pickle.load(f)
@@ -120,10 +113,10 @@ def save_newsession(trials,savedir=None):
         session = int(re.findall("session(\d+)_",file)[0])
         trial = int(re.findall("trial(\d+)",file)[0])
         return [hms,session,trial]
-    
-    trial_lists = list(trials).sort(key=key)
+    trials = list(trials)
+    trials.sort(key=key)
 
-    trial = trial_lists[0]
+    trial = trials[0]
 
     mouse_id = re.findall("(\d+)_part",trial)[0]
     part = re.findall("part(\d+)",trial)[0]
@@ -132,12 +125,13 @@ def save_newsession(trials,savedir=None):
 
     filename = "%s_part%s_day%s_aim_%s.pkl"%(mouse_id,part,day,aim)
 
-    savedir = r"\\10.10.47.163\Data_archive\qiushou\Sessions" if savedir ==None else savedir
+    savedir = os.path.dirname(trial).replace("Trials","Sessions")
+    #  savedir = r"\\10.10.47.163\Data_archive\qiushou\Sessions" if savedir ==None else savedir)
     savepath = os.path.join(savedir,filename)
 
-    if len(trial_lists)>0:
+    if len(trials)>0:
         try:
-            session = concatenate_trials(trial_lists)            
+            session = concatenate_trials(trials)            
         except:
             print("problem in concatenate_trials")
             session = {}
