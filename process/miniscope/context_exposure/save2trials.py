@@ -44,10 +44,10 @@ class MiniAna():
         print("loading %s"%self.session_path)
         with open(self.session_path,"rb") as f:
             self.result = pickle.load(f)
-        if not "behavelog_info" in self.result.keys():
+        if not "exp" in self.result.keys():
             self.exp = "hc"
         else:
-            self.exp = "task"
+            self.exp = self.result["exp"]
         print("loaded")
         print(self.result.keys())
 
@@ -180,7 +180,7 @@ def divide_sessions_into_trials(session_path
 
         mouse_id2 = re.findall("(\d+)-\d{8}-\d{6}.mp4",videoname)[0]
         key_index = s.result["behavevideo"][1]
-        aim=re.findall("(.*)-%s"%mouse_id2,videoname)[0]
+        aim=s.result["exp"]
 
         if mouse_id1 == mouse_id2:
             mouse_id = mouse_id1
