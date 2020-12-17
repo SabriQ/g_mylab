@@ -161,7 +161,8 @@ class MiniResult(MiniResult):
             sys.exit()
 
         ## 产生“corrected_ms_ts”
-        for behave_info, task_ms_info,task in zip(behave_infos,task_ms_infos,session_tasks):
+        nonhc_session_tasks = [i for i in session_tasks if i!="hc"]
+        for behave_info, task_ms_info,task in zip(behave_infos,task_ms_infos,nonhc_session_tasks):
             ## 读取行为学beha_session
             with open(behave_info,'rb') as f:
                 behave_result = pickle.load(f)

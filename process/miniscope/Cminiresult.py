@@ -38,6 +38,7 @@ def concatenate_sessions(session1,session2):
             pickle.dump(s1,f)
         print("%s has been merged in %s"%(session2,session1))
         print("you should remove %s"%session2)
+        os.remove(session2)
     else:
         print("%s is not connected to %s"%(session2,session1))
 
