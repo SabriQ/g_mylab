@@ -44,6 +44,7 @@ class MiniAna():
         print("loading %s"%self.session_path)
         with open(self.session_path,"rb") as f:
             self.result = pickle.load(f)
+
         if not "exp" in self.result.keys():
             self.exp = "hc"
         else:
@@ -97,7 +98,7 @@ class MiniAna():
         we define 'nosepoke,ctx_enter,ctx_exit,choice,r_ctx_enter,r_ctx_exit' as event_points,
         this function help us to quickly check the relative behavioral frame
         """
-        if self.exp=="task":
+        if not self.exp=="hc":
             event_points = np.reshape(self.result["behavelog_time"].to_numpy(),(1,-1))[0]
             be_ts = self.result["behave_track"]["be_ts"].to_numpy()
             frame_points=[find_close_fast(be_ts,i)+1 for i in event_points ]
@@ -143,7 +144,7 @@ class MiniAna():
         """
         """
         print("FUN:: add_c_all_track_points")
-        if self.exp == "task":
+        if not self.exp == "hc":
             if not "all_track_points" in self.result.keys():
                 behavevideo = self.result["behavevideo"][0] if behavevideo == None else behavevideo
                 coords = LT_Videos(behavevideo).draw_midline_of_whole_track_for_each_day(aim="midline_of_track",count=7)
