@@ -192,7 +192,7 @@ def divide_sessions_into_trials(session_path
         trial_list= [i for i in set(s.result["aligned_behave2ms"]["Trial_Num"]) if not i==-1] 
 
         for trial in trial_list :
-            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,trial))
+            savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_aim_%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,s.exp,trial))
             if os.path.exists(savepath):
                 print("%s exists"%os.path.basename(savepath))
                 break

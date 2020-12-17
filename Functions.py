@@ -15,7 +15,7 @@ def save_pkl(result,result_path):
 def load_pkl(result_path):
     with open(result_path,'rb') as f:
         result = pickle.load(f)
-    print("result is loaded")
+    # print("result is loaded")
     return result
 
 def load_txt(path):

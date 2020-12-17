@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-import os,sys,glob,csv
+import os,sys,glob,csv,re
 import json
 import scipy.io as spio
 import pickle
@@ -12,61 +12,16 @@ from mylab.Functions import *
 from mylab.process.miniscope.Mfunctions import *
 from mylab.ana.miniscope.Mca_transient_detection import detect_ca_transients
 from mylab.ana.miniscope.Mplacecells import *
-import logging 
-
-
-# logger = logging.getLogger()
-# logger.setLevel(logging.DEBUG)
-
-# sh = logging.StreamHandler(sys.stdout) #stream handler
-# sh.setLevel(logging.INFO)
-# logger.addHandler(sh)
-
-
-# class MiniAna(MA):
-#     def __init__(self,session_path):
-#         super().__init__(session_path)
-
-        # self.logfile =self.session_path.replace('.pkl','_log.txt')
-        # fh = logging.FileHandler(self.logfile,mode="a")
-        # formatter = logging.Formatter("  %(asctime)s %(message)s")
-        # fh.setFormatter(formatter)
-        # fh.setLevel(logging.INFO)
-        # logger.addHandler(fh)
 
 
 
 
-def construct_trial_lists(mouse_id,part,day,session=None,screen_trials=None,screen_trials_out=None,trial_pool_path=None):
-    """
-    index ,screen and sort trials in trial pools
-    each trial lists have only one mouse_id,one part,one day, however more than one sessions is allowed.
-    Accordingly, we could screen out some trials.
 
-    """
-    trial_pool_path  = r"\\10.10.47.163\Data_archive\qiushou\Trials\*.pkl" if trial_pool_path is None else trial_pool_path
-    trials = glob.glob(trial_pool_path)
-    trials = [i for i in trials if not "hc" in i]
-    trials = [i for i in trials if str(mouse_id) in i]
-    trials = [i for i in trials if "part%s"%part in i]
-    trials = [i for i in trials if str(day) in i]
 
-    if not session is None:
-        trials = [i for i in trials if "session%s"%session in i]
-    if not screen_trials is None:
-        trials = [i for i in trials if int(re.findall("trial(\d+)",i)[0]) in screen_trials]
-    if not screen_trials_out is None:
-        trials = [i for i in trials if not int(re.findall("trial(\d+)",i)[0]) in screen_trials_out]
 
-    def key(file):
-        hms = int(re.findall("index\d{8}-(\d{6})_",file)[0])
-        session = int(re.findall("session(\d+)_",file)[0])
-        trial = int(re.findall("trial(\d+)",file)[0])
-        return [hms,session,trial]
 
-    trials.sort(key=key)
 
-    return trials
+
 
 def _load_trial(trial_path):
     with open(trial_path,'rb') as f:
@@ -156,10 +111,27 @@ def concatenate_trials(trials):
     return session 
 
 
-def save_session(mouse_id,part,day,aim='ce',savedir=None):
-    trial_lists = construct_trial_lists(mouse_id,part,day)
 
-    filename = "%s_part%s_day%s_%s.pkl"%(mouse_id,part,day,aim)
+
+def save_newsession(trials,savedir=None):
+
+    def key(file):
+        hms = int(re.findall("index\d{8}-(\d{6})_",file)[0])
+        session = int(re.findall("session(\d+)_",file)[0])
+        trial = int(re.findall("trial(\d+)",file)[0])
+        return [hms,session,trial]
+    
+    trial_lists = list(trials).sort(key=key)
+
+    trial = trial_lists[0]
+
+    mouse_id = re.findall("(\d+)_part",trial)[0]
+    part = re.findall("part(\d+)",trial)[0]
+    day = re.findall("index(\d+)",trial)[0]
+    aim = re.findall("aim_(.*)_trial",trial)[0]
+
+    filename = "%s_part%s_day%s_aim_%s.pkl"%(mouse_id,part,day,aim)
+
     savedir = r"\\10.10.47.163\Data_archive\qiushou\Sessions" if savedir ==None else savedir
     savepath = os.path.join(savedir,filename)
 
@@ -173,6 +145,7 @@ def save_session(mouse_id,part,day,aim='ce',savedir=None):
         save_pkl(session,savepath)
     else:
         print("no trial is indexed")
+
 
 def build_session(session_path):
     s =load_pkl(session_path) 
