@@ -12,7 +12,7 @@ from mylab.ana.miniscope.Mpca import *
 
 #%% for single cell analysis
 
-def cellids_Context(s,*args,**kwargs):
+def cellid_Context(s,*args,**kwargs):
     """
     s.add_Context()
     s.add_Trial_Num_Process()

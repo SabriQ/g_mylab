@@ -147,8 +147,8 @@ def build_session(session_path):
 
 class AnaMini():
     def __init__(self,session):
-        self.result = session
-        self.exp=self.result["exp"]
+        self.result = session["result"]
+        self.exp=self.result["aim"][0]
         self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self,hc_trial_bin=5000):
@@ -201,7 +201,7 @@ class AnaMini():
 
         print("FUN::add_Body_speed")
 
-        if self.exp == "task":
+        if not self.exp == "hc":
             Body_speed,Body_speed_angle = speed(X=self.result["aligned_behave2ms"]["Body_x"]
                                                     ,Y=self.result["aligned_behave2ms"]["Body_y"]
                                                     ,T=self.result["aligned_behave2ms"]["be_ts"]
@@ -217,7 +217,7 @@ class AnaMini():
     def add_Head_speed(self,scale=0.2339021309714166):
         print("FUN::add_Head_speed")
 
-        if self.exp == "task":
+        if not self.exp == "hc":
             Head_speed,Head_speed_angle = speed(X=self.result["aligned_behave2ms"]["Head_x"]
                                                     ,Y=self.result["aligned_behave2ms"]["Head_y"]
                                                     ,T=self.result["aligned_behave2ms"]["be_ts"]
@@ -235,7 +235,7 @@ class AnaMini():
     def add_running_direction(self,according="Body"):
         print("FUN::add_running_direction")
 
-        if self.exp == "task":
+        if not self.exp == "hc":
             running_direction = []
             key = "%s_speed_angle"%according
             if not key in ["Body","Head"]:
@@ -259,7 +259,7 @@ class AnaMini():
         """
         print("FUN::add_alltrack_placebin_num")
 
-        if self.exp == "task":
+        if not self.exp == "hc":
 
             if "all_track_points" in self.result.keys():
                 coords = self.result["all_track_points"]
@@ -321,7 +321,7 @@ class AnaMini():
         which is about to discrete
         """
         print("FUN::add_is_in_context")
-        if self.exp == "task":
+        if not self.exp == "hc":
             mask = self.result["in_context_mask"]
             is_in_context=[]
             for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
@@ -340,7 +340,7 @@ class AnaMini():
         which is about to discrete
         """
         print("FUN::add_is_in_context")
-        if self.exp == "task":
+        if not self.exp == "hc":
             is_in_context=[]
             for x in self.result["aligned_behave2ms"]["Body_x"]:
                 if x>=self.result["all_track_points"][2][0] and x<=self.result["all_track_points"][3][0]:
@@ -355,7 +355,7 @@ class AnaMini():
     def add_is_in_lineartrack(self):
 
         print("FUN::add_is_in_lineartrack")
-        if self.exp == "task":
+        if not self.exp == "hc":
             mask = self.result["in_lineartrack_mask"]
             is_in_lineartrack=[]
             for x,y in zip(self.result["aligned_behave2ms"]["Body_x"],self.result["aligned_behave2ms"]["Body_y"]):
@@ -372,7 +372,7 @@ class AnaMini():
     def add_incontext_placebin_num(self,according="Head",placebin_number=40):
         print("FUN::add_incontext_placebin_num")
 
-        if self.exp == "task":
+        if not self.exp == "hc":
             Cx_min = np.min(np.array(self.result["in_context_coords"])[:,0])
             Cx_max = np.max(np.array(self.result["in_context_coords"])[:,0])
 
