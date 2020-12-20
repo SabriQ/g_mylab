@@ -554,7 +554,7 @@ class AnaMini():
         print("FUN::add_behave_choice_side")
 
         behave_choice_side = []
-        if self.result["behavelog_info"]["Left_choice"][0]>self.result["behavelog_info"]["Right_choice"][0]:
+        if list(self.result["behavelog_info"]["Left_choice"])[0]>list(self.result["behavelog_info"]["Right_choice"])[0]:
             behave_choice_side.append("left")
         else:
             behave_choice_side.append("right")
