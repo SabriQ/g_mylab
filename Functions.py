@@ -13,8 +13,13 @@ def save_pkl(result,result_path):
     print("result is saved at %s"% result_path)
 
 def load_pkl(result_path):
+
     with open(result_path,'rb') as f:
-        result = pickle.load(f)
+        try:
+            result = pd.read_pickle(result_path)    
+        except:
+            result = pickle.load(f)
+            
     # print("result is loaded")
     return result
 
