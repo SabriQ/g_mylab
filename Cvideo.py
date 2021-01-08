@@ -138,9 +138,9 @@ class Video():
                 print(out)
             if not multiprocess:
                 child.wait()
-            print("%s has been cropped"%video)
+            print("%s has been cropped"%self.video_path)
         else:
-            print("%s was cropped."%video)
+            print("%s was cropped."%self.video_path)
 
 
     def contrastbrightness(self,):

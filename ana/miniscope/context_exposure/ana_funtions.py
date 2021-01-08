@@ -9,10 +9,11 @@ import itertools
 import scipy.stats as stats
 from mylab.ana.miniscope.Mplacecells import *
 from mylab.ana.miniscope.Mpca import *
+from mylab.ana.miniscope.context_exposure.Canamini import AnaMini
 
 #%% for single cell analysis
 
-def cellid_Context(s,*args,**kwargs):
+def cellid_Context(s:AnaMini,*args,**kwargs):
     """
     s.add_Context()
     s.add_Trial_Num_Process()
@@ -68,7 +69,7 @@ def cellid_Context(s,*args,**kwargs):
 
     return result
 
-def cellid_RD_incontext(s,*args,**kwargs):
+def cellid_RD_incontext(s:AnaMini,*args,**kwargs):
     """
     s.align_behave_ms()
     s.add_Trial_Num_Process()
@@ -124,7 +125,7 @@ def cellid_RD_incontext(s,*args,**kwargs):
     return result
 
 
-def cellid_PC_incontext(s,*args,shuffle_times=1000,**kwargs):
+def cellid_PC_incontext(s:AnaMini,*args,shuffle_times=1000,**kwargs):
     """
     s.align_behave_ms()
     s.add_Trial_Num_Process()
@@ -166,7 +167,7 @@ def cellid_PC_incontext(s,*args,shuffle_times=1000,**kwargs):
 
 
 
-def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,*args,**kwargs):    
+def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :    
     """
     generate a dict contains a matrix of each context
     the structure of matrix is [len(cellids),len(place_bins),len(trials)]
@@ -183,48 +184,88 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s,*args,**kwargs):
     df = df[index]
     Trial_Num = s.result["Trial_Num"][index]
     Context= s.result["Context"][index]
+    place_bin_No = s.result["place_bin_No"][index]
 
     
-    #  meanfr by "Trial_Num","Context","place_bin_No"
-    meanfr = df.groupby([s.result["Trial_Num"],s.result["Context"],s.result["place_bin_No"]]).mean()
+    #  meanfr by untrimmed "Trial_Num","Context","place_bin_No"
+    # meanfr = df.groupby([s.result["Trial_Num"],s.result["Context"],s.result["place_bin_No"]]).mean()
+    meanfr = df.groupby([Trial_Num,Context,place_bin_No]).mean()
     meanfr.index.names = ['Trial_Num', 'Context', 'place_bin_No']
 
-    #screen rows in specified contexts, then Trials is also ready, because of each meaningful context has a meaningful trial_num
-    contexts = np.unique(meanfr.index.get_level_values("Context")) 
-    context = meanfr.index.get_level_values(level="Context")
-    meanfr = meanfr[context.isin(contexts)]
+    # #screen rows in specified contexts, then Trials is also ready, because of each meaningful context has a meaningful trial_num
+    # contexts = np.unique(meanfr.index.get_level_values("Context")) 
+    # context = meanfr.index.get_level_values(level="Context")
+    # meanfr = meanfr[context.isin(contexts)]
             
-    # screen rows in specified place_bins
-    place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) 
-    place_bin_No = meanfr.index.get_level_values(level="place_bin_No")
-    meanfr = meanfr[place_bin_No.isin(place_bins)]
+    # # screen rows in specified place_bins
+    # place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) 
+    # place_bin_No = meanfr.index.get_level_values(level="place_bin_No")
+    # meanfr = meanfr[place_bin_No.isin(place_bins)]
     
-    # screen rows in specified Trials, which could be used to screen trials according to choice or reward
-    trials = np.unique(meanfr.index.get_level_values("Trial_Num")) 
-    trial = meanfr.index.get_level_values(level="Trial_Num")
-    meanfr = meanfr[trial.isin(trials)]
+    # # screen rows in specified Trials, which could be used to screen trials according to choice or reward
+    # trials = np.unique(meanfr.index.get_level_values("Trial_Num")) 
+    # trial = meanfr.index.get_level_values(level="Trial_Num")
+    # meanfr = meanfr[trial.isin(trials)]
     
     # build np.array with dimensions like [len_cellids,len_placebins,len_trials]
     cellids = s.result["idx_accepted"] 
     
-    Context_Matrix_cellids_placebins_trials= {}
+    
     Context_Matrix_info = {}
     Context_Matrix_info["cellids"] = cellids
-    Context_Matrix_info["place_bins"] = place_bins    
+    Context_Matrix_info["place_bins"] = np.unique(meanfr.index.get_level_values("place_bin_No")) 
+    
+
+    ###
+    trials =np.unique(meanfr.index.get_level_values("Trial_Num"))
+    matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)
+    for i,t in enumerate(trials):
+        for j,p in enumerate(place_bins):
+            try:
+                matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
+            except:
+                pass
+    Matrix_cellids_placebins_trials=matrix
+    Context_Matrix_info["Matrix_cellids_placebins_trials"] = Matrix_cellids_placebins_trials
+
+
     Context_Matrix_info["trials"] = {}
-    for c in contexts:  
+    for c in set(Context):
         trials = np.unique(meanfr.xs(c,level="Context").index.get_level_values("Trial_Num"))
         Context_Matrix_info["trials"]["context%s"%c] = trials
-        matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)    
-        for i,t in enumerate(trials):
-            for j,p in enumerate(place_bins):
-                try:
-                    matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
-                except:
-                    pass
-        Context_Matrix_cellids_placebins_trials["context%s"%c]=matrix
+        
+    Context_Matrix_info["trials"]["left_right"] = []
+    Context_Matrix_info["trials"]["right_right"] = []
+    Context_Matrix_info["trials"]["left_wrong"] = []
+    Context_Matrix_info["trials"]["right_wrong"]= []
+    for i,choice in enumerate(zip(s.result["behave_choice_side"],s.result["behave_reward"]),1):
+        if choice == ('left',1):
+            Context_Matrix_info["trials"]["left_right"].append(i)
+        elif choice == ('left',0):
+            Context_Matrix_info["trials"]["left_wrong"].append(i)
+        elif choice == ('right',1):
+            Context_Matrix_info["trials"]["right_right"].append(i)
+        elif choice == ('right',0):
+            Context_Matrix_info["trials"]["right_wrong"].append(i)
+        else:
+            print("unexpected trial type")
 
-    Context_Matrix_info["Context_Matrix_cellids_placebins_trials"] = Context_Matrix_cellids_placebins_trials
+    ###
+
+    # Context_Matrix_cellids_placebins_trials= {}
+    # for c in contexts:  
+    #     trials = np.unique(meanfr.xs(c,level="Context").index.get_level_values("Trial_Num"))
+    #     Context_Matrix_info["trials"]["context%s"%c] = trials
+    #     matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)    
+    #     for i,t in enumerate(trials):
+    #         for j,p in enumerate(place_bins):
+    #             try:
+    #                 matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
+    #             except:
+    #                 pass
+    #     Context_Matrix_cellids_placebins_trials["context%s"%c]=matrix
+
+    # Context_Matrix_info["Context_Matrix_cellids_placebins_trials"] = Context_Matrix_cellids_placebins_trials
 
     return Context_Matrix_info
 
@@ -302,7 +343,7 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info):
         
     return plot,plot2
 
-def SingleCell_trace_in_SingleTrial(s,*args,**kwargs):
+def SingleCell_trace_in_SingleTrial(s:AnaMini,*args,**kwargs):
     """
     generate a dict containing lists of each context in which are dataframe of each trials
     the columns of the dataframe are [ms_ts,Body_speed_angle,idxes...]
@@ -410,7 +451,7 @@ def plot_trace_with_running_direction(Context_dataframe_info):
 #%% for population analysis
 
 
-def PCA(s,**kwargs):
+def PCA(s:AnaMini,**kwargs):
     """
     return a fig and x_dr
     """
@@ -429,7 +470,7 @@ def PCA(s,**kwargs):
 
     return result
 
-def dPCA(s,**kwargs):
+def dPCA(s:AnaMini,**kwargs):
     """
     """
     s.add_Trial_Num_Process()
@@ -517,7 +558,7 @@ def dPCA(s,**kwargs):
 
 #%% for behavioral analysis
 
-def behave_stat_info(s,):
+def behave_stat_info(s:AnaMini,):
     """
     计算每一个test or train session的行为学相关参数
     """
@@ -558,7 +599,7 @@ def behave_stat_info(s,):
 
     return stat_info
 
-def behave_logistic_regression(s,):
+def behave_logistic_regression(s:AnaMini,):
     pass
     
 #%% SVM decoding for single neuron with Bayesian optimization
@@ -566,7 +607,7 @@ def behave_logistic_regression(s,):
 
 #%% which is about to discard
 
-def cellids_Context2(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
+def cellids_Context2(s:AnaMini,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
     """
     which is about to discrete
     s.align_behave_ms()
@@ -615,7 +656,7 @@ def cellids_Context2(s,*args,idxes=None,context_map=["A","B","C","N"],**kwargs):
     "non_context_cells":non_context_cells
     }
 
-def cellid_RD_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
+def cellid_RD_incontext2(s:AnaMini,*args,idxes=None,context_map=["A","B","C","N"],rd_map=["left","right","None"],**kwargs):
     """
     which is about to discrete
     """
@@ -682,7 +723,7 @@ def cellid_RD_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],rd_map
     }
 
 
-def cellid_PC_incontext2(s,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
+def cellid_PC_incontext2(s:AnaMini,*args,idxes=None,context_map=["A","B","C","N"],shuffle_times=1000,**kwargs):
     """
     which is about to be discreted
 

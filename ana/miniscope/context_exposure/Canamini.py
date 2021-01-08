@@ -66,6 +66,7 @@ def concatenate_trials(trials):
         if aligned_behave2ms is None:
             aligned_behave2ms=track
         else:
+            # track["Trian_Num"] is accumulating, which is reset according to the real number
             track["Trial_Num"] = max(aligned_behave2ms["Trial_Num"]) + 1
             aligned_behave2ms = pd.concat((aligned_behave2ms,track))
 
@@ -141,7 +142,7 @@ def save_newsession(trials,savedir=None):
         print("no trial is indexed")
 
 
-def build_session(session_path):
+def build_session(session_path: str,):
     s =load_pkl(session_path) 
     return AnaMini(s)
 
@@ -191,10 +192,9 @@ class AnaMini():
 
         if not context_map == None:
             self.result["Context"] = pd.Series([context_map[i] for i in self.Context],name="Context")
-            print("'Context' was represented as A,B,C or ON")
+            print("'Context' was represented as A,B,C or N")
         else:
             print("'Context' was represented as 0,1,2 or -1")
-
 
 
     def add_Body_speed(self,scale=0.2339021309714166):
@@ -314,6 +314,7 @@ class AnaMini():
 
         else:
             print("homecage session has no 'place_bin_No'")
+
 
     #%% which are about to discrete
     def add_is_in_context2(self):
@@ -548,7 +549,9 @@ class AnaMini():
                 pickle.dump(self.result,f)
             print("aligned_behave2ms is updated and saved %s" %self.session_path)
 
-    #%%
+
+    #%% behave part
+
 
     def add_behave_choice_side(self,):
         print("FUN::add_behave_choice_side")
@@ -613,6 +616,7 @@ class AnaMini():
         print("FUN::add_behave_reward")
         self.result["behave_reward"] = pd.Series(self.result["behavelog_info"]["Choice_class"],name="behave_reward")
         print("'behave_reward' was added")
+
 
 
     def trim_df(self,*args,**kwargs):
