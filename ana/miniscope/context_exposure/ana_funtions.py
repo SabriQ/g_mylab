@@ -350,7 +350,7 @@ def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save
     if save:
         if savedir is None:
             savedir = os.getcwd()
-        filename = "mouse%sid%s.png"%(Context_Matrix_info["mouse_id"][0],idx)
+        filename = "mouse%sid%s.png"%(Context_Matrix_info["mouse_id"],idx)
         savepath = os.path.join(savedir,filename)
         plt.savefig(savepath,format="png")
     if show:
