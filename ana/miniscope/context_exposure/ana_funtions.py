@@ -208,6 +208,9 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     Context_Matrix_info = {}
     Context_Matrix_info["cellids"] = cellids
     Context_Matrix_info["mouse_id"] = s.result["mouse_id"][0]
+    Context_Matrix_info["part"] = s.result["part"][0]
+    Context_Matrix_info["index"] = s.result["index"][0]
+    Context_Matrix_info["aim"] = s.result["aim"][0]
 
     Context_Matrix_info["place_bins"] = np.unique(meanfr.index.get_level_values("place_bin_No")) 
     
@@ -350,7 +353,7 @@ def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save
     if save:
         if savedir is None:
             savedir = os.getcwd()
-        filename = "mouse%sid%s.png"%(Context_Matrix_info["mouse_id"],idx)
+        filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
         savepath = os.path.join(savedir,filename)
         plt.savefig(savepath,format="png")
     if show:
