@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import os,sys,glob,re
+import os,sys,glob,re,copy
 import scipy.io as spio
 import pickle
 import itertools
@@ -173,18 +173,29 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     the structure of matrix is [len(cellids),len(place_bins),len(trials)]
 
     s.add_Trial_Num_Process()
-    s.add_alltrack_placebin_num(according = "Head",place_bin_nums=[4,4,30,4,4,4],behavevideo=None) # add "place_bin_No"
-    s.add_Context(context_map=None) # add "Contxt" as a set of [0,1,2] 
+    s.add_Context()
+    s.add_alltrack_placebin_num(place_bin_nums=[4,4,30,4,4,4])
+    s.add_Body_speed(scale=0.33)
+
+    s.add_behave_forward_context(according="Enter_ctx")
+    s.add_behave_choice_side()
+    s.add_behave_reward()
     """
     # 添加需要的数据
-    
     
     print("FUNC::SingleCell_MeanFr_in_SingleTrial_along_Placebin")
     df,index = s.trim_df(*args,**kwargs)
     df = df[index]
-    Trial_Num = s.result["Trial_Num"][index]
+    Trial_Num = s.result["Trial_Num"]
+    process = s.result["process"]
+    place_bin_No = copy.deepcopy(s.result["place_bin_No"])
+    # 将backward的place_bin_No 反向增加
+    max_placebin = 49
+    for i in place_bin_No[(process>3) | (process==0)].index:
+        place_bin_No[i] = 2*max_placebin-place_bin_No[i]+1
+    Trial_Num=Trial_Num[index]
+    process=process[index]
     Context= s.result["Context"][index]
-    place_bin_No = s.result["place_bin_No"][index]
 
     
     #  meanfr by untrimmed "Trial_Num","Context","place_bin_No"
@@ -192,32 +203,17 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     meanfr = df.groupby([Trial_Num,Context,place_bin_No]).mean()
     meanfr.index.names = ['Trial_Num', 'Context', 'place_bin_No']
 
-    # #screen rows in specified contexts, then Trials is also ready, because of each meaningful context has a meaningful trial_num
-    # contexts = np.unique(meanfr.index.get_level_values("Context")) 
-    # context = meanfr.index.get_level_values(level="Context")
-    # meanfr = meanfr[context.isin(contexts)]
-            
-    # # screen rows in specified place_bins
-    # place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) 
-    # place_bin_No = meanfr.index.get_level_values(level="place_bin_No")
-    # meanfr = meanfr[place_bin_No.isin(place_bins)]
-    
-    # # screen rows in specified Trials, which could be used to screen trials according to choice or reward
-    # trials = np.unique(meanfr.index.get_level_values("Trial_Num")) 
-    # trial = meanfr.index.get_level_values(level="Trial_Num")
-    # meanfr = meanfr[trial.isin(trials)]
-    
-    # build np.array with dimensions like [len_cellids,len_placebins,len_trials]
-    cellids = s.result["idx_accepted"] 
-    
-    
+    cellids = s.result["idx_accepted"]
     Context_Matrix_info = {}
     Context_Matrix_info["cellids"] = cellids
+    Context_Matrix_info["mouse_id"] = s.result["mouse_id"][0]
+
     Context_Matrix_info["place_bins"] = np.unique(meanfr.index.get_level_values("place_bin_No")) 
     
 
     ###
     trials =np.unique(meanfr.index.get_level_values("Trial_Num"))
+    place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) 
     matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)
     for i,t in enumerate(trials):
         for j,p in enumerate(place_bins):
@@ -232,8 +228,8 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     Context_Matrix_info["trials"] = {}
     for c in set(Context):
         trials = np.unique(meanfr.xs(c,level="Context").index.get_level_values("Trial_Num"))
-        Context_Matrix_info["trials"]["context%s"%c] = trials
-        
+        Context_Matrix_info["trials"]["context%s"%c] = list(trials)
+
     Context_Matrix_info["trials"]["left_right"] = []
     Context_Matrix_info["trials"]["right_right"] = []
     Context_Matrix_info["trials"]["left_wrong"] = []
@@ -250,58 +246,156 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
         else:
             print("unexpected trial type")
 
-    ###
-
-    # Context_Matrix_cellids_placebins_trials= {}
-    # for c in contexts:  
-    #     trials = np.unique(meanfr.xs(c,level="Context").index.get_level_values("Trial_Num"))
-    #     Context_Matrix_info["trials"]["context%s"%c] = trials
-    #     matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)    
-    #     for i,t in enumerate(trials):
-    #         for j,p in enumerate(place_bins):
-    #             try:
-    #                 matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
-    #             except:
-    #                 pass
-    #     Context_Matrix_cellids_placebins_trials["context%s"%c]=matrix
-
-    # Context_Matrix_info["Context_Matrix_cellids_placebins_trials"] = Context_Matrix_cellids_placebins_trials
-
     return Context_Matrix_info
+
+def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save=False,show=True,savedir=None):
+    Matrix_cellids_placebins_trials = Context_Matrix_info["Matrix_cellids_placebins_trials"]
+    trialtypes = Context_Matrix_info["trials"]
+    
+    if idx in Context_Matrix_info["cellids"]:
+        dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
+    else:
+        print("Cell %s doesn't exist"%idx)
+        return 
+    
+    
+    placebins = Context_Matrix_info["place_bins"] if placebins is None else placebins
+    try:
+        dim2 = np.array([np.where(Context_Matrix_info["place_bins"]==i)[0][0] for i in placebins])
+    except:        
+        dim2 = np.array(Context_Matrix_info["place_bins"])
+        print("the placebins you specified is out of index:%s"%dim2)
+    # print(dim2)    
+    spatial_points={
+    "nosepoke": np.where(placebins==0),
+    "turnover_1": np.where(placebins==3),
+    "context_enter": np.where(placebins==7),
+    "context_exit": np.where(placebins==37),
+    "turnover_2": np.where(placebins==41),
+    "choice1": np.where(placebins==45),
+    "choice2": np.where(placebins==49),
+    "turnover_3": np.where(placebins==57),
+    "context_reverse_enter": np.where(placebins==61),
+    "context_reverse_exit": np.where(placebins==91),
+    "turnover_4": np.where(placebins==95),
+    "trial_end": np.where(placebins==99)}
+    
+    n_type = len(trialtypes)
+    fig = plt.figure(figsize=(10,n_type*4),dpi=300)
+    plt.rc('font',family='Times New Roman')
+    
+    for i,trialtype in enumerate(trialtypes.keys(),1):
+        # 根据条件去对应type 的trials
+        dim3 = np.array(Context_Matrix_info["trials"][trialtype])-1
+        if len(dim3)==0:
+            continue
+        matrix = Matrix_cellids_placebins_trials[dim1,:,:]
+        matrix = matrix[dim2,:]
+        matrix = matrix[:,dim3] # placebins * trials
+        
+        #mean 所有的trials
+        matrix_mean = np.nanmean(matrix,axis=1) 
+        #sem 所有的trials
+        matrix_sem = np.nanstd(matrix,axis=1,ddof=1)/np.sqrt(matrix.shape[1]) 
+        # matrix_and_mean = np.row_stack((matrix,matrix_mean)) # 在最后一行合并评论值
+        
+        ## axis =1 每一行的placebins进行 standarization ,每一行是一个trial
+        matrix_standarization = np.apply_along_axis(lambda x:(x-np.nanmean(x))/np.nanstd(x,ddof=1)
+                                                   ,axis=0
+                                                   ,arr=matrix)
+        matrix_standarization_mean = np.nanmean(matrix_standarization,axis=1)
+        matrix_standarization_sem = np.nanstd(matrix_standarization,axis=1,ddof=1)/np.sqrt(matrix_standarization.shape[1]) 
+        
+        plt.subplot(n_type+1,2,i*2-1)
+        sns.heatmap(matrix_standarization.T)
+        # plt.imshow(matrix_standarization.T)
+        plt.ylabel("Trials")
+        plt.xlabel("Placebins")
+        plt.title("mouse:%s-id:%s in %s"%(Context_Matrix_info["mouse_id"],idx,trialtype))
+        
+        plt.subplot(n_type+1,2,i*2)
+        plt.plot(matrix_standarization_mean,color="blue",linestyle="--")
+        plt.fill_between(np.arange(0,len(matrix_mean))
+                         ,matrix_standarization_mean-matrix_standarization_sem
+                         ,matrix_standarization_mean+matrix_standarization_sem
+                        ,color="blue"
+                        ,alpha=0.3
+                        ,edgecolor="white")
+#         plt.plot(matrix_mean,color="blue",linestyle="--")
+#         plt.fill_between(np.arange(0,len(matrix_mean))
+#                          ,matrix_mean-matrix_sem
+#                          ,matrix_mean+matrix_sem
+#                         ,color="blue"
+#                         ,alpha=0.3
+#                         ,edgecolor="white")
+
+        for point in spatial_points.keys():
+            try:
+                if "choice" in point:
+                    color = "red"
+                elif "turn" in point:
+                    color = "green"
+                elif "context" in point:
+                    color = "orange"
+                else:
+                    color = "black"
+                plt.axvline(spatial_points[point][0][0],color=color,linestyle="--")
+            except:
+                pass
+        plt.ylabel("Z-score(MeanFr)")
+        plt.xlabel("Placebins")
+        plt.title("mouse:%s-id:%s in %s"%(Context_Matrix_info["mouse_id"],idx,trialtype))
+        plt.tight_layout()
+    if save:
+        if savedir is None:
+            savedir = os.getcwd()
+        filename = "mouse:%s-id:%s.png"%(Context_Matrix_info["mouse_id"][0],idx)
+        savepath = os.path.join(savedir,filename)
+        plt.savefig(savepath)
+    if show:
+        plt.show()
 
 def plot_MeanFr_along_Placebin(Context_Matrix_info):    
     """
+    is about to discard
     Context_Matrix_info: the output of FUNCTION: SingleCell_MeanFr_in_SingleTrial_along_Placebin
     return two internal functions for plotting place fields or continuous MeanFr along place bins
     """
     
-    Context_Matrix_cellids_placebins_trials = Context_Matrix_info["Context_Matrix_cellids_placebins_trials"]    
+    Matrix_cellids_placebins_trials = Context_Matrix_info["Matrix_cellids_placebins_trials"]    
     
-    def plot(idx,context):
+    def plot(idx:list,trialtype,placebins:list=None):
         """
         return an internal funtion 
             that could plot MeanFr in each place bin of each cellid in each context by specify cellid and context
         
         """
         # specified idx and context 
-        if context in Context_Matrix_cellids_placebins_trials.keys():
-            if idx in Context_Matrix_info["cellids"]:
-                dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
-            else:
-                print("Cell %s doesn't exist"%idx)
-                return 
+        if idx in Context_Matrix_info["cellids"]:
+            dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
         else:
-            print("context '%s' don't exist"%context)
+            print("Cell %s doesn't exist"%idx)
+            return 
+
+        dim2 = Context_Matrix_info["place_bins"] if placebins==None else placebins
+
+        if trialtype in Context_Matrix_info["trials"].keys():
+            dim3 = np.array(Context_Matrix_info["trials"][trialtype])-1
+        else:
+            print("trialtype '%s' don't exist"%context)
             return 
         
         # for specifed neuron in specified context, there are row-number of placebin and column-number of trials
-        matrix = Context_Matrix_cellids_placebins_trials[context][dim1,:,:] # [placebins,trials]        
-        matrix_mean = np.nanmean(matrix,axis=1)
-        matrix_and_mean = np.column_stack((matrix,matrix_mean))
-        matrix_and_mean_norm = np.apply_along_axis(lambda x:(x-np.nanmean(x))/np.nanstd(x,ddof=1),axis=0,arr=matrix_and_mean)
+        matrix = Matrix_cellids_placebins_trials[dim1,:,dim3] # [cells,placebins,trials]        
+        matrix = matrix[:,dim2] # 不能三个同时进行切片操作 # trials * placebins
+        matrix_mean = np.nanmean(matrix,axis=0)
+        matrix_and_mean = np.row_stack((matrix,matrix_mean))
+        ## axis =1 每一行进行 standarization ,每一行是一个trial
+        matrix_and_mean_norm = np.apply_along_axis(lambda x:(x-np.nanmean(x))/np.nanstd(x,ddof=1)
+            ,axis=1,arr=matrix_and_mean)
         
         
-        plt.imshow(matrix_and_mean_norm.T)
+        plt.imshow(matrix_and_mean_norm)
         plt.axhline(y=matrix_and_mean_norm.shape[1]-1.6,color="red",linewidth=0.8,linestyle="--")
         plt.xlabel("Place bins")
         plt.ylabel("Trials")
@@ -321,8 +415,8 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info):
             print("Cell %s doesn't exist"%idx)
             return 
 
-        matrix_0 = Context_Matrix_cellids_placebins_trials[0][dim1,:,:] # [placebins,trials]    
-        matrix_1 = Context_Matrix_cellids_placebins_trials[1][dim1,:,:] # [placebins,trials]  
+        matrix_0 = Matrix_cellids_placebins_trials[0][dim1,:,:] # [placebins,trials]    
+        matrix_1 = Matrix_cellids_placebins_trials[1][dim1,:,:] # [placebins,trials]  
         
         matrix_0_mean = np.nanmean(matrix_0,axis=1)
         matrix_1_mean = np.nanmean(matrix_1,axis=1)

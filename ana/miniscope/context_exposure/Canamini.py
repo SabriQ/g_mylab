@@ -186,7 +186,7 @@ class AnaMini():
         """
         print("FUN::add_Context")
         Context = (pd.merge(self.result["Trial_Num"],self.result["behavelog_info"][["Trial_Num","Enter_ctx"]],how="left",on=["Trial_Num"])["Enter_ctx"]).fillna(-1)# 将NaN置换成-1
-        print("'Contex' came frome 'Enter_ctx'")
+        print("'Context' came frome 'Enter_ctx'")
         self.result["Context"] = pd.Series([int(i) for i in Context],name="Context")
         print("'Context' has been added")
 
@@ -690,7 +690,7 @@ class AnaMini():
 
     def _trim_process(self,process_list):
         self.trim_index["process"] = self.result["process"].isin(process_list)
-        print("trim_index : process are limited in %s"%min_speed)
+        print("trim_index : process are limited in %s"%process_list)
 
     def _trim_trial(self,trial_list):
         self.trim_index["Trial"] = self.result["Trial_Num"].isin(trial_list)
