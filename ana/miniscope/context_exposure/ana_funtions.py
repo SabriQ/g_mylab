@@ -358,6 +358,7 @@ def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save
         plt.savefig(savepath,format="png")
     if show:
         plt.show()
+    plt.close('all')
 
 def plot_MeanFr_along_Placebin(Context_Matrix_info):    
     """
