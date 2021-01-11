@@ -167,12 +167,12 @@ def cellid_PC_incontext(s:AnaMini,*args,shuffle_times=1000,**kwargs):
 
 
 
-
+# heatmap and line map
 def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :    
     """
     generate a dict contains a matrix of each context
     the structure of matrix is [len(cellids),len(place_bins),len(trials)]
-
+    这里 不在函数内使用 add*函数，是因为多个函数一块使用的场景可以把这些步骤放到外面节省时间
     s.add_Trial_Num_Process()
     s.add_Context()
     s.add_alltrack_placebin_num(place_bin_nums=[4,4,30,4,4,4])
@@ -185,8 +185,10 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     # 添加需要的数据
     
     print("FUNC::SingleCell_MeanFr_in_SingleTrial_along_Placebin")
+
     df,index = s.trim_df(*args,**kwargs)
     df = df[index]
+
     Trial_Num = s.result["Trial_Num"]
     process = s.result["process"]
     place_bin_No = copy.deepcopy(s.result["place_bin_No"])
@@ -252,7 +254,7 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
 
     return Context_Matrix_info
 
-def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save=False,show=True,savedir=None):
+def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=False,show=True,savedir=None):
     if save:
         filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
         savepath = os.path.join(savedir,filename)
@@ -366,88 +368,8 @@ def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save
         plt.show()
     plt.close('all')
 
-def plot_MeanFr_along_Placebin(Context_Matrix_info):    
-    """
-    is about to discard
-    Context_Matrix_info: the output of FUNCTION: SingleCell_MeanFr_in_SingleTrial_along_Placebin
-    return two internal functions for plotting place fields or continuous MeanFr along place bins
-    """
-    
-    Matrix_cellids_placebins_trials = Context_Matrix_info["Matrix_cellids_placebins_trials"]    
-    
-    def plot(idx:list,trialtype,placebins:list=None):
-        """
-        return an internal funtion 
-            that could plot MeanFr in each place bin of each cellid in each context by specify cellid and context
-        
-        """
-        # specified idx and context 
-        if idx in Context_Matrix_info["cellids"]:
-            dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
-        else:
-            print("Cell %s doesn't exist"%idx)
-            return 
 
-        dim2 = Context_Matrix_info["place_bins"] if placebins==None else placebins
-
-        if trialtype in Context_Matrix_info["trials"].keys():
-            dim3 = np.array(Context_Matrix_info["trials"][trialtype])-1
-        else:
-            print("trialtype '%s' don't exist"%context)
-            return 
-        
-        # for specifed neuron in specified context, there are row-number of placebin and column-number of trials
-        matrix = Matrix_cellids_placebins_trials[dim1,:,dim3] # [cells,placebins,trials]        
-        matrix = matrix[:,dim2] # 不能三个同时进行切片操作 # trials * placebins
-        matrix_mean = np.nanmean(matrix,axis=0)
-        matrix_and_mean = np.row_stack((matrix,matrix_mean))
-        ## axis =1 每一行进行 standarization ,每一行是一个trial
-        matrix_and_mean_norm = np.apply_along_axis(lambda x:(x-np.nanmean(x))/np.nanstd(x,ddof=1)
-            ,axis=1,arr=matrix_and_mean)
-        
-        
-        plt.imshow(matrix_and_mean_norm)
-        plt.axhline(y=matrix_and_mean_norm.shape[1]-1.6,color="red",linewidth=0.8,linestyle="--")
-        plt.xlabel("Place bins")
-        plt.ylabel("Trials")
-        plt.title("MeanFr in Context %s"%context)
-               
-        plt.show()
-        
-    def plot2(idx):
-        """
-        return an internal function
-            that could plot MeanFr along placebins for each cellid in different contexts
-        """
-        # specified idx
-        if idx in Context_Matrix_info["cellids"]:
-            dim1 = np.where(Context_Matrix_info["cellids"]==idx)[0][0]
-        else:
-            print("Cell %s doesn't exist"%idx)
-            return 
-
-        matrix_0 = Matrix_cellids_placebins_trials[0][dim1,:,:] # [placebins,trials]    
-        matrix_1 = Matrix_cellids_placebins_trials[1][dim1,:,:] # [placebins,trials]  
-        
-        matrix_0_mean = np.nanmean(matrix_0,axis=1)
-        matrix_1_mean = np.nanmean(matrix_1,axis=1)
-        
-        matrix_0_sem = np.nanstd(matrix_0,axis=1,ddof=1)/np.sqrt(matrix_0.shape[1])
-        matrix_1_sem = np.nanstd(matrix_1,axis=1,ddof=1)/np.sqrt(matrix_1.shape[1])
-        
-
-        plt.plot(matrix_0_mean,linestyle="--",color="red")
-        plt.plot(matrix_1_mean,linestyle="--",color="green")
-        plt.fill_between(x=np.arange(len(matrix_0_mean)),y1=matrix_0_mean-matrix_0_sem,y2=matrix_0_mean+matrix_0_sem,alpha=0.3,color="red")
-        plt.fill_between(x=np.arange(len(matrix_1_mean)),y1=matrix_1_mean-matrix_1_sem,y2=matrix_1_mean+matrix_1_sem,alpha=0.3,color="green")
-        plt.legend(["Ctx 0","Ctx 1"])
-        plt.title("MeanFr in different contexts")
-        plt.xlabel("Place bins")
-        plt.ylabel("MeanFr (UnNorm.)")
-        plt.show()
-        
-    return plot,plot2
-
+# dotmap that reflect the speed direction 
 def SingleCell_trace_in_SingleTrial(s:AnaMini,*args,**kwargs):
     """
     generate a dict containing lists of each context in which are dataframe of each trials
@@ -549,29 +471,34 @@ def plot_trace_with_running_direction(Context_dataframe_info):
     return plot
 
 
-            
-            
-
-
 #%% for population analysis
 
 
-def PCA(s:AnaMini,**kwargs):
+def PCA(s:AnaMini):
     """
     return a fig and x_dr
     """
     s.add_Trial_Num_Process()
-    s.add_alltrack_placebin_num()
+    s.add_alltrack_placebin_num(place_bin_nums=[4,4,30,4,4,4])
     s.add_Context()
-    s.trim_df("S_dff",placebin = np.arange(0,56))
-    index = s.trim_index.all(axis=1)
+    df,index = s.trim_df("S_dff",placebin = np.arange(0,50))
+    
+    Trial_Num = s.result["Trial_Num"]
+    process = s.result["process"]
+    place_bin_No = copy.deepcopy(s.result["place_bin_No"])
+    # 将backward的place_bin_No 反向增加
+    max_placebin = 49
+    for i in place_bin_No[(process>3) | (process==0)].index:
+        place_bin_No[i] = 2*max_placebin-place_bin_No[i]+1
+    Trial_Num=Trial_Num[index]
+    process=process[index]
+    Context= s.result["Context"][index]
 
     sigraw = s.df[index]
-    placebins = s.result["place_bin_No"][index]
-    context = s.result["Context"][index]
-    x = sigraw.groupby([context,placebins]).mean()
 
-    result = pca(x,**kwargs)
+    x = sigraw.groupby([Context,place_bin_No]).mean()
+
+    result = pca(x)
 
     return result
 
