@@ -293,6 +293,7 @@ void Read_ir(){
     if (exp_start ==0 && on_signal>=0.90){
       Signal(55);//锁死电机,初始化电机转动速度序列
       Signal(48);//默认第一个trial的开始nose poke给水
+      Signal(53);// the first context when exp start is context 1
       exp_start_time=millis();
       digitalWrite(miniscope_trigger,HIGH);
       Serial.print("Stat0: exp_and_miniscope_start ");
@@ -312,7 +313,7 @@ void Read_ir(){
       if (ir_enter_value< 200 ) {ir[2] = 1;}else{ir[2] = 0;}
       if (ir_exit_value< 100) {ir[3] = 1;}else{ir[3] = 0;}
       if (ir_rl_value< 800 && ir_rl_value>5) {ir[4] = 1;}else{ir[4] = 0;} 
-      if (ir_rr_value< 800 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
+      if (ir_rr_value< 750 && ir_rr_value>5) {ir[5] = 1;}else{ir[5] = 0;} 
       if (ir[0]+ir[1]+ir[4]+ir[5]==1){
         digitalWrite(pump_led,LOW);
       }else if(ir[0]+ir[1]+ir[4]+ir[5]==0){
@@ -347,7 +348,9 @@ void Read_ir(){
     digitalWrite(pump_led,LOW);
     digitalWrite(miniscope_trigger,LOW);
     if (exp_start == 1){
-    Signal(56);}
+      Serial.println("release");
+    Signal(56); // release the motor
+    }
     exp_start = 0;
   }  }
 //////////////////////////////////////////

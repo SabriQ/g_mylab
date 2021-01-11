@@ -127,10 +127,10 @@ void rec(){
 
     case 3: //set motor_count_num=0;
       motor_count_num = 0;
-      digitalWrite(ena,LOW); //锁死
+      digitalWrite(ena,LOW); //lock the motor
       break;
     case 4:
-      digitalWrite(ena,HIGH); 
+      digitalWrite(ena,HIGH); //release the motor
       break;
     default:
       digitalWrite(dir,LOW);
