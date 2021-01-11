@@ -253,6 +253,11 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     return Context_Matrix_info
 
 def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save=False,show=True,savedir=None):
+    if save:
+        filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
+        savepath = os.path.join(savedir,filename)
+        if os.path.exists(savepath):
+            return 
     Matrix_cellids_placebins_trials = Context_Matrix_info["Matrix_cellids_placebins_trials"]
     trialtypes = Context_Matrix_info["trials"]
     
@@ -325,13 +330,13 @@ def plot_MeanFr_along_Placebin2(Context_Matrix_info,idx,placebins:list=None,save
                         ,color="blue"
                         ,alpha=0.3
                         ,edgecolor="white")
-#         plt.plot(matrix_mean,color="blue",linestyle="--")
-#         plt.fill_between(np.arange(0,len(matrix_mean))
-#                          ,matrix_mean-matrix_sem
-#                          ,matrix_mean+matrix_sem
-#                         ,color="blue"
-#                         ,alpha=0.3
-#                         ,edgecolor="white")
+        # plt.plot(matrix_mean,color="blue",linestyle="--")
+        # plt.fill_between(np.arange(0,len(matrix_mean))
+        #                  ,matrix_mean-matrix_sem
+        #                  ,matrix_mean+matrix_sem
+        #                 ,color="blue"
+        #                 ,alpha=0.3
+        #                 ,edgecolor="white")
 
         for point in spatial_points.keys():
             try:
