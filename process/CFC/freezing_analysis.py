@@ -5,17 +5,17 @@ import glob,sys
 # 然后在执行本脚本 python freezing_analysis.py即可
 
 timestamp_method="ffmpeg" # timestamps 的文件，注意在ffmpeg,datetime,miniscope中进行选择
-Interval_number=7 # 选第1+7n帧用于计算。产生_freezing_csv文件时，参考coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
+Interval_number=2 # 选第1+7n帧用于计算。产生_freezing_csv文件时，参考coulbourn system每秒有4个数据，所以建议调整产生数据的帧间隔（frame_interval）至每秒4-8个数据左右
 diff_gray_value=30 #前后两帧同样像素点位置是否变化的阈值，一般不变，但是当曝光很暗，比如低于10lux时可以适当降低这个值
 show = True #显示前100帧视频
-threshold = 0.05#当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.52%
+threshold = 0.04#当总共至少有多少比例的像素点变化了时，我们认为小鼠时运动着的，这里表示0.52%
 start = 0 #分析行为学起始时间, in seconds
-stop = 100#分析行为学结束时间 in seconds
+stop = 300#分析行为学结束时间 in seconds
 show_detail=True#将结果,比如freezing的epoch 输出到屏幕上
 percent =True#freezing 时间比列 用省略百分号的百分比表示
 save_epoch=True# 将freezing的epoch也存储下来
 
-videolists=glob.glob(r"\\10.10.46.135\share\ChenHaoshan\11. fiber photometry\video\20181024\*.AVI")
+videolists=glob.glob(r"\\10.10.46.135\share\Qiushou\3_1_coulbourn_system_threshold_test\*.asf")
 if not len(videolists)==0:
     [print(i) for i in videolists]
 else:

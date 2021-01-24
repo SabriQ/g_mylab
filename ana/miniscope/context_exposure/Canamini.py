@@ -22,9 +22,13 @@ def _load_trial(trial_path):
     print("%s is loaded"%os.path.basename(trial_path))
     return result
 
-def concatenate_trials(trials):
+def _concatenate_trials(trials):
     """
-    concatenate trials gemerated by function  "construct_trial_lists" as new sessions
+    concatenate trials as session which is a dict
+        sessin{
+        "trial_list":list,
+        "result":{}
+        }
     """
     mouse_ids=[]
     parts=[]
@@ -107,7 +111,12 @@ def concatenate_trials(trials):
 
 
 
-def save_newsession(trials,savedir=None):
+def save_newsession(trials,savedir=None,update=False):
+    """
+    trials are firstly sorted by [hms,session,trial]
+    secondly concatenated by _concatenate_trials
+    finnaly saved as pklfiles or bug-pklfiles if _concatenate_trials was wrong
+    """
 
     def key(file):
         hms = int(re.findall("index\d{8}-(\d{6})_",file)[0])
@@ -126,20 +135,25 @@ def save_newsession(trials,savedir=None):
 
     filename = "%s_part%s_day%s_aim_%s.pkl"%(mouse_id,part,day,aim)
 
-    savedir = os.path.dirname(trial).replace("Trials","Sessions")
+    savedir = os.path.dirname(trial).replace("Trials","Sessions") if savedir is None else savedir
     #  savedir = r"\\10.10.47.163\Data_archive\qiushou\Sessions" if savedir ==None else savedir)
     savepath = os.path.join(savedir,filename)
 
+    if os.path.exists(savepath):
+        if not update:
+            print("session existed. JUMP!")
+            return
+
     if len(trials)>0:
         try:
-            session = concatenate_trials(trials)            
+            session = _concatenate_trials(trials)
         except:
             print("problem in concatenate_trials")
             session = {}
             savepath = savepath.replace(".pkl","_bug.pkl")
         save_pkl(session,savepath)
     else:
-        print("no trial is indexed")
+        print("no trial indexed")
 
 
 def build_session(session_path: str,):
@@ -148,9 +162,49 @@ def build_session(session_path: str,):
 
 class AnaMini():
     def __init__(self,session):
-        self.result = session["result"]
+        if isinstance(session,dict):
+            self.result = session["result"]
+            self.exp=self.result["aim"][0]
+            if not self.exp == "hc":
+                self.mouse_id  = self.result["mouse_id"][0]
+                self.part = self.result["part"][0]
+                self.index = self.result["index"][0]
+            self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+        elif isinstance(sessions,str):
+            self._load(session)
+
+    def _load(self,):
+        self.result = load_pkl(session_path)
         self.exp=self.result["aim"][0]
+        if not self.exp == "hc":
+            self.mouse_id  = self.result["mouse_id"][0]
+            self.part = self.result["part"][0]
+            self.index = self.result["index"][0]
         self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+
+    def select_cellids(self,cellids:list):
+        """
+        specify the cellids according to celltype
+        """
+        is_in_idx_accepeted = []
+        new_cellids = []
+        for cellid in cellids:
+            if self.mouse_id in cellid:
+                cellid = cellid.replace(self.mouse_id+"_","")
+            new_cellids.append(int(cellid))
+            if int(cellid) in self.result["idx_accepted"]:
+                is_in_idx_accepeted.append(0) # 在data pool中的赋值 0
+            else:
+                is_in_idx_accepeted.append(1) # 不在data pool 中的赋值 1
+        new_cellids = sorted(new_cellids)
+        if sum(is_in_idx_accepeted)>0:
+            no_cells = cellids[np.where(is_in_idx_accepeted==1)[0]]
+            print("%s are not existed"%no_cells)
+        else:
+            self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+            self.df = self.df[new_cellids]
+            print("only cells %s are included"%cellids)
+
     #%% add behavioral proverties to aligned_behave2ms
     def add_Trial_Num_Process(self,hc_trial_bin=5000):
         """
@@ -646,11 +700,11 @@ class AnaMini():
             if key == "in_context":
                 self._trim_in_context(value=value)
 
-
         for arg in args:
             if arg =="S_dff":
                 try:
-                    self.df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+                    new_df = pd.DataFrame(self.result["S_dff"],columns=self.result["idx_accepted"])
+                    self.df = new_df[self.df.columns]
                     self.shape = self.df.shape
                     print("'S_dff' is taken as original self.df")
                 except:
@@ -658,12 +712,13 @@ class AnaMini():
                     print("S_dff doesn't exist, sigraw is used.")
 
             if arg == "sigraw":
-                self.df = pd.DataFrame(self.result["sigraw"],columns=self.result["idx_accepted"])
+                new_df = pd.DataFrame(self.result["sigraw"],columns=self.result["idx_accepted"])
+                self.df = new_df[self.df.columns]
                 self.shape = self.df.shape
                 print("'sigraw' is taken as original self.df")
 
             if arg=="detect_ca_transient":
-                _,self.df,_= detect_ca_transients(self.result["idx_accepted"],self.df.values,thresh=1.5,baseline=0.8,t_half=0.2,FR=30)
+                _,self.df,_= detect_ca_transients(self.df.columns,self.df.values,thresh=1.5,baseline=0.8,t_half=0.2,FR=30)
                 print("trim_df : calcium transients are detected and ")
 
             if arg=="force_neg2zero":                
@@ -703,7 +758,6 @@ class AnaMini():
     def _trim_in_context(self,value):
         if value:
             self.trim_index["in_context"] = self.result["is_in_context"]
-            
 
     def show_behaveframe(self,tracking=True):
         """

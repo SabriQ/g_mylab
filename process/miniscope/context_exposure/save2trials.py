@@ -142,6 +142,7 @@ class MiniAna():
             
     def add_c_all_track_points(self,behavevideo=None):
         """
+        add 7 ponits with behavevideo frame for generating placebins later
         """
         print("FUN:: add_c_all_track_points")
         if not self.exp == "hc":
@@ -158,17 +159,18 @@ class MiniAna():
 
 
 def divide_sessions_into_trials(session_path
-    ,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"):
+    ,savedir=r"\\10.10.46.135\Lab_Members\_Lab Data Analysis\02_Linear_Track\Miniscope_Linear_Track\batch3\results\trials"
+    ,update=False):
     """
     Arguments:
 
-    session_path: path of each session after aligned
-    r"...\batch3\Results_201033-finish\part1\session2.pkl"
-    context_map_file: transfer to function session_describe, the default is okay
+    session_path: path of each session after aligned. e.g.
+        r"...\batch3\Results_201033-finish\part1\session2.pkl"
+    savedir:
+    update: if True, then regenerate the trials or jump the trial if it was once generated
 
     Returns:
-
-    a trial list in which each trial get a structure organized.
+        save trial as pkl files. No returns.
     """
     mouse_id1 = re.findall("Results_(\d+)",session_path)[0]
     part = re.findall("part(\d+)",session_path)[0]
@@ -194,8 +196,11 @@ def divide_sessions_into_trials(session_path
         for trial in trial_list :
             savepath = os.path.join(savedir,"%s_part%s_index%s_session%s_aim_%s_trial%s.pkl"%(mouse_id,part,key_index,session_num,s.exp,trial))
             if os.path.exists(savepath):
-                print("%s exists"%os.path.basename(savepath))
-                break
+                if update:
+                    pass
+                else:
+                    print("%s exists. JUMP!"%os.path.basename(savepath))
+                    break
                 
             info={
                 "mouse_id":mouse_id,

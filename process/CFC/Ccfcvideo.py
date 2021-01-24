@@ -171,6 +171,8 @@ class CFCvideo(Video):
             writer = csv.writer(csv_file)
             writer.writerow(['diff_gray_value',diff_gray_value])
             writer.writerow(['threshold',threshold])
+            writer.writerow(["Interval_number",Interval_number])
+            writer.writerow(['start',start,"stop",stop])
             writer.writerow(['video','freezing%'])
             for video in videolists:
                 freezing = cls(video).freezing_percentage(timestamp_method=timestamp_method,Interval_number=Interval_number,diff_gray_value=diff_gray_value,show = show,threshold=threshold, start = start, stop = stop,show_detail=show_detail,percent =percent,save_epoch=save_epoch)

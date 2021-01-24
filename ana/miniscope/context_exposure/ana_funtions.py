@@ -9,8 +9,11 @@ import pickle
 import itertools
 import scipy.stats as stats
 from mylab.ana.miniscope.Mplacecells import *
-from mylab.ana.miniscope.Mpca import *
+from mylab.ana.miniscope.context_exposure.Mpca import *
 from mylab.ana.miniscope.context_exposure.Canamini import AnaMini
+
+#%%
+
 
 #%% for single cell analysis
 
@@ -192,15 +195,21 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     Trial_Num = s.result["Trial_Num"]
     process = s.result["process"]
     place_bin_No = copy.deepcopy(s.result["place_bin_No"])
+    speed = pd.Series(s.result["Body_speed"],name="Body_speed")
     # 将backward的place_bin_No 反向增加
     max_placebin = 49
     for i in place_bin_No[(process>3) | (process==0)].index:
         place_bin_No[i] = 2*max_placebin-place_bin_No[i]+1
+
     Trial_Num=Trial_Num[index]
     process=process[index]
-    Context= s.result["Context"][index]
+    Context= s.result["Context"][index]    
+    speed = speed[index]
 
+
+    meanspeed = speed.groupby([Trial_Num,Context,place_bin_No]).mean()
     
+
     #  meanfr by untrimmed "Trial_Num","Context","place_bin_No"
     # meanfr = df.groupby([s.result["Trial_Num"],s.result["Context"],s.result["place_bin_No"]]).mean()
     meanfr = df.groupby([Trial_Num,Context,place_bin_No]).mean()
@@ -214,22 +223,27 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     Context_Matrix_info["index"] = s.result["index"][0]
     Context_Matrix_info["aim"] = s.result["aim"][0]
 
-    Context_Matrix_info["place_bins"] = np.unique(meanfr.index.get_level_values("place_bin_No")) 
-    
+    # Context_Matrix_info["place_bins"] = np.unique(meanfr.index.get_level_values("place_bin_No")) 
+    Context_Matrix_info["place_bins"] = np.arange(0,100)
 
     ###
     trials =np.unique(meanfr.index.get_level_values("Trial_Num"))
-    place_bins = np.unique(meanfr.index.get_level_values("place_bin_No")) 
+    place_bins = Context_Matrix_info["place_bins"]
     matrix = np.full([len(cellids),len(place_bins),len(trials)],np.nan)
+    matrix_meanspeed = np.full([len(place_bins),len(trials)],np.nan)
     for i,t in enumerate(trials):
         for j,p in enumerate(place_bins):
             try:
                 matrix[:,j,i] = meanfr.xs((t,p),level=["Trial_Num","place_bin_No"]).values
             except:
                 pass
-    Matrix_cellids_placebins_trials=matrix
-    Context_Matrix_info["Matrix_cellids_placebins_trials"] = Matrix_cellids_placebins_trials
+            try:
+                matrix_meanspeed[j,i] = meanspeed.xs((t,p),level=["Trial_Num","place_bin_No"]).values
+            except:
+                pass
 
+    Context_Matrix_info["Matrix_cellids_placebins_trials"] = matrix
+    Context_Matrix_info["meanspeed"]=matrix_meanspeed
 
     Context_Matrix_info["trials"] = {}
     for c in set(Context):
@@ -240,6 +254,7 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
     Context_Matrix_info["trials"]["right_right"] = []
     Context_Matrix_info["trials"]["left_wrong"] = []
     Context_Matrix_info["trials"]["right_wrong"]= []
+
     for i,choice in enumerate(zip(s.result["behave_choice_side"],s.result["behave_reward"]),1):
         if choice == ('left',1):
             Context_Matrix_info["trials"]["left_right"].append(i)
@@ -254,7 +269,14 @@ def SingleCell_MeanFr_in_SingleTrial_along_Placebin(s:AnaMini,*args,**kwargs) :
 
     return Context_Matrix_info
 
-def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=False,show=True,savedir=None):
+def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,save=False,show=True,savedir=None):
+
+    """
+    Arguments:
+        Context_Matrix_info: the output of SingleCell_MeanFr_in_SingleTrial_along_Placebin
+    Returns:
+        plot single cell MeanFr and save as png. No return
+    """
     if save:
         filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
         savepath = os.path.join(savedir,filename)
@@ -304,10 +326,15 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=
         matrix = matrix[dim2,:]
         matrix = matrix[:,dim3] # placebins * trials
         
+        matrix_speed = Context_Matrix_info["meanspeed"][:,dim3]
+        
         #mean 所有的trials
         matrix_mean = np.nanmean(matrix,axis=1) 
+        matrix_speed_mean = np.nanmean(matrix_speed,axis=1)
         #sem 所有的trials
         matrix_sem = np.nanstd(matrix,axis=1,ddof=1)/np.sqrt(matrix.shape[1]) 
+        matrix_speed_sem = np.nanstd(matrix_speed,axis=1,ddof=1)/np.sqrt(matrix_speed.shape[1]) 
+
         # matrix_and_mean = np.row_stack((matrix,matrix_mean)) # 在最后一行合并评论值
         
         ## axis =1 每一行的placebins进行 standarization ,每一行是一个trial
@@ -317,6 +344,7 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=
         matrix_standarization_mean = np.nanmean(matrix_standarization,axis=1)
         matrix_standarization_sem = np.nanstd(matrix_standarization,axis=1,ddof=1)/np.sqrt(matrix_standarization.shape[1]) 
         
+
         plt.subplot(n_type+1,2,i*2-1)
         sns.heatmap(matrix_standarization.T)
         # plt.imshow(matrix_standarization.T)
@@ -324,21 +352,15 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=
         plt.xlabel("Placebins")
         plt.title("mouse:%s-id:%s in %s"%(Context_Matrix_info["mouse_id"],idx,trialtype))
         
-        plt.subplot(n_type+1,2,i*2)
-        plt.plot(matrix_standarization_mean,color="blue",linestyle="--")
-        plt.fill_between(np.arange(0,len(matrix_mean))
+        ax1 = fig.add_subplot(n_type+1,2,i*2)
+        line1, = ax1.plot(np.arange(0,len(matrix_mean)),matrix_standarization_mean,color="blue",linestyle="--",label="Fr")
+#         ax1.legend([line1],["Fr"])
+        ax1.fill_between(np.arange(0,len(matrix_mean))
                          ,matrix_standarization_mean-matrix_standarization_sem
                          ,matrix_standarization_mean+matrix_standarization_sem
                         ,color="blue"
                         ,alpha=0.3
                         ,edgecolor="white")
-        # plt.plot(matrix_mean,color="blue",linestyle="--")
-        # plt.fill_between(np.arange(0,len(matrix_mean))
-        #                  ,matrix_mean-matrix_sem
-        #                  ,matrix_mean+matrix_sem
-        #                 ,color="blue"
-        #                 ,alpha=0.3
-        #                 ,edgecolor="white")
 
         for point in spatial_points.keys():
             try:
@@ -350,13 +372,23 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=
                     color = "orange"
                 else:
                     color = "black"
-                plt.axvline(spatial_points[point][0][0],color=color,linestyle="--")
+                ax1.axvline(spatial_points[point][0][0],color=color,linestyle="--")
             except:
                 pass
-        plt.ylabel("Z-score(MeanFr)")
-        plt.xlabel("Placebins")
+        ax1.set_ylabel("Z-score(MeanFr)")
+        ax1.set_xlabel("Placebins")
+        
+        ax2 = ax1.twinx()
+        line2,=ax2.plot(np.arange(0,len(matrix_speed_mean)),matrix_speed_mean,color="grey",label="speed")
+        
+        ax2.fill_between(x=np.arange(0,len(matrix_speed_mean))
+                         ,y1=matrix_speed_mean-matrix_speed_sem
+                        ,y2=matrix_speed_mean+matrix_speed_sem,color="grey",alpha=.2)
+        ax2.set_ylabel(r"speed(cm/s)")
+        plt.legend([line1,line2],["Fr","Speed"],frameon =False,loc=(0.65,0.7))
         plt.title("mouse:%s-id:%s in %s"%(Context_Matrix_info["mouse_id"],idx,trialtype))
         plt.tight_layout()
+        
     if save:
         if savedir is None:
             savedir = os.getcwd()
@@ -367,7 +399,6 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info,idx,placebins:list=None,save=
     if show:
         plt.show()
     plt.close('all')
-
 
 # dotmap that reflect the speed direction 
 def SingleCell_trace_in_SingleTrial(s:AnaMini,*args,**kwargs):
@@ -470,122 +501,6 @@ def plot_trace_with_running_direction(Context_dataframe_info):
 
     return plot
 
-
-#%% for population analysis
-
-
-def PCA(s:AnaMini):
-    """
-    return a fig and x_dr
-    """
-    s.add_Trial_Num_Process()
-    s.add_alltrack_placebin_num(place_bin_nums=[4,4,30,4,4,4])
-    s.add_Context()
-    df,index = s.trim_df("S_dff",placebin = np.arange(0,50))
-    
-    Trial_Num = s.result["Trial_Num"]
-    process = s.result["process"]
-    place_bin_No = copy.deepcopy(s.result["place_bin_No"])
-    # 将backward的place_bin_No 反向增加
-    max_placebin = 49
-    for i in place_bin_No[(process>3) | (process==0)].index:
-        place_bin_No[i] = 2*max_placebin-place_bin_No[i]+1
-    Trial_Num=Trial_Num[index]
-    process=process[index]
-    Context= s.result["Context"][index]
-
-    sigraw = s.df[index]
-
-    x = sigraw.groupby([Context,place_bin_No]).mean()
-
-    result = pca(x)
-
-    return result
-
-def dPCA(s:AnaMini,**kwargs):
-    """
-    """
-    s.add_Trial_Num_Process()
-    del s.result["place_bin_No"]
-    s.add_alltrack_placebin_num(according="Body",place_bin_nums=[4,4,30,4,4,4])
-
-    s.trim_df("S_dff")
-    index = s.trim_index.all(axis=1)
-
-    df = s.df[index]
-    Trial_Num = s.result["Trial_Num"][index]
-    placebins = s.result["place_bin_No"][index]
-
-    dpca_matrix = pd.DataFrame(df).groupby([Trial_Num,placebins]).mean()
-    try:
-        dpca_matrix = dpca_matrix.drop(index=(-1))
-        print("Trial -1 was deleted")
-    except:
-        pass
-
-    s.add_behave_choice_side()
-    choice_side = pd.Series([0 if i =="left" else 1 for i in s.result["behave_choice_side"]],name="behave_choice_side")
-    s.add_behave_context(according="Enter_ctx")
-    context = s.result["behave_context"]
-
-
-    
-    ctx0_choice0_trial = s.result["behavelog_info"]["Trial_Num"][(context==0)&(choice_side==0)]
-    ctx0_choice1_trial = s.result["behavelog_info"]["Trial_Num"][(context==0)&(choice_side==1)]
-
-    ctx1_choice0_trial = s.result["behavelog_info"]["Trial_Num"][(context==1)&(choice_side==0)]
-    ctx1_choice1_trial = s.result["behavelog_info"]["Trial_Num"][(context==1)&(choice_side==1)]
-
-    # 判断以下变量的size
-    # max trial num in each condition(contexts)
-    max_Trial_Num = max(ctx0_choice0_trial.shape[0],ctx0_choice1_trial.shape[0],ctx1_choice0_trial.shape[0],ctx1_choice1_trial.shape[0])
-    neurons = dpca_matrix.shape[1]
-    placebin = len(set(s.result["place_bin_No"]))
-    context=2
-    decision=2
-    print("max_Trial_Num:%s,neurons:%s,context:%s,decision:%s,placebin:%s."%(max_Trial_Num,neurons,context,decision,placebin))
-    #构建 空的np.array
-    trialR = np.full((max_Trial_Num,neurons,context,decision,placebin),np.nan)
-    # 填充矩阵，其中没有值的地方都是np.nan
-    for i,trial in enumerate(ctx0_choice0_trial,0):
-        temp_trial_matrix = dpca_matrix.loc[trial]
-        for p in np.arange(0,placebin):
-            try:
-                trialR[i,:,0,0,p]=temp_trial_matrix.loc[p]
-            except:
-                trialR[i,:,0,0,p]=0 # 将np.nan替换为0
-        
-    for i,trial in enumerate(ctx0_choice1_trial,0):
-        temp_trial_matrix = dpca_matrix.loc[trial]
-        for p in np.arange(0,placebin):
-            try:
-                trialR[i,:,0,1,p]=temp_trial_matrix.loc[p]
-            except:
-                trialR[i,:,0,1,p]=0 # 将np.nan替换为0
-                
-    for i,trial in enumerate(ctx1_choice0_trial,0):
-        temp_trial_matrix = dpca_matrix.loc[trial]
-        for p in np.arange(0,placebin):
-            try:
-                trialR[i,:,1,0,p]=temp_trial_matrix.loc[p]
-            except:
-                trialR[i,:,1,0,p]=0 # 将np.nan替换为0
-                
-    for i,trial in enumerate(ctx1_choice1_trial,0):
-        temp_trial_matrix = dpca_matrix.loc[trial]
-        for p in np.arange(0,placebin):
-            try:
-                trialR[i,:,1,1,p]=temp_trial_matrix.loc[p]
-            except:
-                trialR[i,:,1,1,p]=0 # 将np.nan替换为0
-
-    #先求没有np.nan的均值，然后再将np.nan替换为0
-    R = np.nanmean(trialR,axis=0)
-    # trialR[np.isnan(trialR)]=0
-
-    result = demixed_pca(R,trialR,**kwargs)
-
-    return result
 
 
 #%% for behavioral analysis
