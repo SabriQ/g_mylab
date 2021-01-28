@@ -37,6 +37,7 @@ def _concatenate_trials(trials):
     indexes=[]
     
     S_dffs=None
+    sigraws = None
 
     aligned_behave2ms=None
     behavelog_info=None
@@ -49,6 +50,8 @@ def _concatenate_trials(trials):
 
         if np.shape(S_dff) == np.shape(sigraw):
             S_dff = S_dff[:,idx_accepted]
+
+
 
         if not mouse_id in mouse_ids:
             mouse_ids.append(mouse_id)
@@ -66,6 +69,10 @@ def _concatenate_trials(trials):
         else:
             S_dffs = np.concatenate((S_dffs,S_dff),axis=0)
 
+        if sigraws is None:
+            sigraws = sigraw
+        else:
+            sigraws = np.concatenate((sigraws,sigraw),axis=0)
 
         if aligned_behave2ms is None:
             aligned_behave2ms=track
@@ -96,7 +103,7 @@ def _concatenate_trials(trials):
 
     "idx_accepted":t["miniscope"]["idx_accepted"],
     "S_dff":S_dffs,
-
+    "sigraw":sigraws,
     "aligned_behave2ms":aligned_behave2ms.reset_index(drop=True),
 
     "behavelog_info":behavelog_info,
