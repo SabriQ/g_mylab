@@ -4,13 +4,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from mylab.ana.miniscope.context_exposure.Canamini import AnaMini
 import copy
-from multiprocessing import Pool
 
 def construct_svm_dict(s:AnaMini,*args,**kwargs):
     """
     Returns
         dict is constructed with data and target. data is [n_samples,n_features], target is as long as n_samples
-        
+
     s.add_Trial_Num_Process()
     s.add_alltrack_placebin_num(place_bin_nums=[4,4,30,4,4,4])
     s.add_Context()
@@ -40,8 +39,6 @@ def construct_svm_dict(s:AnaMini,*args,**kwargs):
 
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score, train_test_split,cross_validate
-import matplotlib.pyplot as plt
-import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from itertools import combinations
@@ -78,7 +75,6 @@ def generate_svm_data(data):
     return svm_score_dict
 
 def main_svm_score(s):
-
     data = construct_svm_dict(s)
     svm_score_dict = generate_svm_data(data)
     return svm_score_dict
