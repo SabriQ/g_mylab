@@ -21,6 +21,7 @@ def construct_svm_dict(s:AnaMini,*args,**kwargs):
     Trial_Num = s.result["Trial_Num"]
     process = s.result["process"]
     place_bin_No = copy.deepcopy(s.result["place_bin_No"])
+    
     # 将backward的place_bin_No 反向增加
     max_placebin = 49
     for i in place_bin_No[(process>3) | (process==0)].index:
@@ -74,8 +75,8 @@ def generate_svm_data(data):
         svm_score_dict["context_%s_%s"%(contexta,contextb)]=svm_score
     return svm_score_dict
 
-def main_svm_score(s):
-    data = construct_svm_dict(s)
+def main_svm_score(s,*args,**kwargs):
+    data = construct_svm_dict(s,*args,**kwargs)
     svm_score_dict = generate_svm_data(data)
     return svm_score_dict
 
