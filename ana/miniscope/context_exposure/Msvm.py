@@ -15,13 +15,12 @@ def construct_svm_dict(s:AnaMini,*args,**kwargs):
     s.add_Context()
     """
 
-
-    df,index = s.trim_df("S_dff",*args,**kwargs)
+    df,index = s.trim_df(*args,**kwargs)
     
     Trial_Num = s.result["Trial_Num"]
     process = s.result["process"]
     place_bin_No = copy.deepcopy(s.result["place_bin_No"])
-    
+
     # 将backward的place_bin_No 反向增加
     max_placebin = 49
     for i in place_bin_No[(process>3) | (process==0)].index:
@@ -44,14 +43,20 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from itertools import combinations
 
-def generate_svm_data(data):
+def generate_svm_data(data,use_PCA=True):
     svm_score_dict={}
     for contexta,contextb in combinations(np.unique(data.index.get_level_values("Context")),2):
         new_data = data[data.index.get_level_values("Context").isin([contexta,contextb])]
         trials = np.array(new_data.groupby(["Trial_Num","Context"]).mean().index.get_level_values("Trial_Num"))
-        placebins = np.arange(0,max(place_bin_No))
+        placebins = np.arange(0,99)
         
         target = np.array(new_data.groupby(["Trial_Num","Context"]).mean().index.get_level_values("Context"))
+
+        for ta in np.unique(target):
+            if sum(target==ta)>10:
+                pass
+            else:
+                break
         
         matrix = np.full((len(trials),len(placebins)),np.nan) # [trials,placebins]
         svm_score={}
