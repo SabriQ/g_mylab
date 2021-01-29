@@ -53,12 +53,12 @@ def generate_svm_data(data,use_PCA=False):
         
         target = np.array(new_data.groupby(["Trial_Num","Context"]).mean().index.get_level_values("Context"))
 
+        target_len=[]
         for ta in np.unique(target):
-            if sum(target==ta)>10:
-                pass
-            else:
-                break
-        
+            target_len.append(sum(target==ta))
+        if (np.array(target_len) < 10).any():
+            break
+
         matrix = np.full((len(trials),len(placebins)),0) # [trials,placebins]
         svm_score={}
         cell_num = len(new_data.columns)
