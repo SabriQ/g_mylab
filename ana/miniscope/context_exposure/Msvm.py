@@ -61,8 +61,9 @@ def generate_svm_data(data,use_PCA=True):
         
         matrix = np.full((len(trials),len(placebins)),0) # [trials,placebins]
         svm_score={}
+        cell_num = len(new_data.columns)
         for i,cell in enumerate(new_data.columns,0): # for different cells
-            print("cell:%s"%cell)
+            print("cell:%s/total:%s"%(cell,cell_num))
             for t,trial in enumerate(trials,0):
                 for placebin in placebins:
                     try:
