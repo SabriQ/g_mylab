@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from mylab.ana.miniscope.context_exposure.Canamini import AnaMini
 import copy
+from multiprocessing import Pool
 
 def construct_svm_dict(s:AnaMini,*args,**kwargs):
     """
@@ -58,9 +59,10 @@ def generate_svm_data(data,use_PCA=True):
             else:
                 break
         
-        matrix = np.full((len(trials),len(placebins)),np.nan) # [trials,placebins]
+        matrix = np.full((len(trials),len(placebins)),0) # [trials,placebins]
         svm_score={}
         for i,cell in enumerate(new_data.columns,0): # for different cells
+            print("cell:%s"%cell)
             for t,trial in enumerate(trials,0):
                 for placebin in placebins:
                     try:
@@ -80,7 +82,9 @@ def generate_svm_data(data,use_PCA=True):
         svm_score_dict["context_%s_%s"%(contexta,contextb)]=svm_score
     return svm_score_dict
 
+
 def main_svm_score(s,*args,**kwargs):
+
     data = construct_svm_dict(s,*args,**kwargs)
     svm_score_dict = generate_svm_data(data)
     return svm_score_dict
