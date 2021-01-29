@@ -79,7 +79,7 @@ def generate_svm_data(data,use_PCA=False):
                 X[np.isnan(X)]=0
                 X = PCA(2).fit_transform(X)
             clf = SVC(kernel="rbf",gamma="auto",cache_size=5000)
-            svm_score[cell] = cross_val_score(clf,X,y).mean()
+            svm_score[cell] = cross_val_score(clf,X,y,cv=5).mean()
         svm_score_dict["context_%s_%s"%(contexta,contextb)]=svm_score
     return svm_score_dict
 
