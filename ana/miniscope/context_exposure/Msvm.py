@@ -44,7 +44,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from itertools import combinations
 
-def generate_svm_data(data,use_PCA=True):
+def generate_svm_data(data,use_PCA=False):
     svm_score_dict={}
     for contexta,contextb in combinations(np.unique(data.index.get_level_values("Context")),2):
         new_data = data[data.index.get_level_values("Context").isin([contexta,contextb])]
