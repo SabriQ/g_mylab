@@ -1,6 +1,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 import seaborn as sns
 import pandas as pd
 import os,sys,glob,re,copy
@@ -282,7 +284,11 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
         filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
         savepath = os.path.join(savedir,filename)
         if os.path.exists(savepath):
+            print("existed,Jump!")
             return 
+        else:
+            print("plotting")
+
     Matrix_cellids_placebins_trials = Context_Matrix_info["Matrix_cellids_placebins_trials"]
     trialtypes = Context_Matrix_info["trials"]
     
@@ -315,8 +321,11 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
     "trial_end": np.where(placebins==99)}
     
     n_type = len(trialtypes)
+
     fig = plt.figure(figsize=(10,n_type*4),dpi=300)
+    print("plotting...")
     plt.rc('font',family='Times New Roman')
+    
     
     for i,trialtype in enumerate(trialtypes.keys(),1):
         # 根据条件去对应type 的trials
@@ -342,6 +351,10 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
         matrix_standarization = np.apply_along_axis(lambda x:(x-np.nanmean(x))/np.nanstd(x,ddof=1)
                                                    ,axis=0
                                                    ,arr=matrix)
+        if np.isnan(matrix_standarization).all():
+            print("cell has no firing")
+            plt.close("all")
+            continue
         matrix_standarization_mean = np.nanmean(matrix_standarization,axis=1)
         matrix_standarization_sem = np.nanstd(matrix_standarization,axis=1,ddof=1)/np.sqrt(matrix_standarization.shape[1]) 
         
@@ -389,7 +402,6 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
         plt.legend([line1,line2],["Fr","Speed"],frameon =False,loc=(0.65,0.7))
         plt.title("mouse:%s-id:%s in %s"%(Context_Matrix_info["mouse_id"],idx,trialtype))
         plt.tight_layout()
-    print(">>>>>>>>>>>>>>>>>")
     if save:
 
         filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
