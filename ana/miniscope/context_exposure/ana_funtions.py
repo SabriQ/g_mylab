@@ -12,7 +12,6 @@ from mylab.ana.miniscope.Mplacecells import *
 from mylab.ana.miniscope.context_exposure.Mpca import *
 from mylab.ana.miniscope.context_exposure.Canamini import AnaMini
 
-#%%
 
 
 #%% for single cell analysis
@@ -278,6 +277,8 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
         plot single cell MeanFr and save as png. No return
     """
     if save:
+        if savedir is None:
+            savedir = os.getcwd()
         filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
         savepath = os.path.join(savedir,filename)
         if os.path.exists(savepath):
@@ -354,7 +355,7 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
         
         ax1 = fig.add_subplot(n_type+1,2,i*2)
         line1, = ax1.plot(np.arange(0,len(matrix_mean)),matrix_standarization_mean,color="blue",linestyle="--",label="Fr")
-#         ax1.legend([line1],["Fr"])
+        # ax1.legend([line1],["Fr"])
         ax1.fill_between(np.arange(0,len(matrix_mean))
                          ,matrix_standarization_mean-matrix_standarization_sem
                          ,matrix_standarization_mean+matrix_standarization_sem
@@ -388,10 +389,9 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
         plt.legend([line1,line2],["Fr","Speed"],frameon =False,loc=(0.65,0.7))
         plt.title("mouse:%s-id:%s in %s"%(Context_Matrix_info["mouse_id"],idx,trialtype))
         plt.tight_layout()
-        
+    print(">>>>>>>>>>>>>>>>>")
     if save:
-        if savedir is None:
-            savedir = os.getcwd()
+
         filename = "mouse%sid%spart%sindex%saim%s.png"%(Context_Matrix_info["mouse_id"],idx,Context_Matrix_info["part"],Context_Matrix_info["index"],Context_Matrix_info["aim"])
         savepath = os.path.join(savedir,filename)
         plt.savefig(savepath,format="png")
