@@ -91,23 +91,3 @@ def main_svm_score(s,*args,**kwargs):
     return svm_score_dict
 
 
-def construct_pvalue_matrix(data):
-    matrix_pvalue = {}
-    for c1,c2 in combinations(np.unique(data.index.get_level_values(level="Context")),2):
-    matrix_pvalue["context%s_%s"%(c1,c2)] = np.full((len(data.columns),100),np.nan) # [cells,placebins]
-    for i,cell in enumerate(data.columns,0):
-#         print("i:%s"%i)
-        for placebin in np.arange(0,100):
-#             print("%s"%placebin,end=" ")
-            try:
-                context_a = data.xs(key=(c1,placebin),level=("Context","place_bin_No"))[cell]
-                context_b = data.xs(key=(c2,placebin),level=("Context","place_bin_No"))[cell]
-                if len(context_a) < 3 or len(context_b) < 3:
-                    pass
-                else:
-                    statistic,p_value = Wilcoxon_ranksumstest(context_a,context_b)
-            
-                    matrix_pvalue["context%s_%s"%(c1,c2)][i,placebin] = p_value
-            except:
-                p_value = np.nan
-    return matrix_pvalue

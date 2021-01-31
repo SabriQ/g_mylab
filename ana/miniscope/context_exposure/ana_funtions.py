@@ -323,7 +323,6 @@ def plot_MeanFr_along_Placebin(Context_Matrix_info:dict,idx,placebins:list=None,
     n_type = len(trialtypes)
 
     fig = plt.figure(figsize=(10,n_type*4),dpi=300)
-    print("plotting...")
     plt.rc('font',family='Times New Roman')
     
     
